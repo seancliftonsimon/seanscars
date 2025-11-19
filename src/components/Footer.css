@@ -1,0 +1,121 @@
+.footer {
+    background: var(--gradient-dark);
+    border-top: 2px solid var(--color-gold);
+    padding: var(--spacing-lg) 0 var(--spacing-md);
+    margin-top: var(--spacing-xl);
+}
+
+.footer-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.footer-section h3,
+.footer-section h4 {
+    color: var(--color-gold);
+    margin-bottom: var(--spacing-sm);
+    font-family: var(--font-heading);
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-gold);
+}
+
+.footer-tagline {
+    color: var(--color-cream);
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-links a {
+    color: var(--color-cream);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    display: inline-block;
+}
+
+.footer-links a:hover {
+    color: var(--color-gold);
+    transform: translateX(5px);
+}
+
+.footer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-cream);
+}
+
+.contact-item svg {
+    color: var(--color-gold);
+    flex-shrink: 0;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.footer-bottom p {
+    color: var(--color-cream);
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.footer-credit {
+    font-style: italic;
+    color: var(--color-gold);
+}
+
+@media (max-width: 768px) {
+    .footer {
+        padding: var(--spacing-md) 0;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .footer-section {
+        text-align: center;
+    }
+
+    .footer-logo {
+        justify-content: center;
+    }
+
+    .contact-item {
+        justify-content: center;
+    }
+}

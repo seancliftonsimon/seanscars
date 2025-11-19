@@ -1,0 +1,530 @@
+.hall-page {
+    padding-top: 60px;
+    min-height: 100vh;
+}
+
+.hall-hero {
+    background: var(--gradient-red);
+    padding: var(--spacing-lg) 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hall-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 30% 50%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 70% 50%, rgba(212, 175, 55, 0.15) 0%, transparent 50%);
+}
+
+.hero-icon {
+    color: var(--color-gold);
+    margin-bottom: var(--spacing-sm);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.hall-hero h1 {
+    color: var(--color-white);
+    margin-bottom: var(--spacing-sm);
+}
+
+.hall-subtitle {
+    font-size: 1.5rem;
+    color: var(--color-cream);
+    font-style: italic;
+    font-family: var(--font-heading);
+}
+
+/* Intro */
+.hall-intro {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: rgba(212, 175, 55, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.hall-intro p {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: var(--color-cream);
+    margin: 0;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Timeline Section */
+.timeline-section {
+    margin: var(--spacing-lg) 0;
+    padding: var(--spacing-md) 0;
+}
+
+.timeline-title {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-gold);
+    font-family: var(--font-heading);
+}
+
+.timeline {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-md) 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--gradient-gold);
+    transform: translateX(-50%);
+    z-index: 0;
+}
+
+.timeline-year-group {
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.timeline-year-marker {
+    position: relative;
+    z-index: 2;
+    margin-bottom: var(--spacing-md);
+}
+
+.year-badge {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--gradient-gold);
+    color: var(--color-black);
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    border-radius: 50px;
+    box-shadow: var(--shadow-gold);
+    border: 3px solid var(--color-black);
+    position: relative;
+}
+
+.timeline-inductees {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    width: 100%;
+    padding: 0 var(--spacing-md);
+}
+
+.timeline-inductee {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.8s ease forwards;
+    opacity: 0;
+    max-width: 200px;
+    flex: 0 0 auto;
+}
+
+.portrait-frame {
+    position: relative;
+    width: 180px;
+    height: 240px;
+    margin-bottom: var(--spacing-sm);
+    padding: 12px;
+    background: var(--gradient-gold);
+    border-radius: 8px;
+    box-shadow: 
+        0 0 0 4px var(--color-black),
+        0 0 0 8px rgba(212, 175, 55, 0.3),
+        0 8px 24px rgba(0, 0, 0, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.portrait-frame::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 2px solid rgba(184, 148, 30, 0.5);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.portrait-frame::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.8);
+    border-radius: 2px;
+    pointer-events: none;
+    box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+.portrait-frame:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 
+        0 0 0 4px var(--color-black),
+        0 0 0 8px rgba(212, 175, 55, 0.5),
+        0 12px 32px rgba(212, 175, 55, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+.portrait-image {
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-dark);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--color-gold);
+    overflow: hidden;
+    position: relative;
+}
+
+.portrait-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.portrait-placeholder {
+    font-family: var(--font-heading);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+    margin-top: 0.5rem;
+}
+
+.inductee-name {
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-gold);
+    margin-top: var(--spacing-sm);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius-sm);
+    display: inline-block;
+    text-align: center;
+}
+
+/* Honorees Grid */
+.honorees-grid {
+    display: grid;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.honoree-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-lg);
+    background: var(--color-charcoal);
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    animation: fadeIn 0.8s ease forwards;
+    opacity: 0;
+}
+
+.honoree-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--gradient-gold);
+}
+
+.honoree-card:hover {
+    border-color: var(--color-gold);
+    box-shadow: var(--shadow-gold);
+    transform: translateY(-5px);
+}
+
+.honoree-year {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--gradient-gold);
+    color: var(--color-black);
+    border-radius: 50px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.honoree-image-placeholder {
+    width: 300px;
+    height: 400px;
+    background: var(--gradient-dark);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--color-gold);
+    flex-shrink: 0;
+}
+
+.image-label {
+    font-family: var(--font-heading);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+}
+
+.honoree-content {
+    padding-top: 3rem;
+}
+
+.honoree-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-gold);
+}
+
+.honoree-bio {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--color-cream);
+    margin-bottom: var(--spacing-md);
+}
+
+.notable-works {
+    background: rgba(212, 175, 55, 0.05);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.notable-works h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--color-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.notable-works ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.notable-works li {
+    padding: 0.75rem;
+    background: var(--color-charcoal);
+    border-left: 3px solid var(--color-gold);
+    border-radius: var(--radius-sm);
+    color: var(--color-cream);
+    transition: all var(--transition-fast);
+}
+
+.notable-works li:hover {
+    background: rgba(212, 175, 55, 0.1);
+    transform: translateX(5px);
+}
+
+/* Future Section */
+.future-section {
+    display: flex;
+    justify-content: center;
+}
+
+.future-card {
+    max-width: 600px;
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: var(--gradient-red);
+    border: 2px solid var(--color-gold);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.future-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+}
+
+.future-card svg {
+    color: var(--color-gold);
+    margin-bottom: var(--spacing-sm);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.future-card h3 {
+    font-size: 2rem;
+    color: var(--color-gold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.future-card p {
+    font-size: 1.125rem;
+    color: var(--color-cream);
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .timeline::before {
+        left: 30px;
+    }
+
+    .timeline-year-group {
+        align-items: flex-start;
+        padding-left: 80px;
+    }
+
+
+    .timeline-inductees {
+        justify-content: flex-start;
+    }
+
+    .portrait-frame {
+        width: 160px;
+        height: 213px;
+    }
+
+    .honoree-card {
+        grid-template-columns: 1fr;
+    }
+
+    .honoree-image-placeholder {
+        width: 100%;
+        height: 300px;
+    }
+
+    .honoree-content {
+        padding-top: 0;
+    }
+
+    .honoree-year {
+        position: static;
+        width: fit-content;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .notable-works ul {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .hall-page {
+        padding-top: 60px;
+    }
+
+    .hall-hero {
+        padding: var(--spacing-lg) 0;
+    }
+
+    .timeline-title {
+        font-size: 2rem;
+    }
+
+    .timeline::before {
+        left: 20px;
+    }
+
+    .timeline-year-group {
+        padding-left: 60px;
+    }
+
+    .year-badge {
+        font-size: 1.25rem;
+        padding: 0.5rem 1.5rem;
+    }
+
+
+    .portrait-frame {
+        width: 140px;
+        height: 186px;
+    }
+
+    .inductee-name {
+        font-size: 1rem;
+    }
+
+    .timeline-inductees {
+        gap: var(--spacing-md);
+    }
+
+    .honoree-content h2 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .timeline-inductees {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .timeline-inductee {
+        max-width: 100%;
+    }
+
+    .portrait-frame {
+        width: 180px;
+        height: 240px;
+    }
+}

@@ -1,0 +1,271 @@
+.history-page {
+    padding-top: 80px;
+    min-height: 100vh;
+}
+
+.history-hero {
+    background: var(--gradient-red);
+    padding: var(--spacing-lg) 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.history-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+}
+
+.history-hero h1 {
+    color: var(--color-white);
+    margin-bottom: var(--spacing-sm);
+}
+
+.history-subtitle {
+    font-size: 1.25rem;
+    color: var(--color-cream);
+    font-style: italic;
+}
+
+/* Year Filter */
+.year-filter {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.year-btn {
+    padding: 1rem 2.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: var(--color-charcoal);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--color-cream);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.year-btn:hover {
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.year-btn.active {
+    background: var(--gradient-gold);
+    border-color: var(--color-gold);
+    color: var(--color-black);
+    box-shadow: var(--shadow-gold);
+}
+
+/* Categories */
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.category-card {
+    background: var(--color-charcoal);
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.category-card:hover {
+    border-color: var(--color-gold);
+    box-shadow: var(--shadow-gold);
+}
+
+.category-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: transparent;
+    border: none;
+    color: var(--color-cream);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.category-header:hover {
+    background: rgba(212, 175, 55, 0.05);
+}
+
+.category-title {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: left;
+}
+
+.category-icon {
+    color: var(--color-gold);
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.category-header h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+    color: var(--color-gold);
+}
+
+.category-description {
+    font-size: 0.95rem;
+    color: var(--color-cream);
+    opacity: 0.8;
+    margin: 0;
+}
+
+.category-header svg:last-child {
+    color: var(--color-gold);
+    flex-shrink: 0;
+}
+
+/* Category Content */
+.category-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.winner-section {
+    background: rgba(212, 175, 55, 0.1);
+    border: 2px solid var(--color-gold);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    position: relative;
+}
+
+.winner-badge {
+    position: absolute;
+    top: -12px;
+    left: var(--spacing-md);
+    background: var(--gradient-gold);
+    color: var(--color-black);
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.winner-name {
+    font-size: 1.75rem;
+    color: var(--color-gold);
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+.nominees-section {
+    padding: var(--spacing-md);
+    background: rgba(212, 175, 55, 0.03);
+    border-radius: var(--radius-md);
+}
+
+.nominees-section h5 {
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    color: var(--color-gold);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.nominees-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.nominees-list li {
+    padding: 0.75rem 1rem;
+    padding-left: 2.5rem;
+    background: var(--color-charcoal);
+    border-left: 3px solid rgba(212, 175, 55, 0.5);
+    border-radius: var(--radius-sm);
+    color: var(--color-cream);
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.nominees-list li::before {
+    content: '◆';
+    position: absolute;
+    left: 1rem;
+    color: var(--color-gold);
+    font-size: 0.875rem;
+}
+
+.nominees-list li:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-left-color: var(--color-gold);
+    transform: translateX(5px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .history-page {
+        padding-top: 60px;
+    }
+
+    .history-hero {
+        padding: var(--spacing-md) 0;
+    }
+
+    .year-filter {
+        gap: 0.75rem;
+    }
+
+    .year-btn {
+        padding: 0.875rem 2rem;
+        font-size: 1.125rem;
+    }
+
+    .category-title {
+        gap: 1rem;
+    }
+
+    .category-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .category-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .winner-name {
+        font-size: 1.5rem;
+    }
+}
