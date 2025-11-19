@@ -63,8 +63,9 @@
 
 /* Videos Grid */
 .videos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-xl);
 }
@@ -75,6 +76,8 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: all var(--transition-normal);
+    flex: 0 1 400px;
+    max-width: 100%;
 }
 
 .video-card:hover {
@@ -182,6 +185,10 @@
     }
 
     .videos-grid {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+    
+    .video-card {
+        flex: 1 1 100%;
     }
 }
