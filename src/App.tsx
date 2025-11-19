@@ -10,7 +10,7 @@ import './index.css';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/seanscars">
       <div className="app">
         <Navbar />
         <main>

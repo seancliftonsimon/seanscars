@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Calendar, Clock, Navigation, Award, Users, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Navigation, Award, Users, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import './Info.css';
 
 const Info = () => {
