@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
 import Home from './pages/Home';
 import RSVP from './pages/RSVP';
 import Info from './pages/Info';
@@ -24,7 +23,6 @@ function App() {
             <Route path="/media" element={<Media />} />
           </Routes>
         </main>
-        <Footer />
       </div>
     </Router>
   );
