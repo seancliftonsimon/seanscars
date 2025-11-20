@@ -8,15 +8,15 @@ interface Inductee {
 }
 
 const inductees: Inductee[] = [
-    { name: 'Octavia Spencer', year: 2021 },
-    { name: 'Joan Cusack', year: 2022 },
-    { name: 'Jamie Lee Curtis', year: 2022 },
-    { name: 'Nathan Lane', year: 2023 },
-    { name: 'Christine Baranski', year: 2023 },
-    { name: 'Agent Dana Scully', year: 2024 },
-    { name: 'Dr. Cristina Yang', year: 2024 },
-    { name: 'Jodie Foster', year: 2025 },
-    { name: 'Kathy Bates', year: 2025 },
+    { name: 'Octavia Spencer', year: 2021, image: '/images/hall-of-fame/octavia-spencer.jpg' },
+    { name: 'Joan Cusack', year: 2022, image: '/images/hall-of-fame/joan-cusack.jpg' },
+    { name: 'Jamie Lee Curtis', year: 2022, image: '/images/hall-of-fame/jamie-lee-curtis.jpg' },
+    { name: 'Nathan Lane', year: 2023, image: '/images/hall-of-fame/nathan-lane.jpg' },
+    { name: 'Christine Baranski', year: 2023, image: '/images/hall-of-fame/christine-baranski.jpg' },
+    { name: 'Agent Dana Scully', year: 2024, image: '/images/hall-of-fame/agent-dana-scully.jpg' },
+    { name: 'Dr. Cristina Yang', year: 2024, image: '/images/hall-of-fame/dr-cristina-yang.jpg' },
+    { name: 'Jodie Foster', year: 2025, image: '/images/hall-of-fame/jodie-foster.jpg' },
+    { name: 'Kathy Bates', year: 2025, image: '/images/hall-of-fame/kathy-bates.jpg' },
 ];
 
 const HallOfFame = () => {
