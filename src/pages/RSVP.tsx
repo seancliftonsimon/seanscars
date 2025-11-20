@@ -70,7 +70,7 @@ const RSVP = () => {
 
                             <div className="info-card">
                                 <h3>Venue</h3>
-                                <p><strong>The Theater at the Eaton Hotel</strong></p>
+                                <p><strong>The Eaton Hotel Theater</strong></p>
                                 <p>Washington, DC</p>
                             </div>
 

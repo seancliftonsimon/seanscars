@@ -29,7 +29,7 @@ const Info = () => {
                                     <Clock size={20} />
                                     <div>
                                         <strong>Sharemony: 7:00 PM - 10:00 PM</strong>
-                                        <span>The Theater at the Eaton Hotel</span>
+                                        <span>The Eaton Hotel Theater</span>
                                         <span className="venue-address">1201 K St NW, Washington, DC 20005</span>
                                     </div>
                                 </div>
@@ -71,7 +71,7 @@ const Info = () => {
                                         <strong>We recommend guests dine before the show.</strong>
                                     </p>
                                     <p>
-                                        There are many excellent restaurants near The Theater at the Eaton Hotel. 
+                                        There are many excellent restaurants near The Eaton Hotel Theater. 
                                         We suggest making reservations in advance at nearby establishments 
                                         in the K Street and downtown DC area.
                                     </p>

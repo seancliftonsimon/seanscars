@@ -31,11 +31,11 @@ const Home = () => {
 						</div>
 						<div className="detail-item">
 							<MapPin size={20} />
-							<span>The Theater at the Eaton Hotel, Washington, DC</span>
+							<span>The Eaton Hotel Theater, Washington, DC</span>
 						</div>
 						<div className="detail-item">
 							<Clock size={20} />
-							<span>7:00 PM - 10:00 PM</span>
+							<span>7 PM - 10 PM</span>
 						</div>
 					</div>
 
