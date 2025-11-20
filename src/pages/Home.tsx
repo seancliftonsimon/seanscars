@@ -22,8 +22,6 @@ const Home = () => {
 						The <span className="gold-text">2026 Award</span> Sharemony
 					</h1>
 
-					<p className="hero-subtitle">Where Cinema Meets Celebration</p>
-
 					<div className="hero-details">
 						<div className="detail-item">
 							<Calendar size={20} />
