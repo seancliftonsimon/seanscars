@@ -15,6 +15,8 @@ const RSVP = () => {
     });
 
     const [submitted, setSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const target = e.target;
@@ -27,26 +29,53 @@ const RSVP = () => {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, this would send to a backend
-        console.log('Form submitted:', formData);
-        setSubmitted(true);
+        setLoading(true);
+        setError(null);
 
-        // Reset form after 3 seconds
-        setTimeout(() => {
-            setSubmitted(false);
-            setFormData({
-                firstName: '',
-                lastName: '',
-                email: '',
-                rsvp: '',
-                guestsComment: '',
-                attendanceType: '',
-                awardName: '',
-                brunch: false
+        try {
+            const response = await fetch('https://formspree.io/f/meoykkzy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    rsvp: formData.rsvp,
+                    guestsComment: formData.guestsComment,
+                    attendanceType: formData.attendanceType,
+                    awardName: formData.awardName,
+                    brunch: formData.brunch ? 'Yes' : 'No'
+                }),
             });
-        }, 3000);
+
+            if (response.ok) {
+                setSubmitted(true);
+                // Reset form after 3 seconds
+                setTimeout(() => {
+                    setSubmitted(false);
+                    setFormData({
+                        firstName: '',
+                        lastName: '',
+                        email: '',
+                        rsvp: '',
+                        guestsComment: '',
+                        attendanceType: '',
+                        awardName: '',
+                        brunch: false
+                    });
+                }, 3000);
+            } else {
+                throw new Error('Failed to submit RSVP. Please try again.');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -97,6 +126,18 @@ const RSVP = () => {
                                 </div>
                             ) : (
                                 <form className="rsvp-form" onSubmit={handleSubmit}>
+                                    {error && (
+                                        <div className="error-message" style={{ 
+                                            color: '#ff6b6b', 
+                                            backgroundColor: 'rgba(255, 107, 107, 0.1)', 
+                                            padding: '1rem', 
+                                            borderRadius: '0.5rem', 
+                                            marginBottom: '1rem',
+                                            border: '1px solid rgba(255, 107, 107, 0.3)'
+                                        }}>
+                                            {error}
+                                        </div>
+                                    )}
                                     <div className="form-row">
                                         <div className="form-group">
                                             <label htmlFor="firstName">First Name *</label>
@@ -239,8 +280,8 @@ const RSVP = () => {
                                         </label>
                                     </div>
 
-                                    <button type="submit" className="btn btn-primary btn-submit">
-                                        <span>SUBMIT</span>
+                                    <button type="submit" className="btn btn-primary btn-submit" disabled={loading}>
+                                        <span>{loading ? 'SUBMITTING...' : 'SUBMIT'}</span>
                                     </button>
                                 </form>
                             )}
