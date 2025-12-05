@@ -69,6 +69,29 @@ const Vote = () => {
     setSeenMovies(newSeen);
   };
 
+  const handleMarkSeenBatch = (movieIds: string[], action: 'add' | 'remove') => {
+    const newSeen = new Set(seenMovies);
+
+    if (action === 'add') {
+      movieIds.forEach(id => newSeen.add(id));
+      setSeenMovies(newSeen);
+    } else {
+      // Remove from seen, favorites, and rankings
+      const newFavorites = new Set(favoriteMovies);
+      const newRanked = new Map(rankedMovies);
+
+      movieIds.forEach(id => {
+        newSeen.delete(id);
+        newFavorites.delete(id);
+        newRanked.delete(id);
+      });
+
+      setSeenMovies(newSeen);
+      setFavoriteMovies(newFavorites);
+      setRankedMovies(newRanked);
+    }
+  };
+
   const handleWantToSee = (movieId: string) => {
     const newWantToSee = new Set(wantToSeeMovies);
     if (newWantToSee.has(movieId)) {
@@ -97,10 +120,10 @@ const Vote = () => {
 
   const handleRankChange = (movieId: string, rank: number | null) => {
     const newRanked = new Map(rankedMovies);
-    
+
     // Remove any existing rank for this movie
     newRanked.delete(movieId);
-    
+
     // Remove the rank from any other movie that had it
     if (rank !== null) {
       for (const [id, r] of newRanked.entries()) {
@@ -111,7 +134,7 @@ const Vote = () => {
       }
       newRanked.set(movieId, rank);
     }
-    
+
     setRankedMovies(newRanked);
   };
 
@@ -122,7 +145,7 @@ const Vote = () => {
     try {
       const clientId = getOrCreateClientId();
       const ipHash = hashIP();
-      
+
       // Build ballot movies array
       const ballotMovies: BallotMovie[] = movies.map(movie => ({
         id: movie.id,
@@ -219,6 +242,7 @@ const Vote = () => {
           seenMovies={seenMovies}
           wantToSeeMovies={wantToSeeMovies}
           onMarkSeen={handleMarkSeen}
+          onMarkSeenBatch={handleMarkSeenBatch}
           onWantToSee={handleWantToSee}
           onNext={handleNext}
           onBack={handleBack}

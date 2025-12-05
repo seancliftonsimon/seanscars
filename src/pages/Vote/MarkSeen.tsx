@@ -7,6 +7,7 @@ interface MarkSeenProps {
   seenMovies: Set<string>;
   wantToSeeMovies: Set<string>;
   onMarkSeen: (movieId: string) => void;
+  onMarkSeenBatch: (movieIds: string[], action: 'add' | 'remove') => void;
   onWantToSee: (movieId: string) => void;
   onNext: () => void;
   onBack: () => void;
@@ -19,6 +20,7 @@ const MarkSeen = ({
   seenMovies,
   wantToSeeMovies,
   onMarkSeen,
+  onMarkSeenBatch,
   onWantToSee,
   onNext,
   onBack
@@ -46,35 +48,23 @@ const MarkSeen = ({
   };
 
   const handleSeenAllTopRow = () => {
-    paginatedMovies.slice(0, 4).forEach(movie => {
-      if (!seenMovies.has(movie.id)) {
-        onMarkSeen(movie.id);
-      }
-    });
+    const moviesToMark = paginatedMovies.slice(0, 4).map(m => m.id);
+    onMarkSeenBatch(moviesToMark, 'add');
   };
 
   const handleSeenAllBottomRow = () => {
-    paginatedMovies.slice(4, 8).forEach(movie => {
-      if (!seenMovies.has(movie.id)) {
-        onMarkSeen(movie.id);
-      }
-    });
+    const moviesToMark = paginatedMovies.slice(4, 8).map(m => m.id);
+    onMarkSeenBatch(moviesToMark, 'add');
   };
 
   const handleSeenAll = () => {
-    paginatedMovies.forEach(movie => {
-      if (!seenMovies.has(movie.id)) {
-        onMarkSeen(movie.id);
-      }
-    });
+    const moviesToMark = paginatedMovies.map(m => m.id);
+    onMarkSeenBatch(moviesToMark, 'add');
   };
 
   const handleSeenNone = () => {
-    paginatedMovies.forEach(movie => {
-      if (seenMovies.has(movie.id)) {
-        onMarkSeen(movie.id);
-      }
-    });
+    const moviesToUnmark = paginatedMovies.map(m => m.id);
+    onMarkSeenBatch(moviesToUnmark, 'remove');
   };
 
   const handleNextPage = () => {
