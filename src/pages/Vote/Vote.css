@@ -106,15 +106,15 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Movies Grid - 4 columns mobile-first */
+/* Movies Grid - 4 columns mobile-first, 2 rows */
 .movies-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
   margin-bottom: var(--spacing-md);
   flex: 1;
-  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  min-height: 200px;
 }
 
 .movie-grid-item {
@@ -142,6 +142,12 @@
 .movie-grid-item.seen {
   border-color: var(--color-gold);
   background: rgba(212, 175, 55, 0.1);
+  opacity: 1;
+}
+
+.movie-grid-item.not-seen {
+  opacity: 0.5;
+  border-color: rgba(212, 175, 55, 0.2);
 }
 
 .movie-checkbox-small {
@@ -402,6 +408,43 @@
   margin-bottom: var(--spacing-md);
   color: var(--color-cream);
   font-size: 1rem;
+}
+
+/* Bulk Selection Controls */
+.bulk-selection-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.row-controls,
+.all-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.btn-secondary {
+  background: var(--color-charcoal);
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--color-gold-light);
+}
+
+.btn-small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
 }
 
 /* Extra Questions */
