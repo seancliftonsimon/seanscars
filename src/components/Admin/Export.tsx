@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAllBallots, getBestPictureResults, getUnderSeenResults, getFunCategories, type Ballot } from '../../services/adminApi';
+import { getAllBallots, getBestPictureResults, getUnderSeenResults, getFunCategories } from '../../services/adminApi';
 import './Admin.css';
 
 const Export = () => {

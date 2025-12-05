@@ -25,10 +25,6 @@ const RankFavorites = ({
     setAvailableRanks(ranks);
   }, [movies.length]);
 
-  const handleRankSelect = (movieId: string, rank: number) => {
-    onRankChange(movieId, rank);
-  };
-
   const allRanked = movies.length > 0 && movies.every(m => rankedMovies.has(m.id));
   const maxRank = Math.max(...Array.from(rankedMovies.values()), 0);
 

@@ -11,7 +11,6 @@ import './Admin.css';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'best-picture' | 'under-seen' | 'fun-categories' | 'ballots' | 'export'>('overview');
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check authentication
@@ -26,8 +25,6 @@ const Dashboard = () => {
       // Trigger re-render by updating a state
       window.dispatchEvent(new Event('refresh-data'));
     }, 30000);
-
-    setRefreshInterval(interval);
 
     return () => {
       if (interval) clearInterval(interval);
