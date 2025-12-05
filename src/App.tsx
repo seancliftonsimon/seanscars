@@ -13,7 +13,7 @@ import './index.css';
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === '/vote' || location.pathname.startsWith('/admin');
+  const hideNavbar = (location.pathname === '/vote' || location.pathname === '/voting') || location.pathname.startsWith('/admin');
 
   return (
     <div className="app">
@@ -27,6 +27,7 @@ function AppContent() {
           <Route path="/hall-of-fame" element={<HallOfFame />} />
           <Route path="/media" element={<Media />} />
           <Route path="/vote" element={<Vote />} />
+          <Route path="/voting" element={<Vote />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>

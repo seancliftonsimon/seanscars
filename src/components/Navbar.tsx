@@ -14,6 +14,7 @@ const Navbar = () => {
         { path: '/media', label: 'Past Songs' },
         { path: '/hall-of-fame', label: 'Hall of Fame' },
         { path: '/rsvp', label: 'RSVP' },
+        { path: '/vote', label: 'Vote' },
     ];
 
     const isActive = (path: string) => location.pathname === path;
