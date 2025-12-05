@@ -34,7 +34,7 @@ const MarkSeen = ({
 
   const totalPages = Math.ceil(movies.length / MOVIES_PER_PAGE);
   const hasMorePages = currentPage < totalPages - 1;
-  const allMoviesProcessed = currentPage >= totalPages - 1;
+
 
   const handleMovieClick = (movieId: string) => {
     onMarkSeen(movieId);
@@ -136,7 +136,7 @@ const MarkSeen = ({
           {paginatedMovies.map(movie => {
             const isSeen = seenMovies.has(movie.id);
             const isWantToSee = wantToSeeMovies.has(movie.id);
-            
+
             return (
               <div
                 key={movie.id}
