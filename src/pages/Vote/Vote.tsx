@@ -17,6 +17,9 @@ export interface Movie {
 
 const Vote = () => {
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [screen, setScreen] = useState(0);
   const [movies] = useState<Movie[]>(moviesData);
   const [seenMovies, setSeenMovies] = useState<Set<string>>(new Set());
@@ -36,6 +39,17 @@ const Vote = () => {
     // Initialize client ID on mount
     getOrCreateClientId();
   }, []);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.toUpperCase() === 'HOST') {
+      setIsAuthenticated(true);
+      setPasswordError(null);
+    } else {
+      setPasswordError('Incorrect password. Please try again.');
+      setPassword('');
+    }
+  };
 
   const handleMarkSeen = (movieId: string) => {
     const newSeen = new Set(seenMovies);
@@ -157,6 +171,44 @@ const Vote = () => {
       setScreen(screen - 1);
     }
   };
+
+  // Show password screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="vote-container">
+        <div className="vote-screen welcome-screen">
+          <div className="vote-content">
+            <h1>Voting Access</h1>
+            <p className="welcome-description">
+              Please enter the password to access the voting section.
+            </p>
+            <form onSubmit={handlePasswordSubmit} style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError(null);
+                }}
+                placeholder="Enter password"
+                className="search-input"
+                style={{ marginBottom: '1rem', textAlign: 'center' }}
+                autoFocus
+              />
+              {passwordError && (
+                <div className="error-message" style={{ marginBottom: '1rem' }}>
+                  {passwordError}
+                </div>
+              )}
+              <button type="submit" className="btn btn-primary btn-large" style={{ width: '100%' }}>
+                Enter
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="vote-container">
