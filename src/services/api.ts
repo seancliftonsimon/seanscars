@@ -1,6 +1,5 @@
-// API client for voting system
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+import { db } from './firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export interface Movie {
   id: string;
@@ -29,21 +28,8 @@ export interface Ballot {
 
 export async function submitBallot(ballotData: Ballot): Promise<{ success: boolean; id?: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/ballots`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(ballotData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to submit ballot' }));
-      throw new Error(error.error || 'Failed to submit ballot');
-    }
-
-    const result = await response.json();
-    return { success: true, id: result.id };
+    const docRef = await addDoc(collection(db, 'ballots'), ballotData);
+    return { success: true, id: docRef.id };
   } catch (error) {
     console.error('Ballot submission error:', error);
     throw error;

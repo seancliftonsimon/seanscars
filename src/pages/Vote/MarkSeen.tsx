@@ -37,6 +37,9 @@ const MarkSeen = ({
   const totalPages = Math.ceil(movies.length / MOVIES_PER_PAGE);
   const hasMorePages = currentPage < totalPages - 1;
 
+  const rowOneMovies = paginatedMovies.slice(0, 4);
+  const rowTwoMovies = paginatedMovies.slice(4, 8);
+
 
   const handleMovieClick = (movieId: string) => {
     onMarkSeen(movieId);
@@ -47,23 +50,13 @@ const MarkSeen = ({
     onWantToSee(movieId);
   };
 
-  const handleSeenAllTopRow = () => {
-    const moviesToMark = paginatedMovies.slice(0, 4).map(m => m.id);
+  const handleSeenAllRow = (rowMovies: Movie[]) => {
+    const moviesToMark = rowMovies.map(m => m.id);
     onMarkSeenBatch(moviesToMark, 'add');
   };
 
-  const handleSeenAllBottomRow = () => {
-    const moviesToMark = paginatedMovies.slice(4, 8).map(m => m.id);
-    onMarkSeenBatch(moviesToMark, 'add');
-  };
-
-  const handleSeenAll = () => {
-    const moviesToMark = paginatedMovies.map(m => m.id);
-    onMarkSeenBatch(moviesToMark, 'add');
-  };
-
-  const handleSeenNone = () => {
-    const moviesToUnmark = paginatedMovies.map(m => m.id);
+  const handleSeenNoneRow = (rowMovies: Movie[]) => {
+    const moviesToUnmark = rowMovies.map(m => m.id);
     onMarkSeenBatch(moviesToUnmark, 'remove');
   };
 
@@ -74,6 +67,59 @@ const MarkSeen = ({
       onNext();
     }
   };
+
+  const renderMovieRow = (rowMovies: Movie[], rowIndex: number) => (
+    <div className="movie-row-container" key={rowIndex}>
+      <div className="row-controls-left">
+        <button
+          onClick={() => handleSeenNoneRow(rowMovies)}
+          className="btn btn-secondary btn-small btn-row-action"
+        >
+          None
+        </button>
+      </div>
+
+      <div className="movies-row">
+        {rowMovies.map(movie => {
+          const isSeen = seenMovies.has(movie.id);
+          const isWantToSee = wantToSeeMovies.has(movie.id);
+
+          return (
+            <div
+              key={movie.id}
+              className={`movie-grid-item ${isSeen ? 'seen' : 'not-seen'}`}
+              onClick={() => handleMovieClick(movie.id)}
+            >
+              <div className="movie-checkbox-small">
+                <div className={`checkbox-small ${isSeen ? 'checked' : ''}`}>
+                  {isSeen && '✓'}
+                </div>
+              </div>
+              <div className="movie-title-small">{movie.title}</div>
+              {isSeen && (
+                <button
+                  className={`want-to-see-btn-small ${isWantToSee ? 'active' : ''}`}
+                  onClick={(e) => handleWantToSeeClick(e, movie.id)}
+                  title="Want to See"
+                >
+                  {isWantToSee ? '★' : '☆'}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="row-controls-right">
+        <button
+          onClick={() => handleSeenAllRow(rowMovies)}
+          className="btn btn-secondary btn-small btn-row-action"
+        >
+          All
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="vote-screen mark-seen-screen">
@@ -90,67 +136,9 @@ const MarkSeen = ({
           Select the movies you've seen. Page {currentPage + 1} of {totalPages}
         </div>
 
-        {/* Bulk selection buttons */}
-        <div className="bulk-selection-controls">
-          <div className="row-controls">
-            <button
-              onClick={handleSeenAllTopRow}
-              className="btn btn-secondary btn-small"
-            >
-              I've seen all (Row 1)
-            </button>
-            <button
-              onClick={handleSeenAllBottomRow}
-              className="btn btn-secondary btn-small"
-            >
-              I've seen all (Row 2)
-            </button>
-          </div>
-          <div className="all-controls">
-            <button
-              onClick={handleSeenAll}
-              className="btn btn-secondary btn-small"
-            >
-              I've seen all
-            </button>
-            <button
-              onClick={handleSeenNone}
-              className="btn btn-secondary btn-small"
-            >
-              I've seen none
-            </button>
-          </div>
-        </div>
-
-        <div className="movies-grid">
-          {paginatedMovies.map(movie => {
-            const isSeen = seenMovies.has(movie.id);
-            const isWantToSee = wantToSeeMovies.has(movie.id);
-
-            return (
-              <div
-                key={movie.id}
-                className={`movie-grid-item ${isSeen ? 'seen' : 'not-seen'}`}
-                onClick={() => handleMovieClick(movie.id)}
-              >
-                <div className="movie-checkbox-small">
-                  <div className={`checkbox-small ${isSeen ? 'checked' : ''}`}>
-                    {isSeen && '✓'}
-                  </div>
-                </div>
-                <div className="movie-title-small">{movie.title}</div>
-                {isSeen && (
-                  <button
-                    className={`want-to-see-btn-small ${isWantToSee ? 'active' : ''}`}
-                    onClick={(e) => handleWantToSeeClick(e, movie.id)}
-                    title="Want to See"
-                  >
-                    {isWantToSee ? '★' : '☆'}
-                  </button>
-                )}
-              </div>
-            );
-          })}
+        <div className="movies-rows-layout">
+          {renderMovieRow(rowOneMovies, 1)}
+          {rowTwoMovies.length > 0 && renderMovieRow(rowTwoMovies, 2)}
         </div>
 
         <div className="vote-footer">

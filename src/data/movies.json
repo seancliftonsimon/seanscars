@@ -1,104 +1,362 @@
 [
-	{ "id": "movie-1", "title": "Avatar: Fire and Ash" },
-	{ "id": "movie-2", "title": "The SpongeBob Movie: Search for SquarePants" },
-	{ "id": "movie-3", "title": "Five Nights at Freddy's 2" },
-	{ "id": "movie-4", "title": "A Minecraft Movie" },
-	{ "id": "movie-5", "title": "Zootopia 2" },
-	{ "id": "movie-6", "title": "Moana 2" },
-	{ "id": "movie-7", "title": "Jurassic World: Rebirth" },
-	{ "id": "movie-8", "title": "Mufasa: The Lion King" },
-	{ "id": "movie-9", "title": "Superman" },
-	{ "id": "movie-10", "title": "Mission: Impossible - The Final Reckoning" },
-	{ "id": "movie-11", "title": "The Fantastic Four: First Steps" },
-	{ "id": "movie-12", "title": "Lilo & Stitch" },
-	{ "id": "movie-13", "title": "Sonic the Hedgehog 3" },
-	{ "id": "movie-14", "title": "How to Train Your Dragon" },
-	{ "id": "movie-15", "title": "Wicked" },
-	{ "id": "movie-16", "title": "Wicked: For Good" },
-	{ "id": "movie-17", "title": "Tron: Ares" },
-	{ "id": "movie-18", "title": "Captain America: Brave New World" },
-	{ "id": "movie-19", "title": "Elio" },
-	{ "id": "movie-20", "title": "The Bad Guys 2" },
-	{ "id": "movie-21", "title": "Snow White" },
-	{ "id": "movie-22", "title": "Thunderbolts*" },
+	{
+		"id": "movie-1",
+		"title": "Avatar: Fire and Ash"
+	},
+	{
+		"id": "movie-2",
+		"title": "The SpongeBob Movie: Search for SquarePants"
+	},
+	{
+		"id": "movie-3",
+		"title": "Five Nights at Freddy's 2"
+	},
+	{
+		"id": "movie-4",
+		"title": "A Minecraft Movie"
+	},
+	{
+		"id": "movie-5",
+		"title": "Zootopia 2"
+	},
+	{
+		"id": "movie-7",
+		"title": "Jurassic World: Rebirth"
+	},
+	{
+		"id": "movie-9",
+		"title": "Superman"
+	},
+	{
+		"id": "movie-10",
+		"title": "Mission: Impossible - The Final Reckoning"
+	},
+	{
+		"id": "movie-11",
+		"title": "The Fantastic Four: First Steps"
+	},
+	{
+		"id": "movie-12",
+		"title": "Lilo & Stitch"
+	},
+	{
+		"id": "movie-14",
+		"title": "How to Train Your Dragon"
+	},
+	{
+		"id": "movie-16",
+		"title": "Wicked: For Good"
+	},
+	{
+		"id": "movie-17",
+		"title": "Tron: Ares"
+	},
+	{
+		"id": "movie-18",
+		"title": "Captain America: Brave New World"
+	},
+	{
+		"id": "movie-19",
+		"title": "Elio"
+	},
+	{
+		"id": "movie-20",
+		"title": "The Bad Guys 2"
+	},
+	{
+		"id": "movie-21",
+		"title": "Snow White"
+	},
+	{
+		"id": "movie-22",
+		"title": "Thunderbolts*"
+	},
 	{
 		"id": "movie-23",
 		"title": "Demon Slayer: Kimetsu no Yaiba- The Movie - Infinity Castle"
 	},
-	{ "id": "movie-24", "title": "The Conjuring: Last Rites" },
-	{ "id": "movie-25", "title": "Karate Kid: Legends" },
-	{ "id": "movie-26", "title": "F1: The Movie" },
-	{ "id": "movie-27", "title": "Now You See Me: Now You Don't" },
-	{ "id": "movie-28", "title": "28 Years Later" },
-	{ "id": "movie-29", "title": "Final Destination: Bloodlines" },
-	{ "id": "movie-30", "title": "Ballerina" },
-	{ "id": "movie-31", "title": "The Naked Gun" },
-	{ "id": "movie-32", "title": "Paddington in Peru" },
-	{ "id": "movie-33", "title": "Downton Abbey: The Grand Finale" },
-	{ "id": "movie-34", "title": "Black Phone 2" },
-	{ "id": "movie-35", "title": "Chainsaw Man - The Movie: Reze Arc" },
-	{ "id": "movie-36", "title": "Predator: Badlands" },
-	{ "id": "movie-37", "title": "One Battle After Another" },
-	{ "id": "movie-38", "title": "Weapons" },
-	{ "id": "movie-39", "title": "A Working Man" },
-	{ "id": "movie-40", "title": "Regretting You" },
-	{ "id": "movie-41", "title": "Den of Thieves: Pantera" },
-	{ "id": "movie-42", "title": "The Monkey" },
-	{ "id": "movie-43", "title": "The Accountant 2" },
-	{ "id": "movie-44", "title": "Mickey 17" },
-	{ "id": "movie-45", "title": "Dog Man" },
-	{ "id": "movie-46", "title": "Sinners" },
-	{ "id": "movie-47", "title": "Freakier Friday" },
-	{ "id": "movie-48", "title": "The King of Kings" },
-	{ "id": "movie-49", "title": "One of Them Days" },
-	{ "id": "movie-50", "title": "A Complete Unknown" },
-	{ "id": "movie-51", "title": "Nosferatu" },
-	{ "id": "movie-52", "title": "The Amateur" },
-	{ "id": "movie-53", "title": "Highest 2 Lowest" },
-	{ "id": "movie-54", "title": "The Phoenician Scheme" },
-	{ "id": "movie-55", "title": "Eddington" },
-	{ "id": "movie-56", "title": "Marty Supreme" },
-	{ "id": "movie-57", "title": "Blue Moon" },
-	{ "id": "movie-58", "title": "Materialists" },
-	{ "id": "movie-59", "title": "The Mastermind" },
-	{ "id": "movie-60", "title": "Frankenstein" },
-	{ "id": "movie-61", "title": "Hamnet" },
-	{ "id": "movie-62", "title": "Black Bag" },
-	{ "id": "movie-63", "title": "Sentimental Value" },
-	{ "id": "movie-64", "title": "My Mom Jayne" },
-	{ "id": "movie-65", "title": "It Was Just an Accident" },
-	{ "id": "movie-66", "title": "The Secret Agent" },
-	{ "id": "movie-67", "title": "Sirāt" },
-	{ "id": "movie-68", "title": "If I Had Legs I'd Kick You" },
-	{ "id": "movie-69", "title": "Train Dreams" },
-	{ "id": "movie-70", "title": "Afternoons of Solitude" },
+	{
+		"id": "movie-24",
+		"title": "The Conjuring: Last Rites"
+	},
+	{
+		"id": "movie-25",
+		"title": "Karate Kid: Legends"
+	},
+	{
+		"id": "movie-26",
+		"title": "F1: The Movie"
+	},
+	{
+		"id": "movie-27",
+		"title": "Now You See Me: Now You Don't"
+	},
+	{
+		"id": "movie-28",
+		"title": "28 Years Later"
+	},
+	{
+		"id": "movie-29",
+		"title": "Final Destination: Bloodlines"
+	},
+	{
+		"id": "movie-30",
+		"title": "Ballerina"
+	},
+	{
+		"id": "movie-31",
+		"title": "The Naked Gun"
+	},
+	{
+		"id": "movie-32",
+		"title": "Paddington in Peru"
+	},
+	{
+		"id": "movie-33",
+		"title": "Downton Abbey: The Grand Finale"
+	},
+	{
+		"id": "movie-34",
+		"title": "Black Phone 2"
+	},
+	{
+		"id": "movie-35",
+		"title": "Chainsaw Man - The Movie: Reze Arc"
+	},
+	{
+		"id": "movie-36",
+		"title": "Predator: Badlands"
+	},
+	{
+		"id": "movie-37",
+		"title": "One Battle After Another"
+	},
+	{
+		"id": "movie-38",
+		"title": "Weapons"
+	},
+	{
+		"id": "movie-39",
+		"title": "A Working Man"
+	},
+	{
+		"id": "movie-40",
+		"title": "Regretting You"
+	},
+	{
+		"id": "movie-41",
+		"title": "Den of Thieves: Pantera"
+	},
+	{
+		"id": "movie-42",
+		"title": "The Monkey"
+	},
+	{
+		"id": "movie-43",
+		"title": "The Accountant 2"
+	},
+	{
+		"id": "movie-44",
+		"title": "Mickey 17"
+	},
+	{
+		"id": "movie-45",
+		"title": "Dog Man"
+	},
+	{
+		"id": "movie-46",
+		"title": "Sinners"
+	},
+	{
+		"id": "movie-47",
+		"title": "Freakier Friday"
+	},
+	{
+		"id": "movie-48",
+		"title": "The King of Kings"
+	},
+	{
+		"id": "movie-49",
+		"title": "One of Them Days"
+	},
+	{
+		"id": "movie-52",
+		"title": "The Amateur"
+	},
+	{
+		"id": "movie-53",
+		"title": "Highest 2 Lowest"
+	},
+	{
+		"id": "movie-54",
+		"title": "The Phoenician Scheme"
+	},
+	{
+		"id": "movie-55",
+		"title": "Eddington"
+	},
+	{
+		"id": "movie-56",
+		"title": "Marty Supreme"
+	},
+	{
+		"id": "movie-57",
+		"title": "Blue Moon"
+	},
+	{
+		"id": "movie-58",
+		"title": "Materialists"
+	},
+	{
+		"id": "movie-59",
+		"title": "The Mastermind"
+	},
+	{
+		"id": "movie-60",
+		"title": "Frankenstein"
+	},
+	{
+		"id": "movie-61",
+		"title": "Hamnet"
+	},
+	{
+		"id": "movie-62",
+		"title": "Black Bag"
+	},
+	{
+		"id": "movie-63",
+		"title": "Sentimental Value"
+	},
+	{
+		"id": "movie-64",
+		"title": "My Mom Jayne"
+	},
+	{
+		"id": "movie-65",
+		"title": "It Was Just an Accident"
+	},
+	{
+		"id": "movie-66",
+		"title": "The Secret Agent"
+	},
+	{
+		"id": "movie-67",
+		"title": "Sirāt"
+	},
+	{
+		"id": "movie-68",
+		"title": "If I Had Legs I'd Kick You"
+	},
+	{
+		"id": "movie-69",
+		"title": "Train Dreams"
+	},
+	{
+		"id": "movie-70",
+		"title": "Afternoons of Solitude"
+	},
 	{
 		"id": "movie-71",
 		"title": "My Undesirable Friends: Part I – Last Air in Moscow"
 	},
-	{ "id": "movie-72", "title": "Sorry, Baby" },
-	{ "id": "movie-73", "title": "Resurrection" },
-	{ "id": "movie-74", "title": "Nouvelle Vague" },
-	{ "id": "movie-75", "title": "Caught by the Tides" },
-	{ "id": "movie-76", "title": "The Testament of Ann Lee" },
-	{ "id": "movie-77", "title": "Misericordia" },
-	{ "id": "movie-78", "title": "My Father's Shadow" },
-	{ "id": "movie-79", "title": "Urchin" },
-	{ "id": "movie-80", "title": "Pillion" },
-	{ "id": "movie-81", "title": "No Other Choice" },
-	{ "id": "movie-82", "title": "Cover-Up" },
-	{ "id": "movie-83", "title": "April" },
-	{ "id": "movie-84", "title": "Sound of Falling" },
-	{ "id": "movie-85", "title": "The Perfect Neighbor" },
-	{ "id": "movie-86", "title": "Cloud" },
-	{ "id": "movie-87", "title": "Dry Leaf" },
-	{ "id": "movie-88", "title": "Oslo Stories Trilogy: Dreams" },
-	{ "id": "movie-89", "title": "I Only Rest in the Storm" },
-	{ "id": "movie-90", "title": "Yes!" },
-	{ "id": "movie-91", "title": "7 Walks With Mark Brown" },
-	{ "id": "movie-92", "title": "Sauna" },
-	{ "id": "movie-93", "title": "Room Temperature" },
-	{ "id": "movie-94", "title": "When Fall Is Coming" },
-	{ "id": "movie-95", "title": "With Hasan in Gaza" },
-	{ "id": "movie-96", "title": "What Does That Nature Say to You" }
+	{
+		"id": "movie-72",
+		"title": "Sorry, Baby"
+	},
+	{
+		"id": "movie-73",
+		"title": "Resurrection"
+	},
+	{
+		"id": "movie-74",
+		"title": "Nouvelle Vague"
+	},
+	{
+		"id": "movie-75",
+		"title": "Caught by the Tides"
+	},
+	{
+		"id": "movie-76",
+		"title": "The Testament of Ann Lee"
+	},
+	{
+		"id": "movie-77",
+		"title": "Misericordia"
+	},
+	{
+		"id": "movie-78",
+		"title": "My Father's Shadow"
+	},
+	{
+		"id": "movie-79",
+		"title": "Urchin"
+	},
+	{
+		"id": "movie-80",
+		"title": "Pillion"
+	},
+	{
+		"id": "movie-81",
+		"title": "No Other Choice"
+	},
+	{
+		"id": "movie-82",
+		"title": "Cover-Up"
+	},
+	{
+		"id": "movie-83",
+		"title": "April"
+	},
+	{
+		"id": "movie-84",
+		"title": "Sound of Falling"
+	},
+	{
+		"id": "movie-85",
+		"title": "The Perfect Neighbor"
+	},
+	{
+		"id": "movie-86",
+		"title": "Cloud"
+	},
+	{
+		"id": "movie-87",
+		"title": "Dry Leaf"
+	},
+	{
+		"id": "movie-88",
+		"title": "Oslo Stories Trilogy: Dreams"
+	},
+	{
+		"id": "movie-89",
+		"title": "I Only Rest in the Storm"
+	},
+	{
+		"id": "movie-90",
+		"title": "Yes!"
+	},
+	{
+		"id": "movie-91",
+		"title": "7 Walks With Mark Brown"
+	},
+	{
+		"id": "movie-92",
+		"title": "Sauna"
+	},
+	{
+		"id": "movie-93",
+		"title": "Room Temperature"
+	},
+	{
+		"id": "movie-94",
+		"title": "When Fall Is Coming"
+	},
+	{
+		"id": "movie-95",
+		"title": "With Hasan in Gaza"
+	},
+	{
+		"id": "movie-96",
+		"title": "What Does That Nature Say to You"
+	}
 ]
