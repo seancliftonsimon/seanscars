@@ -138,6 +138,10 @@ const Vote = () => {
     setRankedMovies(newRanked);
   };
 
+  const handleUpdateRankings = (newRanked: Map<string, number>) => {
+    setRankedMovies(newRanked);
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
@@ -262,6 +266,7 @@ const Vote = () => {
           movies={movies.filter(m => favoriteMovies.has(m.id))}
           rankedMovies={rankedMovies}
           onRankChange={handleRankChange}
+          onUpdateRankings={handleUpdateRankings}
           onNext={() => setScreen(4)}
           onBack={handleBack}
         />

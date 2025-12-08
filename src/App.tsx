@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import RSVP from './pages/RSVP';
@@ -38,7 +38,7 @@ function AppContent() {
 
 function App() {
   return (
-    <Router basename="/seanscars">
+    <Router>
       <AppContent />
     </Router>
   );

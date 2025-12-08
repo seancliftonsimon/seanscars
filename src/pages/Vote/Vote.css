@@ -592,7 +592,7 @@
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .row-controls-left,
   .row-controls-right {
     width: 100%;
@@ -603,4 +603,47 @@
   }
 }
 
+/* Drag and Drop Styling */
+.ranked-movie-item.drag-item {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  /* Recommended for dnd-kit on touch devices */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
 
+.ranked-movie-item.drag-item:active {
+  cursor: grabbing;
+}
+
+.sortable-item {
+  /* Ensure wrapper doesn't interfere */
+  touch-action: none;
+}
+
+.drag-handle {
+  font-size: 1.5rem;
+  color: var(--color-gray);
+  cursor: grab;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--color-gold);
+}
+
+.rank-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-gold);
+  width: 3rem;
+  text-align: center;
+  flex-shrink: 0;
+}
