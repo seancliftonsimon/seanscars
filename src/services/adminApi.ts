@@ -2,15 +2,17 @@ import { db } from './firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import {
   calculateBordaScores,
+  calculateWeightedScores,
   calculateUnderSeenAwards,
   calculateFunCategories,
   type MovieStats as BestPictureResult,
+  type WeightedMovieStats,
   type UnderSeenResult,
   type FunCategories
 } from '../utils/scoring';
 
 // Re-export types for compatibility
-export type { BestPictureResult, UnderSeenResult, FunCategories };
+export type { BestPictureResult, WeightedMovieStats, UnderSeenResult, FunCategories };
 
 export interface Ballot {
   id: string;
@@ -72,6 +74,16 @@ export async function getBestPictureResults(): Promise<BestPictureResult[]> {
     return calculateBordaScores(ballots);
   } catch (error) {
     console.error('Error calculating best picture results:', error);
+    throw error;
+  }
+}
+
+export async function getWeightedResults(): Promise<WeightedMovieStats[]> {
+  try {
+    const ballots = await getAllBallots();
+    return calculateWeightedScores(ballots);
+  } catch (error) {
+    console.error('Error calculating weighted results:', error);
     throw error;
   }
 }

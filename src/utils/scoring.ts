@@ -96,6 +96,30 @@ export function calculateBordaScores(ballots: Ballot[]): MovieStats[] {
     return results.sort((a, b) => b.totalPoints - a.totalPoints);
 }
 
+export interface WeightedMovieStats extends MovieStats {
+    weightedScore: number;
+}
+
+// Weighted scoring: balances quality with reach
+// Formula: (avgPointsPerViewer * 2) + (seenFraction * 5)
+// This allows highly-rated niche films to compete with popular blockbusters
+export function calculateWeightedScores(ballots: Ballot[]): WeightedMovieStats[] {
+    const bordaResults = calculateBordaScores(ballots);
+
+    const weightedResults = bordaResults.map((movie) => {
+        // Weighted score balances quality (2x weight) with reach (5x weight)
+        const weightedScore = (movie.avgPointsPerViewer * 2) + (movie.seenFraction * 5);
+
+        return {
+            ...movie,
+            weightedScore: parseFloat(weightedScore.toFixed(2)),
+        };
+    });
+
+    // Sort by weighted score (descending)
+    return weightedResults.sort((a, b) => b.weightedScore - a.weightedScore);
+}
+
 export interface UnderSeenResult extends MovieStats {
     recommendationVotes: number;
 }
