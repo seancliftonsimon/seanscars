@@ -477,6 +477,104 @@
   margin-bottom: var(--spacing-xs);
 }
 
+/* Testing */
+.testing-section {
+  background: var(--color-black);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.testing-section h3 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-gold);
+  font-size: 1.25rem;
+}
+
+.testing-section p {
+  color: var(--color-cream);
+  margin-bottom: var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+}
+
+.input-group label {
+  color: var(--color-gold);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.input-group input {
+  background: var(--color-charcoal);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  color: var(--color-cream);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  max-width: 200px;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
+.input-group input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.danger-zone {
+  border-color: var(--color-red-velvet);
+}
+
+.danger-zone h3 {
+  color: var(--color-red-velvet);
+}
+
+.btn-danger {
+  background: var(--color-red-velvet);
+  color: var(--color-white);
+  border: 2px solid var(--color-red-velvet);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #8B0000;
+  border-color: #8B0000;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.message {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  font-weight: 600;
+}
+
+.message.success {
+  background: rgba(0, 128, 0, 0.2);
+  border: 2px solid rgba(0, 128, 0, 0.5);
+  color: #90EE90;
+}
+
+.message.error {
+  background: rgba(139, 0, 0, 0.2);
+  border: 2px solid var(--color-red-velvet);
+  color: #FFB6C1;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-dashboard {
@@ -512,4 +610,3 @@
     grid-template-columns: 1fr;
   }
 }
-
