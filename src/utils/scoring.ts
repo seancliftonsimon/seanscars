@@ -1,4 +1,5 @@
 import type { Ballot } from '../services/api';
+import moviesData from '../data/movies.json';
 
 export interface MovieStats {
     id: string;
@@ -17,9 +18,16 @@ export function calculateBordaScores(ballots: Ballot[]): MovieStats[] {
 
     // Get all unique movie IDs and titles from ballots
     const movieTitles: Record<string, string> = {};
+
+    // Pre-populate with known titles from static data
+    moviesData.forEach((m) => {
+        movieTitles[m.id] = m.title;
+    });
+
     ballots.forEach((ballot) => {
         if (ballot.movies && Array.isArray(ballot.movies)) {
             ballot.movies.forEach((movie) => {
+                // Only use ballot title if we don't already have it from static data
                 if (movie.id && !movieTitles[movie.id]) {
                     movieTitles[movie.id] = movie.title || movie.id;
                 }
@@ -169,7 +177,14 @@ export function calculateFunCategories(ballots: Ballot[]): FunCategories {
     });
 
     // Get movie titles
+    // Get movie titles
     const movieTitles: Record<string, string> = {};
+
+    // Pre-populate with known titles
+    moviesData.forEach((m) => {
+        movieTitles[m.id] = m.title;
+    });
+
     ballots.forEach((ballot) => {
         if (ballot.movies && Array.isArray(ballot.movies)) {
             ballot.movies.forEach((movie) => {
