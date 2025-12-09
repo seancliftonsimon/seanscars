@@ -6,11 +6,12 @@ import RawBallots from '../../components/Admin/RawBallots';
 import UnderSeen from '../../components/Admin/UnderSeen';
 import FunCategories from '../../components/Admin/FunCategories';
 import Export from '../../components/Admin/Export';
+import TestTools from '../../components/Admin/TestTools';
 import './Admin.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'best-picture' | 'under-seen' | 'fun-categories' | 'ballots' | 'export'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'best-picture' | 'under-seen' | 'fun-categories' | 'ballots' | 'export' | 'test-tools'>('overview');
 
   useEffect(() => {
     // Check authentication
@@ -82,6 +83,12 @@ const Dashboard = () => {
         >
           Export
         </button>
+        <button
+          className={`admin-tab ${activeTab === 'test-tools' ? 'active' : ''}`}
+          onClick={() => setActiveTab('test-tools')}
+        >
+          Test Tools
+        </button>
       </div>
 
       <div className="admin-content">
@@ -91,6 +98,7 @@ const Dashboard = () => {
         {activeTab === 'fun-categories' && <FunCategories />}
         {activeTab === 'ballots' && <RawBallots />}
         {activeTab === 'export' && <Export />}
+        {activeTab === 'test-tools' && <TestTools />}
       </div>
     </div>
   );
