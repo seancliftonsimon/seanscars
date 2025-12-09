@@ -20,6 +20,7 @@ const Login = () => {
         sessionStorage.setItem('admin_token', token);
         navigate('/admin');
       } else {
+        console.warn('Login failed for input:', password);
         setError('Invalid password');
       }
     } catch (err) {

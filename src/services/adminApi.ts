@@ -1,6 +1,16 @@
-// Admin API client
+import { db } from './firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import {
+  calculateBordaScores,
+  calculateUnderSeenAwards,
+  calculateFunCategories,
+  type MovieStats as BestPictureResult,
+  type UnderSeenResult,
+  type FunCategories
+} from '../utils/scoring';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Re-export types for compatibility
+export type { BestPictureResult, UnderSeenResult, FunCategories };
 
 export interface Ballot {
   id: string;
@@ -16,18 +26,9 @@ export interface Ballot {
     favoriteScary?: boolean;
     funniest?: boolean;
     bestTimeAtMovies?: boolean;
+    title?: string;
   }>;
   flagged?: boolean;
-}
-
-export interface BestPictureResult {
-  id: string;
-  title: string;
-  totalPoints: number;
-  numOneVotes: number;
-  seenCount: number;
-  seenFraction: number;
-  avgPointsPerViewer: number;
 }
 
 export interface Overview {
@@ -37,139 +38,85 @@ export interface Overview {
   mostRecentSubmission: string | null;
 }
 
-function getAuthToken(): string | null {
-  return sessionStorage.getItem('admin_token');
-}
-
-function getAuthHeaders(): HeadersInit {
-  const token = getAuthToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` })
-  };
-}
+// Client-side "password" check
+const ADMIN_PASSWORD = 'HOST';
 
 export async function adminLogin(password: string): Promise<string | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/admin/auth`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ password }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.token || null;
-  } catch (error) {
-    console.error('Login error:', error);
-    return null;
+  // Simulating authentication by just checking the hardcoded password
+  console.log('Attempting login with:', password);
+  if (password.trim().toUpperCase() === ADMIN_PASSWORD) {
+    // Return a dummy token since we don't have a backend to issue JWTs
+    return 'client-side-admin-token';
   }
+  return null;
 }
 
 export async function getAllBallots(): Promise<Ballot[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/ballots`, {
-      headers: getAuthHeaders(),
-    });
+    const q = query(collection(db, 'ballots'), orderBy('timestamp', 'desc'));
+    const querySnapshot = await getDocs(q);
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Unauthorized');
-      }
-      throw new Error('Failed to fetch ballots');
-    }
-
-    return await response.json();
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Ballot));
   } catch (error) {
-    console.error('Get ballots error:', error);
+    console.error('Error getting ballots:', error);
     throw error;
   }
 }
 
 export async function getBestPictureResults(): Promise<BestPictureResult[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/results/best-picture`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch results');
-    }
-
-    return await response.json();
+    const ballots = await getAllBallots();
+    return calculateBordaScores(ballots);
   } catch (error) {
-    console.error('Get results error:', error);
+    console.error('Error calculating best picture results:', error);
     throw error;
   }
 }
 
 export async function getOverview(): Promise<Overview> {
   try {
-    const response = await fetch(`${API_BASE_URL}/results/overview`);
+    const ballots = await getAllBallots();
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch overview');
-    }
+    const uniqueClientIds = new Set(ballots.map(b => b.clientId));
+    // Simple logic for flagged: if ipHash matches another ballot from different client ID? 
+    // Or just rely on what's in the DB if we had server-side logic before.
+    // For now, let's just count explicitly flagged ones if existing, or simple check.
+    const flaggedCount = ballots.filter(b => b.flagged).length;
+    const mostRecent = ballots.length > 0 ? ballots[0].timestamp : null;
 
-    return await response.json();
+    return {
+      totalBallots: ballots.length,
+      uniqueClientIds: uniqueClientIds.size,
+      possibleDuplicates: flaggedCount,
+      mostRecentSubmission: mostRecent
+    };
   } catch (error) {
-    console.error('Get overview error:', error);
+    console.error('Error getting overview:', error);
     throw error;
   }
-}
-
-export interface UnderSeenResult {
-  id: string;
-  title: string;
-  totalPoints: number;
-  numOneVotes: number;
-  seenCount: number;
-  seenFraction: number;
-  avgPointsPerViewer: number;
-  recommendationVotes: number;
 }
 
 export async function getUnderSeenResults(): Promise<UnderSeenResult[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/results/under-seen`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch under-seen results');
-    }
-
-    return await response.json();
+    const ballots = await getAllBallots();
+    return calculateUnderSeenAwards(ballots);
   } catch (error) {
-    console.error('Get under-seen results error:', error);
+    console.error('Error calculating under-seen results:', error);
     throw error;
   }
-}
-
-export interface FunCategoryResult {
-  winner: { id: string; title: string; votes: number } | null;
-  allResults: Array<{ id: string; title: string; votes: number }>;
-}
-
-export interface FunCategories {
-  favoriteScary: FunCategoryResult;
-  funniest: FunCategoryResult;
-  bestTimeAtMovies: FunCategoryResult;
 }
 
 export async function getFunCategories(): Promise<FunCategories> {
   try {
-    const response = await fetch(`${API_BASE_URL}/results/fun-categories`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch fun categories');
-    }
-
-    return await response.json();
+    const ballots = await getAllBallots();
+    return calculateFunCategories(ballots);
   } catch (error) {
-    console.error('Get fun categories error:', error);
+    console.error('Error calculating fun categories:', error);
     throw error;
   }
 }
+
 
