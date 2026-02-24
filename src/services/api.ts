@@ -19,6 +19,7 @@ export interface BallotMovie {
 }
 
 export interface Ballot {
+	schemaVersion?: number;
 	clientId: string;
 	timestamp: string;
 	ipHash?: string;
@@ -26,6 +27,8 @@ export interface Ballot {
 	movies: BallotMovie[];
 	flagged?: boolean;
 }
+
+export const BALLOT_SCHEMA_VERSION = 1;
 
 export async function submitBallot(
 	ballotData: Ballot

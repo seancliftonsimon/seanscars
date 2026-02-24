@@ -12,6 +12,7 @@ import {
 	hashIP,
 	type Ballot,
 	type BallotMovie,
+	BALLOT_SCHEMA_VERSION,
 } from "../../services/api";
 import "./Vote.css";
 
@@ -20,13 +21,17 @@ export interface Movie {
 	title: string;
 }
 
+const VOTER_NAME_STORAGE_KEY = "vote.voterName";
+
 const Vote = () => {
 	const navigate = useNavigate();
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [password, setPassword] = useState("");
-	const [passwordError, setPasswordError] = useState<string | null>(null);
 	const [screen, setScreen] = useState(0);
-	const [voterName, setVoterName] = useState("");
+	const [voterName, setVoterName] = useState(() => {
+		if (typeof window === "undefined") {
+			return "";
+		}
+		return sessionStorage.getItem(VOTER_NAME_STORAGE_KEY) ?? "";
+	});
 	const [movies] = useState<Movie[]>(moviesData);
 	const [seenMovies, setSeenMovies] = useState<Set<string>>(new Set());
 	const [wantToSeeMovies, setWantToSeeMovies] = useState<Set<string>>(
@@ -50,16 +55,9 @@ const Vote = () => {
 		getOrCreateClientId();
 	}, []);
 
-	const handlePasswordSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (password.toUpperCase() === "HOST") {
-			setIsAuthenticated(true);
-			setPasswordError(null);
-		} else {
-			setPasswordError("Incorrect password. Please try again.");
-			setPassword("");
-		}
-	};
+	useEffect(() => {
+		sessionStorage.setItem(VOTER_NAME_STORAGE_KEY, voterName);
+	}, [voterName]);
 
 	const handleMarkSeen = (movieId: string) => {
 		const newSeen = new Set(seenMovies);
@@ -176,6 +174,7 @@ const Vote = () => {
 			}));
 
 			const ballot: Ballot = {
+				schemaVersion: BALLOT_SCHEMA_VERSION,
 				clientId,
 				timestamp: new Date().toISOString(),
 				ipHash,
@@ -195,7 +194,9 @@ const Vote = () => {
 
 	const handleNext = () => {
 		if (screen === 0) {
-			setScreen(1);
+			if (voterName.trim().length > 0) {
+				setScreen(1);
+			}
 		} else if (screen === 1) {
 			if (seenMovies.size > 0) {
 				setScreen(2);
@@ -212,51 +213,6 @@ const Vote = () => {
 			setScreen(screen - 1);
 		}
 	};
-
-	// Show password screen if not authenticated
-	if (!isAuthenticated) {
-		return (
-			<div className="vote-container">
-				<div className="vote-screen welcome-screen">
-					<div className="vote-content">
-						<h1>Voting Access</h1>
-						<p className="welcome-description">
-							Please enter the password to access the voting section.
-						</p>
-						<form
-							onSubmit={handlePasswordSubmit}
-							style={{ width: "100%", maxWidth: "400px", margin: "0 auto" }}
-						>
-							<input
-								type="password"
-								value={password}
-								onChange={(e) => {
-									setPassword(e.target.value);
-									setPasswordError(null);
-								}}
-								placeholder="Enter password"
-								className="search-input"
-								style={{ marginBottom: "1rem", textAlign: "center" }}
-								autoFocus
-							/>
-							{passwordError && (
-								<div className="error-message" style={{ marginBottom: "1rem" }}>
-									{passwordError}
-								</div>
-							)}
-							<button
-								type="submit"
-								className="btn btn-primary btn-large"
-								style={{ width: "100%" }}
-							>
-								Enter
-							</button>
-						</form>
-					</div>
-				</div>
-			</div>
-		);
-	}
 
 	return (
 		<div className="vote-container">

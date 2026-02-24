@@ -1,314 +1,670 @@
 [
-	{
-		"id": "movie-1",
-		"title": "Avatar: Fire and Ash"
-	},
-	{
-		"id": "movie-2",
-		"title": "The SpongeBob Movie: Search for SquarePants"
-	},
-	{
-		"id": "movie-3",
-		"title": "Five Nights at Freddy's 2"
-	},
-	{
-		"id": "movie-4",
-		"title": "A Minecraft Movie"
-	},
-	{
-		"id": "movie-5",
-		"title": "Zootopia 2"
-	},
-	{
-		"id": "movie-7",
-		"title": "Jurassic World: Rebirth"
-	},
-	{
-		"id": "movie-9",
-		"title": "Superman"
-	},
-	{
-		"id": "movie-10",
-		"title": "Mission: Impossible - The Final Reckoning"
-	},
-	{
-		"id": "movie-11",
-		"title": "The Fantastic Four: First Steps"
-	},
-	{
-		"id": "movie-12",
-		"title": "Lilo & Stitch"
-	},
-	{
-		"id": "movie-14",
-		"title": "How to Train Your Dragon"
-	},
-	{
-		"id": "movie-16",
-		"title": "Wicked: For Good"
-	},
-	{
-		"id": "movie-17",
-		"title": "Tron: Ares"
-	},
-	{
-		"id": "movie-18",
-		"title": "Captain America: Brave New World"
-	},
-	{
-		"id": "movie-19",
-		"title": "Elio"
-	},
-	{
-		"id": "movie-20",
-		"title": "The Bad Guys 2"
-	},
-	{
-		"id": "movie-21",
-		"title": "Snow White"
-	},
-	{
-		"id": "movie-22",
-		"title": "Thunderbolts*"
-	},
-	{
-		"id": "movie-23",
-		"title": "Demon Slayer: Kimetsu no Yaiba- The Movie - Infinity Castle"
-	},
-	{
-		"id": "movie-24",
-		"title": "The Conjuring: Last Rites"
-	},
-	{
-		"id": "movie-25",
-		"title": "Karate Kid: Legends"
-	},
-	{
-		"id": "movie-26",
-		"title": "F1: The Movie"
-	},
-	{
-		"id": "movie-27",
-		"title": "Now You See Me: Now You Don't"
-	},
-	{
-		"id": "movie-28",
-		"title": "28 Years Later"
-	},
-	{
-		"id": "movie-29",
-		"title": "Final Destination: Bloodlines"
-	},
-	{
-		"id": "movie-30",
-		"title": "Ballerina"
-	},
-	{
-		"id": "movie-31",
-		"title": "The Naked Gun"
-	},
-	{
-		"id": "movie-32",
-		"title": "Paddington in Peru"
-	},
-	{
-		"id": "movie-33",
-		"title": "Downton Abbey: The Grand Finale"
-	},
-	{
-		"id": "movie-34",
-		"title": "Black Phone 2"
-	},
-	{
-		"id": "movie-35",
-		"title": "Chainsaw Man - The Movie: Reze Arc"
-	},
-	{
-		"id": "movie-36",
-		"title": "Predator: Badlands"
-	},
-	{
-		"id": "movie-37",
-		"title": "One Battle After Another"
-	},
-	{
-		"id": "movie-38",
-		"title": "Weapons"
-	},
-	{
-		"id": "movie-39",
-		"title": "A Working Man"
-	},
-	{
-		"id": "movie-40",
-		"title": "Regretting You"
-	},
-	{
-		"id": "movie-41",
-		"title": "Den of Thieves: Pantera"
-	},
-	{
-		"id": "movie-42",
-		"title": "The Monkey"
-	},
-	{
-		"id": "movie-43",
-		"title": "The Accountant 2"
-	},
-	{
-		"id": "movie-44",
-		"title": "Mickey 17"
-	},
-	{
-		"id": "movie-45",
-		"title": "Dog Man"
-	},
-	{
-		"id": "movie-46",
-		"title": "Sinners"
-	},
-	{
-		"id": "movie-47",
-		"title": "Freakier Friday"
-	},
-	{
-		"id": "movie-48",
-		"title": "The King of Kings"
-	},
-	{
-		"id": "movie-49",
-		"title": "One of Them Days"
-	},
-	{
-		"id": "movie-52",
-		"title": "The Amateur"
-	},
-	{
-		"id": "movie-53",
-		"title": "Highest 2 Lowest"
-	},
-	{
-		"id": "movie-54",
-		"title": "The Phoenician Scheme"
-	},
-	{
-		"id": "movie-55",
-		"title": "Eddington"
-	},
-	{
-		"id": "movie-56",
-		"title": "Marty Supreme"
-	},
-	{
-		"id": "movie-57",
-		"title": "Blue Moon"
-	},
-	{
-		"id": "movie-58",
-		"title": "Materialists"
-	},
-	{
-		"id": "movie-59",
-		"title": "The Mastermind"
-	},
-	{
-		"id": "movie-60",
-		"title": "Frankenstein"
-	},
-	{
-		"id": "movie-61",
-		"title": "Hamnet"
-	},
-	{
-		"id": "movie-62",
-		"title": "Black Bag"
-	},
-	{
-		"id": "movie-63",
-		"title": "Sentimental Value"
-	},
-	{
-		"id": "movie-64",
-		"title": "My Mom Jayne"
-	},
-	{
-		"id": "movie-65",
-		"title": "It Was Just an Accident"
-	},
-	{
-		"id": "movie-66",
-		"title": "The Secret Agent"
-	},
-	{
-		"id": "movie-67",
-		"title": "Sirāt"
-	},
-	{
-		"id": "movie-68",
-		"title": "If I Had Legs I'd Kick You"
-	},
-	{
-		"id": "movie-69",
-		"title": "Train Dreams"
-	},
-	{
-		"id": "movie-70",
-		"title": "Afternoons of Solitude"
-	},
-	{
-		"id": "movie-71",
-		"title": "My Undesirable Friends: Part I – Last Air in Moscow"
-	},
-	{
-		"id": "movie-72",
-		"title": "Sorry, Baby"
-	},
-	{
-		"id": "movie-73",
-		"title": "Resurrection"
-	},
-	{
-		"id": "movie-74",
-		"title": "Nouvelle Vague"
-	},
-	{
-		"id": "movie-75",
-		"title": "Caught by the Tides"
-	},
-	{
-		"id": "movie-76",
-		"title": "The Testament of Ann Lee"
-	},
-	{
-		"id": "movie-77",
-		"title": "Misericordia"
-	},
-	{
-		"id": "movie-78",
-		"title": "My Father's Shadow"
-	},
-	{
-		"id": "movie-79",
-		"title": "Urchin"
-	},
-	{
-		"id": "movie-80",
-		"title": "Pillion"
-	},
-	{
-		"id": "movie-81",
-		"title": "No Other Choice"
-	},
-	{
-		"id": "movie-82",
-		"title": "Cover-Up"
-	},
-	{
-		"id": "movie-83",
-		"title": "April"
-	},
-	{
-		"id": "movie-84",
-		"title": "Sound of Falling"
-	}
+  {
+    "id": "movie-1",
+    "title": "Avatar: Fire and Ash"
+  },
+  {
+    "id": "movie-2",
+    "title": "A Minecraft Movie"
+  },
+  {
+    "id": "movie-3",
+    "title": "Jurassic World: Rebirth"
+  },
+  {
+    "id": "movie-4",
+    "title": "Superman"
+  },
+  {
+    "id": "movie-5",
+    "title": "Mission: Impossible - The Final Reckoning"
+  },
+  {
+    "id": "movie-6",
+    "title": "The Fantastic Four: First Steps"
+  },
+  {
+    "id": "movie-7",
+    "title": "Lilo & Stitch"
+  },
+  {
+    "id": "movie-8",
+    "title": "How to Train Your Dragon"
+  },
+  {
+    "id": "movie-9",
+    "title": "Marty Supreme"
+  },
+  {
+    "id": "movie-10",
+    "title": "KPop Demon Hunters"
+  },
+  {
+    "id": "movie-11",
+    "title": "Wicked: For Good"
+  },
+  {
+    "id": "movie-12",
+    "title": "The SpongeBob Movie: Search for SquarePants"
+  },
+  {
+    "id": "movie-13",
+    "title": "Five Nights at Freddy's 2"
+  },
+  {
+    "id": "movie-14",
+    "title": "Zootopia 2"
+  },
+  {
+    "id": "movie-15",
+    "title": "Tron: Ares"
+  },
+  {
+    "id": "movie-16",
+    "title": "Bugonia"
+  },
+  {
+    "id": "movie-17",
+    "title": "The Bad Guys 2"
+  },
+  {
+    "id": "movie-18",
+    "title": "Snow White"
+  },
+  {
+    "id": "movie-19",
+    "title": "Thunderbolts*"
+  },
+  {
+    "id": "movie-20",
+    "title": "Elio"
+  },
+  {
+    "id": "movie-21",
+    "title": "Captain America: Brave New World"
+  },
+  {
+    "id": "movie-22",
+    "title": "The Conjuring: Last Rites"
+  },
+  {
+    "id": "movie-23",
+    "title": "Karate Kid: Legends"
+  },
+  {
+    "id": "movie-24",
+    "title": "F1: The Movie"
+  },
+  {
+    "id": "movie-25",
+    "title": "Now You See Me: Now You Don't"
+  },
+  {
+    "id": "movie-26",
+    "title": "Predator: Badlands"
+  },
+  {
+    "id": "movie-27",
+    "title": "One Battle After Another"
+  },
+  {
+    "id": "movie-28",
+    "title": "Weapons"
+  },
+  {
+    "id": "movie-29",
+    "title": "28 Years Later"
+  },
+  {
+    "id": "movie-30",
+    "title": "28 Years Later: The Bone Temple"
+  },
+  {
+    "id": "movie-31",
+    "title": "Final Destination: Bloodlines"
+  },
+  {
+    "id": "movie-32",
+    "title": "Ballerina"
+  },
+  {
+    "id": "movie-33",
+    "title": "The Naked Gun"
+  },
+  {
+    "id": "movie-34",
+    "title": "Paddington in Peru"
+  },
+  {
+    "id": "movie-35",
+    "title": "Downton Abbey: The Grand Finale"
+  },
+  {
+    "id": "movie-36",
+    "title": "Black Phone 2"
+  },
+  {
+    "id": "movie-37",
+    "title": "Chainsaw Man - The Movie: Reze Arc"
+  },
+  {
+    "id": "movie-38",
+    "title": "The Monkey"
+  },
+  {
+    "id": "movie-39",
+    "title": "The Accountant 2"
+  },
+  {
+    "id": "movie-40",
+    "title": "Mickey 17"
+  },
+  {
+    "id": "movie-41",
+    "title": "Sinners"
+  },
+  {
+    "id": "movie-42",
+    "title": "Freakier Friday"
+  },
+  {
+    "id": "movie-43",
+    "title": "One of Them Days"
+  },
+  {
+    "id": "movie-44",
+    "title": "The Amateur"
+  },
+  {
+    "id": "movie-45",
+    "title": "Highest 2 Lowest"
+  },
+  {
+    "id": "movie-46",
+    "title": "The Phoenician Scheme"
+  },
+  {
+    "id": "movie-47",
+    "title": "Eddington"
+  },
+  {
+    "id": "movie-48",
+    "title": "The Secret Agent"
+  },
+  {
+    "id": "movie-49",
+    "title": "Hamnet"
+  },
+  {
+    "id": "movie-50",
+    "title": "Blue Moon"
+  },
+  {
+    "id": "movie-51",
+    "title": "Materialists"
+  },
+  {
+    "id": "movie-52",
+    "title": "Frankenstein"
+  },
+  {
+    "id": "movie-53",
+    "title": "The Mastermind"
+  },
+  {
+    "id": "movie-54",
+    "title": "Black Bag"
+  },
+  {
+    "id": "movie-55",
+    "title": "No Other Choice"
+  },
+  {
+    "id": "movie-56",
+    "title": "Sentimental Value"
+  },
+  {
+    "id": "movie-57",
+    "title": "It Was Just an Accident"
+  },
+  {
+    "id": "movie-58",
+    "title": "Sirāt"
+  },
+  {
+    "id": "movie-59",
+    "title": "Sorry, Baby"
+  },
+  {
+    "id": "movie-60",
+    "title": "Wake Up Dead Man: A Knives Out Mystery"
+  },
+  {
+    "id": "movie-61",
+    "title": "The Ballad of Wallis Island"
+  },
+  {
+    "id": "movie-62",
+    "title": "The Housemaid"
+  },
+  {
+    "id": "movie-63",
+    "title": "The Life of Chuck"
+  },
+  {
+    "id": "movie-64",
+    "title": "Ne Zha 2"
+  },
+  {
+    "id": "movie-65",
+    "title": "Jay Kelly"
+  },
+  {
+    "id": "movie-66",
+    "title": "Ella McCay"
+  },
+  {
+    "id": "movie-67",
+    "title": "Thursday Murder Club"
+  },
+  {
+    "id": "movie-68",
+    "title": "I Know What You Did Last Summer"
+  },
+  {
+    "id": "movie-69",
+    "title": "If I Had Legs I'd Kick You"
+  },
+  {
+    "id": "movie-70",
+    "title": "Train Dreams"
+  },
+  {
+    "id": "movie-71",
+    "title": "Heart Eyes"
+  },
+  {
+    "id": "movie-72",
+    "title": "M3GAN 2.0"
+  },
+  {
+    "id": "movie-73",
+    "title": "Wolf Man"
+  },
+  {
+    "id": "movie-74",
+    "title": "Pillion"
+  },
+  {
+    "id": "movie-75",
+    "title": "A Working Man"
+  },
+  {
+    "id": "movie-76",
+    "title": "Die My Love"
+  },
+  {
+    "id": "movie-77",
+    "title": "The Voice of Hind Rajab"
+  },
+  {
+    "id": "movie-78",
+    "title": "Rental Family"
+  },
+  {
+    "id": "movie-79",
+    "title": "The Long Walk"
+  },
+  {
+    "id": "movie-80",
+    "title": "Together"
+  },
+  {
+    "id": "movie-81",
+    "title": "Demon Slayer: Kimetsu no Yaiba- The Movie - Infinity Castle"
+  },
+  {
+    "id": "movie-82",
+    "title": "Companion"
+  },
+  {
+    "id": "movie-83",
+    "title": "Eternity"
+  },
+  {
+    "id": "movie-84",
+    "title": "Regretting You"
+  },
+  {
+    "id": "movie-85",
+    "title": "Den of Thieves: Pantera"
+  },
+  {
+    "id": "movie-86",
+    "title": "Wuthering Heights"
+  },
+  {
+    "id": "movie-87",
+    "title": "My Father's Shadow"
+  },
+  {
+    "id": "movie-88",
+    "title": "Urchin"
+  },
+  {
+    "id": "movie-89",
+    "title": "Sound of Falling"
+  },
+  {
+    "id": "movie-90",
+    "title": "Springsteen: Deliver Me From Nowhere"
+  },
+  {
+    "id": "movie-91",
+    "title": "Anaconda"
+  },
+  {
+    "id": "movie-92",
+    "title": "Little Amelie or the Character of Rain"
+  },
+  {
+    "id": "movie-93",
+    "title": "Familiar Touch"
+  },
+  {
+    "id": "movie-94",
+    "title": "A House of Dynamite"
+  },
+  {
+    "id": "movie-95",
+    "title": "Honey Don't"
+  },
+  {
+    "id": "movie-96",
+    "title": "The Smashing Machine"
+  },
+  {
+    "id": "movie-97",
+    "title": "The Running Man"
+  },
+  {
+    "id": "movie-98",
+    "title": "Song Sung Blue"
+  },
+  {
+    "id": "movie-99",
+    "title": "Gabby’s Dollhouse: The Movie"
+  },
+  {
+    "id": "movie-100",
+    "title": "Smurfs"
+  },
+  {
+    "id": "movie-101",
+    "title": "Flight Risk"
+  },
+  {
+    "id": "movie-102",
+    "title": "Warfare"
+  },
+  {
+    "id": "movie-103",
+    "title": "Him"
+  },
+  {
+    "id": "movie-104",
+    "title": "Roofman"
+  },
+  {
+    "id": "movie-105",
+    "title": "The Woman in the Yard"
+  },
+  {
+    "id": "movie-106",
+    "title": "Nobody 2"
+  },
+  {
+    "id": "movie-107",
+    "title": "Last Breath"
+  },
+  {
+    "id": "movie-108",
+    "title": "Novocaine"
+  },
+  {
+    "id": "movie-109",
+    "title": "Bring Her Back"
+  },
+  {
+    "id": "movie-110",
+    "title": "Caught Stealing"
+  },
+  {
+    "id": "movie-111",
+    "title": "Drop"
+  },
+  {
+    "id": "movie-112",
+    "title": "Good Fortune"
+  },
+  {
+    "id": "movie-113",
+    "title": "Friendship"
+  },
+  {
+    "id": "movie-114",
+    "title": "The Roses"
+  },
+  {
+    "id": "movie-115",
+    "title": "Nuremberg"
+  },
+  {
+    "id": "movie-116",
+    "title": "Death of a Unicorn"
+  },
+  {
+    "id": "movie-117",
+    "title": "After the Hunt"
+  },
+  {
+    "id": "movie-118",
+    "title": "Presence"
+  },
+  {
+    "id": "movie-119",
+    "title": "A Big Bold Beautiful Journey"
+  },
+  {
+    "id": "movie-120",
+    "title": "Happy Gilmore 2"
+  },
+  {
+    "id": "movie-121",
+    "title": "Fackham Hall"
+  },
+  {
+    "id": "movie-122",
+    "title": "Good Boy"
+  },
+  {
+    "id": "movie-123",
+    "title": "Is This Thing On?"
+  },
+  {
+    "id": "movie-124",
+    "title": "My Undesirable Friends: Part I – Last Air in Moscow"
+  },
+  {
+    "id": "movie-125",
+    "title": "Resurrection"
+  },
+  {
+    "id": "movie-126",
+    "title": "Nouvelle Vague"
+  },
+  {
+    "id": "movie-127",
+    "title": "The Testament of Ann Lee"
+  },
+  {
+    "id": "movie-128",
+    "title": "Dog Man"
+  },
+  {
+    "id": "movie-129",
+    "title": "Misericordia"
+  },
+  {
+    "id": "movie-130",
+    "title": "The Day the Earth Blew Up: A Looney Tunes Movie"
+  },
+  {
+    "id": "movie-131",
+    "title": "The Alto Knights"
+  },
+  {
+    "id": "movie-132",
+    "title": "The Old Guard 2"
+  },
+  {
+    "id": "movie-133",
+    "title": "Another Simple Favor"
+  },
+  {
+    "id": "movie-134",
+    "title": "The Electric State"
+  },
+  {
+    "id": "movie-135",
+    "title": "Fear Street: Prom Queen"
+  },
+  {
+    "id": "movie-136",
+    "title": "The Gorge"
+  },
+  {
+    "id": "movie-137",
+    "title": "You're Cordially Invited"
+  },
+  {
+    "id": "movie-138",
+    "title": "Holland"
+  },
+  {
+    "id": "movie-139",
+    "title": "G20"
+  },
+  {
+    "id": "movie-140",
+    "title": "War of the Worlds"
+  },
+  {
+    "id": "movie-141",
+    "title": "Hedda"
+  },
+  {
+    "id": "movie-142",
+    "title": "Oh. What. Fun."
+  },
+  {
+    "id": "movie-143",
+    "title": "Hurry Up Tomorrow"
+  },
+  {
+    "id": "movie-144",
+    "title": "Kiss of the Spider Woman"
+  },
+  {
+    "id": "movie-145",
+    "title": "SISU: Road to Revenge"
+  },
+  {
+    "id": "movie-146",
+    "title": "Shelby Oaks"
+  },
+  {
+    "id": "movie-147",
+    "title": "Keeper"
+  },
+  {
+    "id": "movie-148",
+    "title": "Hell of a Summer"
+  },
+  {
+    "id": "movie-149",
+    "title": "The Toxic Avenger Unrated"
+  },
+  {
+    "id": "movie-150",
+    "title": "Dangerous Animals"
+  },
+  {
+    "id": "movie-151",
+    "title": "Eleanor the Great"
+  },
+  {
+    "id": "movie-152",
+    "title": "David"
+  },
+  {
+    "id": "movie-153",
+    "title": "Fight or Flight"
+  },
+  {
+    "id": "movie-154",
+    "title": "Spinal Tap II: The End Continues"
+  },
+  {
+    "id": "movie-155",
+    "title": "Merrily We Roll Along"
+  },
+  {
+    "id": "movie-156",
+    "title": "Oh, Hi!"
+  },
+  {
+    "id": "movie-157",
+    "title": "Christy"
+  },
+  {
+    "id": "movie-158",
+    "title": "Splitsville"
+  },
+  {
+    "id": "movie-159",
+    "title": "Opus"
+  },
+  {
+    "id": "movie-160",
+    "title": "Dead of Winter"
+  },
+  {
+    "id": "movie-161",
+    "title": "Eden"
+  },
+  {
+    "id": "movie-162",
+    "title": "Silent Night, Deadly Night"
+  },
+  {
+    "id": "movie-163",
+    "title": "Anemone"
+  },
+  {
+    "id": "movie-164",
+    "title": "Anniversary"
+  },
+  {
+    "id": "movie-165",
+    "title": "100 Nights of Hero"
+  },
+  {
+    "id": "movie-166",
+    "title": "Back in Action"
+  },
+  {
+    "id": "movie-167",
+    "title": "Predator: Killer of Killers"
+  }
 ]
