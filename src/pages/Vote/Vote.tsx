@@ -220,37 +220,6 @@ const Vote = () => {
 				<div className="vote-screen welcome-screen">
 					<div className="vote-content">
 						<h1>Voting Access</h1>
-						<div
-							style={{
-								backgroundColor: "#fff3cd",
-								border: "1px solid #ffc107",
-								borderRadius: "8px",
-								padding: "1rem",
-								marginBottom: "2rem",
-								textAlign: "center",
-								maxWidth: "400px",
-								margin: "0 auto 2rem auto",
-							}}
-						>
-							<p
-								style={{
-									margin: 0,
-									fontWeight: "bold",
-									color: "#856404",
-									fontSize: "1.1rem",
-								}}
-							>
-								Currently Under Construction
-							</p>
-							<p
-								style={{
-									margin: "0.5rem 0 0 0",
-									color: "#856404",
-								}}
-							>
-								We'll be ready in time for the ceremony.
-							</p>
-						</div>
 						<p className="welcome-description">
 							Please enter the password to access the voting section.
 						</p>
