@@ -412,6 +412,102 @@
   font-size: 1rem;
 }
 
+/* Mark Seen List UI */
+.mark-seen-progress {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-gray);
+  font-size: 0.95rem;
+}
+
+.mark-seen-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  color: var(--color-gray);
+}
+
+.mark-seen-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mark-seen-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem;
+  border: 2px solid rgba(212, 175, 55, 0.25);
+  border-radius: var(--radius-md);
+  background: var(--color-charcoal);
+  color: var(--color-cream);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mark-seen-item:hover {
+  border-color: var(--color-gold);
+  transform: translateX(3px);
+}
+
+.mark-seen-item.seen {
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.14);
+}
+
+.mark-seen-checkbox {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: transparent;
+}
+
+.mark-seen-checkbox.checked {
+  background: var(--gradient-gold);
+  border-color: var(--color-gold-light);
+  color: var(--color-black);
+}
+
+.mark-seen-title {
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.mark-seen-early-finish {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.mark-seen-early-finish .btn {
+  width: 100%;
+}
+
+.mark-seen-footer {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.mark-seen-footer .btn {
+  width: auto;
+  flex: 1;
+}
+
 /* Bulk Selection Controls */
 .bulk-selection-controls {
   display: flex;
