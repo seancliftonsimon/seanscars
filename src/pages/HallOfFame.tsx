@@ -1,4 +1,4 @@
-import { Award, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import "./HallOfFame.css";
 
 interface Inductee {
