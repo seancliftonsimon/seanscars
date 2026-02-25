@@ -11,7 +11,7 @@ interface MarkSeenProps {
 	isLoadingOrder: boolean;
 }
 
-const MOVIES_PER_PAGE = 15;
+const MOVIES_PER_PAGE = 5;
 
 const MarkSeen = ({
 	movies,
@@ -102,9 +102,7 @@ const MarkSeen = ({
 			</div>
 
 			<div className="vote-content">
-				<div className="instruction-text">
-					Tap every movie you've seen.
-				</div>
+				<div className="instruction-text">Tap every movie you've seen.</div>
 				<div className="mark-seen-progress">
 					Page {effectivePage + 1} of {totalPages} | Shown {shownStartIndex}-
 					{shownEndIndex} of {movies.length}

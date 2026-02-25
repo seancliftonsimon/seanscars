@@ -34,6 +34,7 @@ export interface Ballot {
 	ipHash?: string;
 	voterName?: string;
 	movies: BallotMovie[];
+	bestPictureRanks?: string[];
 	flagged?: boolean;
 }
 

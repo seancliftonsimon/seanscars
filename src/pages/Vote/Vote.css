@@ -4,6 +4,7 @@
   min-height: 100vh;
   background: var(--color-black);
   color: var(--color-cream);
+  overflow-x: hidden;
 }
 
 .vote-screen {
@@ -13,6 +14,7 @@
   padding: var(--spacing-md);
   max-width: 600px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 .vote-header {
@@ -101,9 +103,8 @@
 /* Movies List */
 .movies-list {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   margin-bottom: var(--spacing-md);
-  -webkit-overflow-scrolling: touch;
 }
 
 /* Movies Grid - 4 columns mobile-first, 2 rows */
@@ -214,14 +215,14 @@
 .movie-item {
   display: flex;
   align-items: center;
-  padding: 1rem;
+  padding: 0.75rem 0.875rem;
   margin-bottom: 0.5rem;
   background: var(--color-charcoal);
   border: 2px solid rgba(212, 175, 55, 0.2);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-height: 60px;
+  min-height: 52px;
 }
 
 .movie-item:hover {
@@ -298,7 +299,8 @@
 /* Ranked Movies */
 .ranked-movies-list {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
+  overflow-x: hidden;
   margin-bottom: var(--spacing-md);
 }
 
@@ -408,8 +410,11 @@
 
 .instruction-text {
   margin-bottom: var(--spacing-md);
-  color: var(--color-cream);
-  font-size: 1rem;
+  color: var(--color-gold);
+  font-size: clamp(1.2rem, 4.4vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.2;
+  font-family: var(--font-heading);
 }
 
 /* Mark Seen List UI */
@@ -430,12 +435,11 @@
 
 .mark-seen-list {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   margin-bottom: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  -webkit-overflow-scrolling: touch;
 }
 
 .mark-seen-item {
@@ -443,7 +447,7 @@
   display: flex;
   align-items: center;
   gap: 0.875rem;
-  padding: 0.875rem;
+  padding: 0.7rem 0.8rem;
   border: 2px solid rgba(212, 175, 55, 0.25);
   border-radius: var(--radius-md);
   background: var(--color-charcoal);
@@ -451,6 +455,21 @@
   text-align: left;
   cursor: pointer;
   transition: all var(--transition-fast);
+}
+
+.favorites-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.favorites-page-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.favorites-page-controls .btn {
+  flex: 1;
 }
 
 .mark-seen-item:hover {
@@ -712,6 +731,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ranked-movie-item.drag-item:active {
@@ -721,6 +744,8 @@
 .sortable-item {
   /* Ensure wrapper doesn't interfere */
   touch-action: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 .drag-handle {

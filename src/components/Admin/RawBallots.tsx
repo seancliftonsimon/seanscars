@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAllBallots, type Ballot } from "../../services/adminApi";
+import { getCanonicalBestPictureRanks } from "../../utils/bestPictureRanks";
 import "./Admin.css";
 
 const RawBallots = () => {
@@ -60,9 +61,10 @@ const RawBallots = () => {
 	};
 
 	const getRankedMovies = (ballot: Ballot) => {
-		return ballot.movies
-			.filter((m) => m.seen && m.rank)
-			.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+		return getCanonicalBestPictureRanks(ballot).map((movieId, index) => ({
+			id: movieId,
+			rank: index + 1,
+		}));
 	};
 
 	if (loading) {

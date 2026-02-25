@@ -1,5 +1,6 @@
 import type { Ballot } from '../services/api';
 import moviesData from '../data/movies.json';
+import { getCanonicalBestPictureRanks } from './bestPictureRanks';
 
 export interface MovieStats {
     id: string;
@@ -61,18 +62,16 @@ export function calculateBordaScores(ballots: Ballot[]): MovieStats[] {
         });
 
         // Calculate Borda points for ranked movies
-        const rankedMovies = ballot.movies
-            .filter((m) => m.seen && m.rank && m.rank >= 1 && m.rank <= 5)
-            .sort((a, b) => (a.rank || 0) - (b.rank || 0));
+        const rankedMovieIds = getCanonicalBestPictureRanks(ballot);
+        rankedMovieIds.forEach((movieId, index) => {
+            const rank = index + 1;
+            if (movieStats[movieId]) {
+                const points = 6 - rank; // #1 = 5, #2 = 4, etc.
+                movieStats[movieId].totalPoints += points;
+                movieStats[movieId].rankings.push(rank);
 
-        rankedMovies.forEach((movie) => {
-            if (movieStats[movie.id] && movie.rank) {
-                const points = 6 - movie.rank; // #1 = 5, #2 = 4, etc.
-                movieStats[movie.id].totalPoints += points;
-                movieStats[movie.id].rankings.push(movie.rank);
-
-                if (movie.rank === 1) {
-                    movieStats[movie.id].numOneVotes++;
+                if (rank === 1) {
+                    movieStats[movieId].numOneVotes++;
                 }
             }
         });

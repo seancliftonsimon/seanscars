@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -22,10 +22,12 @@ import './Vote.css';
 interface RankFavoritesProps {
   movies: Movie[];
   rankedMovies: Map<string, number>;
-  onRankChange: (movieId: string, rank: number | null) => void;
   onUpdateRankings: (newRanked: Map<string, number>) => void;
   onNext: () => void;
   onBack: () => void;
+  error: string | null;
+  requiredCount: number;
+  submitting: boolean;
 }
 
 function SortableItem(props: { id: string; children: React.ReactNode }) {
@@ -39,11 +41,15 @@ function SortableItem(props: { id: string; children: React.ReactNode }) {
   } = useSortable({ id: props.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Transform.toString(
+      transform ? { ...transform, x: 0 } : transform
+    ),
     transition,
     zIndex: isDragging ? 2 : 1,
     position: 'relative' as const,
     opacity: isDragging ? 0.8 : 1,
+    width: '100%',
+    maxWidth: '100%',
   };
 
   return (
@@ -58,10 +64,40 @@ const RankFavorites = ({
   rankedMovies,
   onUpdateRankings,
   onNext,
-  onBack
+  onBack,
+  error,
+  requiredCount,
+  submitting
 }: RankFavoritesProps) => {
-  const [sortedIds, setSortedIds] = useState<string[]>([]);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const sortedIds = useMemo(() => {
+    const movieIds = movies.map((movie) => movie.id);
+
+    const moviesByRank = new Map<number, string>();
+    movieIds.forEach((movieId) => {
+      const rank = rankedMovies.get(movieId);
+
+      if (
+        typeof rank === 'number' &&
+        Number.isInteger(rank) &&
+        rank >= 1 &&
+        rank <= movieIds.length &&
+        !moviesByRank.has(rank)
+      ) {
+        moviesByRank.set(rank, movieId);
+      }
+    });
+
+    const orderedByRank: string[] = [];
+    for (let rank = 1; rank <= movieIds.length; rank += 1) {
+      const movieId = moviesByRank.get(rank);
+      if (movieId) {
+        orderedByRank.push(movieId);
+      }
+    }
+
+    const fallbackIds = movieIds.filter((movieId) => !orderedByRank.includes(movieId));
+    return [...orderedByRank, ...fallbackIds];
+  }, [movies, rankedMovies]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -70,51 +106,17 @@ const RankFavorites = ({
     })
   );
 
-  useEffect(() => {
-    // If we haven't initialized our local sort order, do it now.
-    // Or if the movie list changes significantly (length change), reset.
-    // We try to respect existing ranks in rankedMovies map.
-
-    // Sort movies based on rank. Unranked go to the end.
-    if (!hasInitialized || sortedIds.length !== movies.length) {
-      const sorted = [...movies].sort((a, b) => {
-        const rankA = rankedMovies.get(a.id) ?? Number.MAX_VALUE;
-        const rankB = rankedMovies.get(b.id) ?? Number.MAX_VALUE;
-        return rankA - rankB;
-      });
-
-      const newSortedIds = sorted.map(m => m.id);
-      setSortedIds(newSortedIds);
-
-      // If we are initializing for the first time, and there are NO ranks yet, 
-      // we should probably set the initial ranks 1-5 immediately based on this default order.
-      // But maybe let the user verify first? 
-      // The user "Next" button logic in Vote.tsx checks if all rankedMovies are set.
-      // So we should auto-rank them if they aren't.
-      if (rankedMovies.size === 0 && newSortedIds.length > 0) {
-        const newRankMap = new Map();
-        newSortedIds.forEach((id, index) => {
-          newRankMap.set(id, index + 1);
-        });
-        onUpdateRankings(newRankMap);
-      }
-
-      setHasInitialized(true);
-    }
-  }, [movies, rankedMovies, hasInitialized, onUpdateRankings]);
-
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const oldIndex = sortedIds.indexOf(active.id as string);
       const newIndex = sortedIds.indexOf(over.id as string);
+      if (oldIndex < 0 || newIndex < 0) {
+        return;
+      }
 
       const newIds = arrayMove(sortedIds, oldIndex, newIndex);
-      setSortedIds(newIds);
-
-      // Update parent with new ranks
       const newRankMap = new Map<string, number>();
       newIds.forEach((id, index) => {
         newRankMap.set(id, index + 1);
@@ -123,7 +125,9 @@ const RankFavorites = ({
     }
   };
 
-  const allRanked = sortedIds.length > 0; // Since it's a list, they are always "ranked" by position
+  const hasExactlyRequiredFavorites = movies.length === requiredCount;
+  const allRanked =
+    sortedIds.length === requiredCount && new Set(sortedIds).size === requiredCount;
 
   return (
     <div className="vote-screen rank-favorites-screen">
@@ -137,8 +141,14 @@ const RankFavorites = ({
 
       <div className="vote-content">
         <p className="instruction-text">
-          Drag and drop the movies to rank them from #1 (top) to #{movies.length} (bottom).
+          Drag to rank your top {requiredCount}.
         </p>
+        {!hasExactlyRequiredFavorites && (
+          <div className="error-message">
+            Pick exactly {requiredCount} favorites first, then return here to rank them.
+          </div>
+        )}
+        {error && <div className="error-message">{error}</div>}
 
         <DndContext
           sensors={sensors}
@@ -172,9 +182,9 @@ const RankFavorites = ({
           <button
             onClick={onNext}
             className="btn btn-primary"
-            disabled={!allRanked}
+            disabled={!hasExactlyRequiredFavorites || !allRanked || submitting}
           >
-            Next
+            {submitting ? "Submitting..." : "Submit Vote"}
           </button>
         </div>
       </div>
@@ -183,4 +193,3 @@ const RankFavorites = ({
 };
 
 export default RankFavorites;
-

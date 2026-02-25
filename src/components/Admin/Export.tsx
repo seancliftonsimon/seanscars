@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getAllBallots, getBestPictureResults, getUnderSeenResults, getFunCategories } from '../../services/adminApi';
+import { getCanonicalBestPictureRanks } from '../../utils/bestPictureRanks';
 import './Admin.css';
 
 const Export = () => {
@@ -68,10 +69,8 @@ const Export = () => {
       // Create CSV rows
       const rows = ballots.map(ballot => {
         const seenMovies = ballot.movies.filter(m => m.seen).map(m => m.id).join('; ');
-        const rankedMovies = ballot.movies
-          .filter(m => m.seen && m.rank)
-          .sort((a, b) => (a.rank || 0) - (b.rank || 0))
-          .map(m => `${m.id} (#${m.rank})`)
+        const rankedMovies = getCanonicalBestPictureRanks(ballot)
+          .map((movieId, index) => `${movieId} (#${index + 1})`)
           .join('; ');
         const underSeenRec = ballot.movies.find(m => m.underSeenRec)?.id || '';
         const favoriteScary = ballot.movies.find(m => m.favoriteScary)?.id || '';
@@ -150,4 +149,3 @@ const Export = () => {
 };
 
 export default Export;
-

@@ -44,6 +44,7 @@ export interface Ballot {
 		bestTimeAtMovies?: boolean;
 		title?: string;
 	}>;
+	bestPictureRanks?: string[];
 	flagged?: boolean;
 }
 

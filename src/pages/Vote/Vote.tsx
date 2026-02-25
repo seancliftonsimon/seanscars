@@ -4,7 +4,6 @@ import Welcome from "./Welcome";
 import MarkSeen from "./MarkSeen";
 import ChooseFavorites from "./ChooseFavorites";
 import RankFavorites from "./RankFavorites";
-import ExtraQuestions from "./ExtraQuestions";
 import moviesData from "../../data/movies.json";
 import { getOrCreateClientId } from "../../utils/voting";
 import {
@@ -26,6 +25,7 @@ export interface Movie {
 const VOTER_NAME_STORAGE_KEY = "vote.voterName";
 const SEEN_MOVIES_STORAGE_KEY = "vote.seenMovies";
 const MARK_SEEN_ORDER_STORAGE_KEY = "vote.markSeenOrder";
+const REQUIRED_FAVORITES_COUNT = 5;
 const MASTER_MOVIE_IDS = moviesData.map((movie) => movie.id);
 const MASTER_MOVIE_ID_SET = new Set(MASTER_MOVIE_IDS);
 
@@ -105,6 +105,95 @@ const clearVoteSessionData = () => {
 	sessionStorage.removeItem(MARK_SEEN_ORDER_STORAGE_KEY);
 };
 
+const getFavoriteSeenMovieIds = (
+	favoriteMovies: Set<string>,
+	seenMovies: Set<string>,
+	movies: Movie[]
+) =>
+	movies
+		.filter((movie) => favoriteMovies.has(movie.id) && seenMovies.has(movie.id))
+		.map((movie) => movie.id);
+
+const getBestPictureRanks = (
+	favoriteSeenMovieIds: string[],
+	rankedMovies: Map<string, number>
+): string[] | null => {
+	if (favoriteSeenMovieIds.length !== REQUIRED_FAVORITES_COUNT) {
+		return null;
+	}
+
+	const favoriteSet = new Set(favoriteSeenMovieIds);
+	const rankedEntries: Array<{ movieId: string; rank: number }> = [];
+	const usedRanks = new Set<number>();
+
+	for (const [movieId, rank] of rankedMovies.entries()) {
+		if (!favoriteSet.has(movieId)) {
+			continue;
+		}
+
+		if (!Number.isInteger(rank) || rank < 1 || rank > REQUIRED_FAVORITES_COUNT) {
+			return null;
+		}
+
+		if (usedRanks.has(rank)) {
+			return null;
+		}
+
+		usedRanks.add(rank);
+		rankedEntries.push({ movieId, rank });
+	}
+
+	if (rankedEntries.length !== REQUIRED_FAVORITES_COUNT) {
+		return null;
+	}
+
+	const orderedIds = rankedEntries
+		.sort((a, b) => a.rank - b.rank)
+		.map((entry) => entry.movieId);
+
+	if (new Set(orderedIds).size !== REQUIRED_FAVORITES_COUNT) {
+		return null;
+	}
+
+	return orderedIds;
+};
+
+const buildNormalizedRankMap = (
+	movieIds: string[],
+	existingRankedMovies: Map<string, number>
+): Map<string, number> => {
+	const moviesByRank = new Map<number, string>();
+
+	movieIds.forEach((movieId) => {
+		const rank = existingRankedMovies.get(movieId);
+		if (
+			typeof rank === "number" &&
+			Number.isInteger(rank) &&
+			rank >= 1 &&
+			rank <= movieIds.length &&
+			!moviesByRank.has(rank)
+		) {
+			moviesByRank.set(rank, movieId);
+		}
+	});
+
+	const orderedByRank: string[] = [];
+	for (let rank = 1; rank <= movieIds.length; rank += 1) {
+		const movieId = moviesByRank.get(rank);
+		if (movieId) {
+			orderedByRank.push(movieId);
+		}
+	}
+
+	const fallbackIds = movieIds.filter((movieId) => !orderedByRank.includes(movieId));
+	const normalizedMap = new Map<string, number>();
+	[...orderedByRank, ...fallbackIds].forEach((movieId, index) => {
+		normalizedMap.set(movieId, index + 1);
+	});
+
+	return normalizedMap;
+};
+
 const Vote = () => {
 	const navigate = useNavigate();
 	const [screen, setScreen] = useState(0);
@@ -128,14 +217,10 @@ const Vote = () => {
 	const [rankedMovies, setRankedMovies] = useState<Map<string, number>>(
 		new Map()
 	);
-	const [extraQuestions, setExtraQuestions] = useState<{
-		underSeenRec?: string;
-		favoriteScary?: string;
-		funniest?: string;
-		bestTimeAtMovies?: string;
-	}>({});
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [favoritesError, setFavoritesError] = useState<string | null>(null);
+	const [rankingError, setRankingError] = useState<string | null>(null);
 
 	useEffect(() => {
 		// Initialize client ID on mount
@@ -225,6 +310,20 @@ const Vote = () => {
 		return orderedMovies.length === movies.length ? orderedMovies : movies;
 	}, [markSeenMovieOrder, movies]);
 
+	const seenMovieOptionsForFavorites = useMemo(
+		() => sessionOrderedMovies.filter((movie) => seenMovies.has(movie.id)),
+		[sessionOrderedMovies, seenMovies]
+	);
+	const bestPictureRanksForSubmit = useMemo(() => {
+		const favoriteSeenMovieIds = getFavoriteSeenMovieIds(
+			favoriteMovies,
+			seenMovies,
+			sessionOrderedMovies
+		);
+
+		return getBestPictureRanks(favoriteSeenMovieIds, rankedMovies);
+	}, [favoriteMovies, seenMovies, sessionOrderedMovies, rankedMovies]);
+
 	const handleMarkSeen = (movieId: string) => {
 		const newSeen = new Set(seenMovies);
 		if (newSeen.has(movieId)) {
@@ -244,6 +343,7 @@ const Vote = () => {
 	};
 
 	const handleToggleFavorite = (movieId: string) => {
+		setFavoritesError(null);
 		const newFavorites = new Set(favoriteMovies);
 		if (newFavorites.has(movieId)) {
 			newFavorites.delete(movieId);
@@ -252,54 +352,41 @@ const Vote = () => {
 			newRanked.delete(movieId);
 			setRankedMovies(newRanked);
 		} else {
-			if (newFavorites.size < 5) {
+			if (newFavorites.size < REQUIRED_FAVORITES_COUNT) {
 				newFavorites.add(movieId);
 			}
 		}
 		setFavoriteMovies(newFavorites);
 	};
 
-	const handleRankChange = (movieId: string, rank: number | null) => {
-		const newRanked = new Map(rankedMovies);
-
-		// Remove any existing rank for this movie
-		newRanked.delete(movieId);
-
-		// Remove the rank from any other movie that had it
-		if (rank !== null) {
-			for (const [id, currentRank] of newRanked.entries()) {
-				if (currentRank === rank) {
-					newRanked.delete(id);
-					break;
-				}
-			}
-			newRanked.set(movieId, rank);
-		}
-
-		setRankedMovies(newRanked);
-	};
-
 	const handleUpdateRankings = (newRanked: Map<string, number>) => {
+		setRankingError(null);
+		setError(null);
 		setRankedMovies(newRanked);
 	};
 
 	const handleSubmit = async () => {
+		if (!bestPictureRanksForSubmit) {
+			setRankingError("Rank your 5 favorites (#1-#5) before submitting.");
+			return;
+		}
+
 		setSubmitting(true);
+		setRankingError(null);
 		setError(null);
 
 		try {
 			const clientId = getOrCreateClientId();
 			const ipHash = hashIP();
+			const rankByMovieId = new Map(
+				bestPictureRanksForSubmit.map((movieId, index) => [movieId, index + 1])
+			);
 
 			// Build ballot movies array
 			const ballotMovies: BallotMovie[] = movies.map((movie) => ({
 				id: movie.id,
 				seen: seenMovies.has(movie.id),
-				rank: rankedMovies.get(movie.id) || null,
-				underSeenRec: extraQuestions.underSeenRec === movie.id,
-				favoriteScary: extraQuestions.favoriteScary === movie.id,
-				funniest: extraQuestions.funniest === movie.id,
-				bestTimeAtMovies: extraQuestions.bestTimeAtMovies === movie.id,
+				rank: rankByMovieId.get(movie.id) || null,
 			}));
 
 			const ballot: Ballot = {
@@ -309,6 +396,7 @@ const Vote = () => {
 				ipHash,
 				voterName: voterName.trim(),
 				movies: ballotMovies,
+				bestPictureRanks: bestPictureRanksForSubmit,
 				flagged: false,
 			};
 
@@ -321,7 +409,7 @@ const Vote = () => {
 			}
 
 			clearVoteSessionData();
-			setScreen(5); // Success screen
+			setScreen(4); // Success screen
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to submit ballot");
 		} finally {
@@ -339,9 +427,28 @@ const Vote = () => {
 				setScreen(2);
 			}
 		} else if (screen === 2) {
-			if (favoriteMovies.size > 0 && favoriteMovies.size <= 5) {
-				setScreen(3);
+			if (seenMovieOptionsForFavorites.length < REQUIRED_FAVORITES_COUNT) {
+				setFavoritesError(
+					`You need at least ${REQUIRED_FAVORITES_COUNT} seen movies before choosing favorites.`
+				);
+				return;
 			}
+
+			if (favoriteMovies.size === REQUIRED_FAVORITES_COUNT) {
+				const favoriteSeenMovieIds = getFavoriteSeenMovieIds(
+					favoriteMovies,
+					seenMovies,
+					sessionOrderedMovies
+				);
+				setRankedMovies(buildNormalizedRankMap(favoriteSeenMovieIds, rankedMovies));
+				setFavoritesError(null);
+				setScreen(3);
+				return;
+			}
+
+			setFavoritesError(`Pick exactly ${REQUIRED_FAVORITES_COUNT} favorites to continue.`);
+		} else if (screen === 3) {
+			void handleSubmit();
 		}
 	};
 
@@ -372,11 +479,13 @@ const Vote = () => {
 			)}
 			{screen === 2 && (
 				<ChooseFavorites
-					movies={sessionOrderedMovies.filter((movie) => seenMovies.has(movie.id))}
+					movies={seenMovieOptionsForFavorites}
 					favoriteMovies={favoriteMovies}
 					onToggleFavorite={handleToggleFavorite}
 					onNext={handleNext}
 					onBack={handleBack}
+					error={favoritesError}
+					requiredCount={REQUIRED_FAVORITES_COUNT}
 				/>
 			)}
 			{screen === 3 && (
@@ -385,26 +494,15 @@ const Vote = () => {
 						favoriteMovies.has(movie.id)
 					)}
 					rankedMovies={rankedMovies}
-					onRankChange={handleRankChange}
 					onUpdateRankings={handleUpdateRankings}
-					onNext={() => setScreen(4)}
+					onNext={handleNext}
 					onBack={handleBack}
+					error={rankingError ?? error}
+					requiredCount={REQUIRED_FAVORITES_COUNT}
+					submitting={submitting}
 				/>
 			)}
 			{screen === 4 && (
-				<ExtraQuestions
-					movies={sessionOrderedMovies.filter((movie) => seenMovies.has(movie.id))}
-					extraQuestions={extraQuestions}
-					onExtraQuestionChange={(question, movieId) => {
-						setExtraQuestions((prev) => ({ ...prev, [question]: movieId }));
-					}}
-					onSubmit={handleSubmit}
-					onBack={handleBack}
-					submitting={submitting}
-					error={error}
-				/>
-			)}
-			{screen === 5 && (
 				<div className="vote-success">
 					<h1>Thank You!</h1>
 					<p>Your vote has been submitted successfully.</p>
