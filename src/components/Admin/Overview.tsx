@@ -53,19 +53,19 @@ const Overview = () => {
       <h2>Overview</h2>
       <div className="overview-grid">
         <div className="stat-card">
-          <div className="stat-label">Total Ballots</div>
-          <div className="stat-value">{overview.totalBallots}</div>
+          <div className="stat-label">Included Ballots</div>
+          <div className="stat-value">{overview.includedBallots}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Unique Voters</div>
+          <div className="stat-label">Excluded Ballots</div>
+          <div className="stat-value">{overview.excludedBallots}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Unique Voters (Included)</div>
           <div className="stat-value">{overview.uniqueClientIds}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Possible Duplicates</div>
-          <div className="stat-value">{overview.possibleDuplicates}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Most Recent Submission</div>
+          <div className="stat-label">Most Recent Included Submission</div>
           <div className="stat-value-small">{formatDate(overview.mostRecentSubmission)}</div>
         </div>
       </div>
@@ -77,4 +77,3 @@ const Overview = () => {
 };
 
 export default Overview;
-

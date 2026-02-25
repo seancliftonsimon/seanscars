@@ -7,13 +7,17 @@ import History from './pages/History';
 import HallOfFame from './pages/HallOfFame';
 import Media from './pages/Media';
 import Vote from './pages/Vote/Vote';
-import AdminLogin from './pages/Admin/Login';
 import AdminDashboard from './pages/Admin/Dashboard';
 import './index.css';
 
+const DEFAULT_ADMIN_SLUG = 'results-HOST2026';
+const configuredAdminSlug = import.meta.env.VITE_ADMIN_SLUG?.trim();
+const adminSlug = configuredAdminSlug || DEFAULT_ADMIN_SLUG;
+const adminRoutePath = `/${adminSlug.replace(/^\/+/, '')}`;
+
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = (location.pathname === '/vote' || location.pathname === '/voting') || location.pathname.startsWith('/admin');
+  const hideNavbar = (location.pathname === '/vote' || location.pathname === '/voting') || location.pathname === adminRoutePath;
 
   return (
     <div className="app">
@@ -28,8 +32,7 @@ function AppContent() {
           <Route path="/media" element={<Media />} />
           <Route path="/vote" element={<Vote />} />
           <Route path="/voting" element={<Vote />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path={adminRoutePath} element={<AdminDashboard />} />
         </Routes>
       </main>
     </div>

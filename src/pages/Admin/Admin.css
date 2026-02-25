@@ -405,6 +405,17 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.ballots-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .checkbox-label {
@@ -416,101 +427,33 @@
 }
 
 .ballots-info {
-  margin-bottom: var(--spacing-md);
-  color: var(--color-gray);
-  font-size: 0.875rem;
-}
-
-.ballots-list {
-  margin-bottom: var(--spacing-md);
-}
-
-.ballot-item {
-  background: var(--color-black);
-  border: 2px solid rgba(212, 175, 55, 0.2);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-sm);
-  overflow: hidden;
-}
-
-.ballot-item.flagged {
-  border-color: var(--color-red-velvet);
-}
-
-.ballot-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-md);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.ballot-header:hover {
-  background: rgba(212, 175, 55, 0.05);
-}
-
-.ballot-info {
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: var(--spacing-md);
-  flex: 1;
-}
-
-.ballot-id {
-  font-family: monospace;
-  color: var(--color-gold);
-  font-weight: 600;
-}
-
-.ballot-date {
+  margin-bottom: var(--spacing-md);
   color: var(--color-gray);
   font-size: 0.875rem;
 }
 
-.flag-badge {
-  background: var(--color-red-velvet);
-  color: var(--color-white);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
+.raw-ballots-table th,
+.raw-ballots-table td {
+  vertical-align: middle;
 }
 
-.ballot-summary {
-  color: var(--color-cream);
-  font-size: 0.875rem;
-  margin-right: var(--spacing-md);
+.raw-ballots-table .flagged-row {
+  background: rgba(139, 0, 0, 0.18);
 }
 
-.expand-icon {
-  color: var(--color-gold);
-  font-weight: bold;
+.flag-toggle-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
-.ballot-details {
-  padding: var(--spacing-md);
-  background: var(--color-charcoal);
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.detail-row {
-  margin-bottom: var(--spacing-sm);
-  color: var(--color-cream);
-}
-
-.detail-row strong {
-  color: var(--color-gold);
-  margin-right: var(--spacing-xs);
-}
-
-.rankings-list {
-  margin-top: var(--spacing-xs);
-  margin-left: var(--spacing-md);
-}
-
-.rankings-list li {
-  margin-bottom: 0.25rem;
+.flag-save-status {
+  color: var(--color-gray);
+  font-size: 0.8rem;
 }
 
 /* Pagination */
@@ -810,13 +753,15 @@
     padding: var(--spacing-xs) var(--spacing-sm);
   }
 
-  .ballot-header {
+  .ballots-header,
+  .ballots-actions {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-sm);
-    text-align: center;
-    color: var(--color-gray);
-    padding: var(--spacing-md);
+  }
+
+  .ballots-info {
+    flex-direction: column;
+    gap: var(--spacing-xs);
   }
 
   .category-all-results {
@@ -1005,12 +950,6 @@
       padding: var(--spacing-xs) var(--spacing-sm);
     }
 
-    .ballot-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--spacing-sm);
-    }
-
     .fun-categories-grid {
       grid-template-columns: 1fr;
     }
@@ -1031,3 +970,4 @@
       flex-direction: column;
     }
   }
+}

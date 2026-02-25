@@ -1,5 +1,12 @@
 import { db } from "./firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import {
+	collection,
+	doc,
+	getDocs,
+	orderBy,
+	query,
+	updateDoc,
+} from "firebase/firestore";
 import {
 	calculateBordaScores,
 	calculateWeightedScores,
@@ -49,23 +56,31 @@ export interface Ballot {
 }
 
 export interface Overview {
-	totalBallots: number;
+	includedBallots: number;
+	excludedBallots: number;
 	uniqueClientIds: number;
-	possibleDuplicates: number;
 	mostRecentSubmission: string | null;
 }
 
-// Client-side "password" check
-const ADMIN_PASSWORD = "HOST";
+export function isIncludedInAnalysis(ballot: Pick<Ballot, "flagged">): boolean {
+	return ballot.flagged !== true;
+}
 
-export async function adminLogin(password: string): Promise<string | null> {
-	// Simulating authentication by just checking the hardcoded password
-	console.log("Attempting login with:", password);
-	if (password.trim().toUpperCase() === ADMIN_PASSWORD) {
-		// Return a dummy token since we don't have a backend to issue JWTs
-		return "client-side-admin-token";
+export async function updateBallotFlagged(
+	ballotId: string,
+	flagged: boolean
+): Promise<void> {
+	try {
+		await updateDoc(doc(db, "ballots", ballotId), { flagged });
+	} catch (error) {
+		console.error("Error updating ballot flag:", error);
+		throw error;
 	}
-	return null;
+}
+
+async function getIncludedBallots(): Promise<Ballot[]> {
+	const ballots = await getAllBallots();
+	return ballots.filter(isIncludedInAnalysis);
 }
 
 export async function getAllBallots(): Promise<Ballot[]> {
@@ -88,7 +103,7 @@ export async function getAllBallots(): Promise<Ballot[]> {
 
 export async function getBestPictureResults(): Promise<BestPictureResult[]> {
 	try {
-		const ballots = await getAllBallots();
+		const ballots = await getIncludedBallots();
 		return calculateBordaScores(ballots);
 	} catch (error) {
 		console.error("Error calculating best picture results:", error);
@@ -98,7 +113,7 @@ export async function getBestPictureResults(): Promise<BestPictureResult[]> {
 
 export async function getWeightedResults(): Promise<WeightedMovieStats[]> {
 	try {
-		const ballots = await getAllBallots();
+		const ballots = await getIncludedBallots();
 		return calculateWeightedScores(ballots);
 	} catch (error) {
 		console.error("Error calculating weighted results:", error);
@@ -109,18 +124,17 @@ export async function getWeightedResults(): Promise<WeightedMovieStats[]> {
 export async function getOverview(): Promise<Overview> {
 	try {
 		const ballots = await getAllBallots();
+		const includedBallots = ballots.filter(isIncludedInAnalysis);
+		const excludedBallots = ballots.length - includedBallots.length;
 
-		const uniqueClientIds = new Set(ballots.map((b) => b.clientId));
-		// Simple logic for flagged: if ipHash matches another ballot from different client ID?
-		// Or just rely on what's in the DB if we had server-side logic before.
-		// For now, let's just count explicitly flagged ones if existing, or simple check.
-		const flaggedCount = ballots.filter((b) => b.flagged).length;
-		const mostRecent = ballots.length > 0 ? ballots[0].timestamp : null;
+		const uniqueClientIds = new Set(includedBallots.map((b) => b.clientId));
+		const mostRecent =
+			includedBallots.length > 0 ? includedBallots[0].timestamp : null;
 
 		return {
-			totalBallots: ballots.length,
+			includedBallots: includedBallots.length,
+			excludedBallots,
 			uniqueClientIds: uniqueClientIds.size,
-			possibleDuplicates: flaggedCount,
 			mostRecentSubmission: mostRecent,
 		};
 	} catch (error) {
@@ -131,7 +145,7 @@ export async function getOverview(): Promise<Overview> {
 
 export async function getUnderSeenResults(): Promise<UnderSeenResult[]> {
 	try {
-		const ballots = await getAllBallots();
+		const ballots = await getIncludedBallots();
 		return calculateUnderSeenAwards(ballots);
 	} catch (error) {
 		console.error("Error calculating under-seen results:", error);
@@ -141,7 +155,7 @@ export async function getUnderSeenResults(): Promise<UnderSeenResult[]> {
 
 export async function getFunCategories(): Promise<FunCategories> {
 	try {
-		const ballots = await getAllBallots();
+		const ballots = await getIncludedBallots();
 		return calculateFunCategories(ballots);
 	} catch (error) {
 		console.error("Error calculating fun categories:", error);
@@ -151,7 +165,7 @@ export async function getFunCategories(): Promise<FunCategories> {
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 	try {
-		const ballots = await getAllBallots();
+		const ballots = await getIncludedBallots();
 
 		const leaderboard: LeaderboardEntry[] = ballots.map((ballot) => {
 			const moviesSeen = ballot.movies.filter((m) => m.seen).length;
