@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, deleteDoc, getDocs } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import {
 	getAllBallots,
 	type Ballot as AdminBallot,
+	updateBallotFlagged,
 } from "../../services/adminApi";
 import { BALLOT_SCHEMA_VERSION, type Ballot } from "../../services/api";
 import { db } from "../../services/firebase";
@@ -45,6 +46,11 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 	const [numGeneratedBallots, setNumGeneratedBallots] = useState(50);
 	const [isGeneratingBallots, setIsGeneratingBallots] = useState(false);
 	const [isClearingBallots, setIsClearingBallots] = useState(false);
+	const [selectedBallotIds, setSelectedBallotIds] = useState<Set<string>>(
+		new Set()
+	);
+	const [isBulkExcluding, setIsBulkExcluding] = useState(false);
+	const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 	const itemsPerPage = 20;
 
 	const fetchData = async () => {
@@ -171,6 +177,102 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		}
 	};
 
+	const handleSelectAllBallots = () => {
+		setSelectedBallotIds(new Set(ballots.map((ballot) => ballot.id)));
+	};
+
+	const handleDeselectAllBallots = () => {
+		setSelectedBallotIds(new Set());
+	};
+
+	const handleToggleBallotSelection = (ballotId: string) => {
+		setSelectedBallotIds((previousSelection) => {
+			const nextSelection = new Set(previousSelection);
+
+			if (nextSelection.has(ballotId)) {
+				nextSelection.delete(ballotId);
+			} else {
+				nextSelection.add(ballotId);
+			}
+
+			return nextSelection;
+		});
+	};
+
+	const handleBulkExcludeSelected = async () => {
+		const selectedIds = Array.from(selectedBallotIds);
+		if (selectedIds.length === 0) {
+			return;
+		}
+
+		setActionError(null);
+		setActionSuccess(null);
+		setIsBulkExcluding(true);
+
+		try {
+			await Promise.all(
+				selectedIds.map((ballotId) => updateBallotFlagged(ballotId, true))
+			);
+
+			setActionSuccess(
+				`Excluded ${selectedIds.length} ballot${
+					selectedIds.length === 1 ? "" : "s"
+				}.`
+			);
+			setSelectedBallotIds(new Set());
+			window.dispatchEvent(new Event("refresh-data"));
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to exclude selected ballots"
+			);
+		} finally {
+			setIsBulkExcluding(false);
+		}
+	};
+
+	const handleBulkDeleteSelected = async () => {
+		const selectedIds = Array.from(selectedBallotIds);
+		if (selectedIds.length === 0) {
+			return;
+		}
+
+		const confirmation = window.confirm(
+			`Delete ${selectedIds.length} selected ballot${
+				selectedIds.length === 1 ? "" : "s"
+			}? This cannot be undone.`
+		);
+
+		if (!confirmation) {
+			return;
+		}
+
+		setActionError(null);
+		setActionSuccess(null);
+		setIsBulkDeleting(true);
+
+		try {
+			await Promise.all(
+				selectedIds.map((ballotId) =>
+					deleteDoc(doc(db, "ballots", ballotId))
+				)
+			);
+
+			setActionSuccess(
+				`Deleted ${selectedIds.length} ballot${
+					selectedIds.length === 1 ? "" : "s"
+				}.`
+			);
+			setSelectedBallotIds(new Set());
+			window.dispatchEvent(new Event("refresh-data"));
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to delete selected ballots"
+			);
+		} finally {
+			setIsBulkDeleting(false);
+		}
+	};
+
 	useEffect(() => {
 		fetchData();
 
@@ -182,6 +284,25 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		return () => window.removeEventListener("refresh-data", handleRefresh);
 	}, []);
 
+	useEffect(() => {
+		setSelectedBallotIds((previousSelection) => {
+			if (previousSelection.size === 0) {
+				return previousSelection;
+			}
+
+			const validBallotIds = new Set(ballots.map((ballot) => ballot.id));
+			const nextSelection = new Set(
+				Array.from(previousSelection).filter((ballotId) =>
+					validBallotIds.has(ballotId)
+				)
+			);
+
+			return nextSelection.size === previousSelection.size
+				? previousSelection
+				: nextSelection;
+		});
+	}, [ballots]);
+
 	const filteredBallots = ballots;
 	const totalPages = Math.max(1, Math.ceil(filteredBallots.length / itemsPerPage));
 	const startIndex = (currentPage - 1) * itemsPerPage;
@@ -190,6 +311,12 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		startIndex + itemsPerPage
 	);
 	const includedCount = ballots.filter((ballot) => ballot.flagged !== true).length;
+	const selectedCount = selectedBallotIds.size;
+	const allBallotsSelected =
+		ballots.length > 0 &&
+		ballots.every((ballot) => selectedBallotIds.has(ballot.id));
+	const hasSelectedBallots = selectedCount > 0;
+	const isBulkActionRunning = isBulkExcluding || isBulkDeleting;
 	const titlesByMovieId = new Map(moviesData.map((movie) => [movie.id, movie.title]));
 
 	useEffect(() => {
@@ -225,9 +352,37 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 						Refresh
 					</button>
 					<button
+						onClick={handleSelectAllBallots}
+						className="btn btn-secondary"
+						disabled={ballots.length === 0 || allBallotsSelected || isBulkActionRunning}
+					>
+						Select all
+					</button>
+					<button
+						onClick={handleDeselectAllBallots}
+						className="btn btn-secondary"
+						disabled={!hasSelectedBallots || isBulkActionRunning}
+					>
+						Deselect all
+					</button>
+					<button
+						onClick={handleBulkExcludeSelected}
+						className="btn btn-warning"
+						disabled={!hasSelectedBallots || isBulkActionRunning}
+					>
+						{isBulkExcluding ? "Excluding..." : "Exclude selected"}
+					</button>
+					<button
+						onClick={handleBulkDeleteSelected}
+						className="btn btn-danger"
+						disabled={!hasSelectedBallots || isBulkActionRunning}
+					>
+						{isBulkDeleting ? "Deleting..." : "Delete selected"}
+					</button>
+					<button
 						onClick={handleClearAllBallots}
 						className="btn btn-danger"
-						disabled={isClearingBallots}
+						disabled={isClearingBallots || isBulkActionRunning}
 					>
 						{isClearingBallots ? "Clearing..." : "Clear All Voter Data"}
 					</button>
@@ -264,6 +419,9 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 				<span>
 					Showing {paginatedBallots.length} of {filteredBallots.length} ballots
 				</span>
+				<span>
+					<strong>{selectedCount}</strong> selected
+				</span>
 			</div>
 
 			{actionError && <div className="error-message">{actionError}</div>}
@@ -273,6 +431,7 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 				<table className="results-table raw-ballots-table">
 					<thead>
 						<tr>
+							<th>Select</th>
 							<th>Name</th>
 							<th>1st</th>
 							<th>2nd</th>
@@ -285,7 +444,7 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 					<tbody>
 						{paginatedBallots.length === 0 && (
 							<tr>
-								<td colSpan={7}>No ballots found.</td>
+								<td colSpan={8}>No ballots found.</td>
 							</tr>
 						)}
 						{paginatedBallots.map((ballot) => {
@@ -302,9 +461,26 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 							});
 
 							return (
-								<tr key={ballot.id}>
+								<tr
+									key={ballot.id}
+									className={ballot.flagged ? "flagged-row" : undefined}
+								>
+									<td>
+										<input
+											type="checkbox"
+											checked={selectedBallotIds.has(ballot.id)}
+											onChange={() => handleToggleBallotSelection(ballot.id)}
+											aria-label={`Select ballot for ${
+												ballot.voterName || obfuscateClientId(ballot.clientId)
+											}`}
+											disabled={isBulkActionRunning}
+										/>
+									</td>
 									<td className="movie-title-cell">
 										{ballot.voterName || obfuscateClientId(ballot.clientId)}
+										{ballot.flagged && (
+											<span className="ballot-excluded-label">Excluded</span>
+										)}
 									</td>
 									<td>{rankedTitles[0]}</td>
 									<td>{rankedTitles[1]}</td>

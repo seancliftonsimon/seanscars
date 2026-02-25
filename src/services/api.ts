@@ -7,6 +7,7 @@ import {
 	increment,
 	orderBy,
 	query,
+	updateDoc,
 	writeBatch,
 } from "firebase/firestore";
 
@@ -22,15 +23,28 @@ export interface BallotMovie {
 	title?: string; // Optional, for reference
 }
 
+export interface BallotRecommendations {
+	toParents: string | null;
+	toKid: string | null;
+	underseenGem: string | null;
+	toFreakiestFriend: string | null;
+	leastFavorite: string | null;
+}
+
+export type BallotRecommendationKey = keyof BallotRecommendations;
+
 export interface Ballot {
 	schemaVersion?: number;
 	clientId: string;
 	timestamp: string;
+	topFiveSubmittedAt?: string;
 	ipHash?: string;
 	voterName?: string;
 	movies: BallotMovie[];
 	bestPictureRanks?: string[];
 	flagged?: boolean;
+	recommendations?: BallotRecommendations;
+	recommendationsCompletedAt?: string | null;
 }
 
 export const BALLOT_SCHEMA_VERSION = 1;
@@ -105,6 +119,33 @@ export async function incrementSeenCounts(movieIds: string[]): Promise<void> {
 	});
 
 	await batch.commit();
+}
+
+export async function updateBallotRecommendation(
+	ballotId: string,
+	key: BallotRecommendationKey,
+	value: string | null,
+	options?: {
+		recommendationsCompletedAt?: string | null;
+	}
+): Promise<void> {
+	const ballotRef = doc(db, "ballots", ballotId);
+	const payload: Record<string, unknown> = {
+		[`recommendations.${key}`]: value,
+	};
+
+	if (options && "recommendationsCompletedAt" in options) {
+		payload.recommendationsCompletedAt = options.recommendationsCompletedAt ?? null;
+	}
+
+	await updateDoc(ballotRef, payload);
+}
+
+export async function setBallotRecommendationsCompletedAt(
+	ballotId: string,
+	recommendationsCompletedAt: string | null
+): Promise<void> {
+	await updateDoc(doc(db, "ballots", ballotId), { recommendationsCompletedAt });
 }
 
 // Simple IP hash (client-side, best effort)

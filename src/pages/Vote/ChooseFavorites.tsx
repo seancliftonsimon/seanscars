@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import type { Movie } from "./Vote";
 import './Vote.css';
 
@@ -21,24 +20,7 @@ const ChooseFavorites = ({
   error,
   requiredCount
 }: ChooseFavoritesProps) => {
-  const moviesPerPage = 5;
-  const [currentPage, setCurrentPage] = useState(0);
   const hasEnoughSeenMovies = movies.length >= requiredCount;
-  const totalPages = Math.max(1, Math.ceil(movies.length / moviesPerPage));
-  const effectivePage = Math.min(currentPage, totalPages - 1);
-  const hasPreviousPage = effectivePage > 0;
-  const hasMorePages = effectivePage < totalPages - 1;
-
-  const paginatedMovies = useMemo(() => {
-    const start = effectivePage * moviesPerPage;
-    return movies.slice(start, start + moviesPerPage);
-  }, [effectivePage, movies]);
-
-  const shownStartIndex = movies.length === 0 ? 0 : effectivePage * moviesPerPage + 1;
-  const shownEndIndex =
-    movies.length === 0
-      ? 0
-      : Math.min(shownStartIndex + paginatedMovies.length - 1, movies.length);
 
   const handleMovieClick = (movieId: string) => {
     if (!hasEnoughSeenMovies) {
@@ -62,9 +44,6 @@ const ChooseFavorites = ({
         <p className="instruction-text">
           Pick exactly {requiredCount} favorites.
         </p>
-        <div className="mark-seen-progress">
-          Page {effectivePage + 1} of {totalPages} | Shown {shownStartIndex}-{shownEndIndex} of {movies.length}
-        </div>
 
         {!hasEnoughSeenMovies && (
           <div className="error-message">
@@ -79,7 +58,7 @@ const ChooseFavorites = ({
         {error && <div className="error-message">{error}</div>}
 
         <div className="movies-list">
-          {paginatedMovies.map(movie => {
+          {movies.map(movie => {
             const isFavorite = favoriteMovies.has(movie.id);
             
             return (
@@ -103,24 +82,6 @@ const ChooseFavorites = ({
         </div>
 
         <div className="vote-footer favorites-footer">
-          <div className="favorites-page-controls">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setCurrentPage(Math.max(0, effectivePage - 1))}
-              disabled={!hasPreviousPage}
-            >
-              Prev Page
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setCurrentPage(Math.min(totalPages - 1, effectivePage + 1))}
-              disabled={!hasMorePages}
-            >
-              Next Page
-            </button>
-          </div>
           <button
             onClick={onNext}
             className="btn btn-primary"

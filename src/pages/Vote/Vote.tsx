@@ -1,18 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Welcome from "./Welcome";
 import MarkSeen from "./MarkSeen";
 import ChooseFavorites from "./ChooseFavorites";
 import RankFavorites from "./RankFavorites";
+import OptionalRecommendations from "./OptionalRecommendations";
 import StepMessage from "./StepMessage";
 import moviesData from "../../data/movies.json";
 import { getOrCreateClientId } from "../../utils/voting";
 import {
 	BALLOT_SCHEMA_VERSION,
+	type BallotRecommendationKey,
+	type BallotRecommendations,
 	getPopularityOrderedMovieIds,
 	hashIP,
 	incrementSeenCounts,
+	setBallotRecommendationsCompletedAt,
 	submitBallot,
+	updateBallotRecommendation,
 	type Ballot,
 	type BallotMovie,
 } from "../../services/api";
@@ -26,9 +31,21 @@ export interface Movie {
 const VOTER_NAME_STORAGE_KEY = "vote.voterName";
 const SEEN_MOVIES_STORAGE_KEY = "vote.seenMovies";
 const MARK_SEEN_ORDER_STORAGE_KEY = "vote.markSeenOrder";
+const FAVORITES_ORDER_STORAGE_KEY = "vote.favoritesOrder";
+const SEEN_COUNT_COMMIT_STATE_STORAGE_KEY = "vote.seenCountCommitState";
 const REQUIRED_FAVORITES_COUNT = 5;
 const MASTER_MOVIE_IDS = moviesData.map((movie) => movie.id);
 const MASTER_MOVIE_ID_SET = new Set(MASTER_MOVIE_IDS);
+
+interface SeenCountCommitState {
+	committedMovieIds: string[];
+	committedAt: string | null;
+}
+
+interface OptionalRecommendationQuestion {
+	key: BallotRecommendationKey;
+	prompt: string;
+}
 
 const parseStoredStringArray = (storedValue: string | null): string[] | null => {
 	if (!storedValue) {
@@ -50,6 +67,71 @@ const parseStoredStringArray = (storedValue: string | null): string[] | null => 
 		console.warn("Failed to parse vote session data:", error);
 		return null;
 	}
+};
+
+const getStoredSeenCountCommitState = (): SeenCountCommitState => {
+	if (typeof window === "undefined") {
+		return {
+			committedMovieIds: [],
+			committedAt: null,
+		};
+	}
+
+	const storedState = sessionStorage.getItem(SEEN_COUNT_COMMIT_STATE_STORAGE_KEY);
+	if (!storedState) {
+		return {
+			committedMovieIds: [],
+			committedAt: null,
+		};
+	}
+
+	try {
+		const parsedState = JSON.parse(storedState);
+		if (typeof parsedState !== "object" || parsedState === null) {
+			return {
+				committedMovieIds: [],
+				committedAt: null,
+			};
+		}
+
+		const rawMovieIds =
+			"committedMovieIds" in parsedState
+				? (parsedState as { committedMovieIds?: unknown }).committedMovieIds
+				: [];
+		const committedMovieIds = Array.isArray(rawMovieIds)
+			? rawMovieIds.filter(
+					(movieId): movieId is string =>
+						typeof movieId === "string" && MASTER_MOVIE_ID_SET.has(movieId)
+				)
+			: [];
+		const rawCommittedAt =
+			"committedAt" in parsedState
+				? (parsedState as { committedAt?: unknown }).committedAt
+				: null;
+		const committedAt = typeof rawCommittedAt === "string" ? rawCommittedAt : null;
+
+		return {
+			committedMovieIds: [...new Set(committedMovieIds)],
+			committedAt,
+		};
+	} catch (error) {
+		console.warn("Failed to parse seen count commit state:", error);
+		return {
+			committedMovieIds: [],
+			committedAt: null,
+		};
+	}
+};
+
+const storeSeenCountCommitState = (state: SeenCountCommitState) => {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	sessionStorage.setItem(
+		SEEN_COUNT_COMMIT_STATE_STORAGE_KEY,
+		JSON.stringify(state)
+	);
 };
 
 const getStoredSeenMovies = (): Set<string> => {
@@ -96,6 +178,40 @@ const getStoredMarkSeenOrder = (): string[] | null => {
 	return hasAllMovieIds ? storedOrder : null;
 };
 
+const getStoredFavoritesOrder = (): string[] | null => {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
+	const storedOrder = parseStoredStringArray(
+		sessionStorage.getItem(FAVORITES_ORDER_STORAGE_KEY)
+	);
+
+	if (!storedOrder || storedOrder.length !== MASTER_MOVIE_IDS.length) {
+		return null;
+	}
+
+	const uniqueStoredIds = new Set(storedOrder);
+	if (uniqueStoredIds.size !== MASTER_MOVIE_IDS.length) {
+		return null;
+	}
+
+	const hasAllMovieIds = MASTER_MOVIE_IDS.every((movieId) =>
+		uniqueStoredIds.has(movieId)
+	);
+
+	return hasAllMovieIds ? storedOrder : null;
+};
+
+const getShuffledMovieIds = (movieIds: string[]): string[] => {
+	const shuffled = [...movieIds];
+	for (let i = shuffled.length - 1; i > 0; i -= 1) {
+		const randomIndex = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
+	}
+	return shuffled;
+};
+
 const clearVoteSessionData = () => {
 	if (typeof window === "undefined") {
 		return;
@@ -104,6 +220,8 @@ const clearVoteSessionData = () => {
 	sessionStorage.removeItem(VOTER_NAME_STORAGE_KEY);
 	sessionStorage.removeItem(SEEN_MOVIES_STORAGE_KEY);
 	sessionStorage.removeItem(MARK_SEEN_ORDER_STORAGE_KEY);
+	sessionStorage.removeItem(FAVORITES_ORDER_STORAGE_KEY);
+	sessionStorage.removeItem(SEEN_COUNT_COMMIT_STATE_STORAGE_KEY);
 };
 
 const getFavoriteSeenMovieIds = (
@@ -202,7 +320,50 @@ const SCREEN_INTRO_CHOOSE_FAVORITES = 3;
 const SCREEN_CHOOSE_FAVORITES = 4;
 const SCREEN_INTRO_RANK_FAVORITES = 5;
 const SCREEN_RANK_FAVORITES = 6;
-const SCREEN_SUCCESS = 7;
+const SCREEN_POST_SUBMIT_CONFIRMATION = 7;
+const SCREEN_OPTIONAL_RECOMMENDATIONS = 8;
+const SCREEN_DONE = 9;
+
+const OPTIONAL_RECOMMENDATION_QUESTIONS: OptionalRecommendationQuestion[] = [
+	{
+		key: "toParents",
+		prompt: "Choose one movie you’d recommend to your parents",
+	},
+	{
+		key: "toKid",
+		prompt: "Choose one movie you’d recommend to your 9-year-old niece or nephew",
+	},
+	{
+		key: "underseenGem",
+		prompt: "Choose one underseen gem more people should see",
+	},
+	{
+		key: "toFreakiestFriend",
+		prompt: "Choose one movie you’d recommend to your freakiest friend",
+	},
+	{
+		key: "leastFavorite",
+		prompt: "Choose your least favorite movie",
+	},
+];
+
+const EMPTY_RECOMMENDATIONS: BallotRecommendations = {
+	toParents: null,
+	toKid: null,
+	underseenGem: null,
+	toFreakiestFriend: null,
+	leastFavorite: null,
+};
+
+const buildOptionalQuestionMovieOrder = (
+	seenMovieIds: string[]
+): Record<BallotRecommendationKey, string[]> => ({
+	toParents: getShuffledMovieIds(seenMovieIds),
+	toKid: getShuffledMovieIds(seenMovieIds),
+	underseenGem: getShuffledMovieIds(seenMovieIds),
+	toFreakiestFriend: getShuffledMovieIds(seenMovieIds),
+	leastFavorite: getShuffledMovieIds(seenMovieIds),
+});
 
 const Vote = () => {
 	const navigate = useNavigate();
@@ -220,6 +381,9 @@ const Vote = () => {
 	const [isLoadingMarkSeenOrder, setIsLoadingMarkSeenOrder] = useState(
 		() => markSeenMovieOrder === null
 	);
+	const [favoritesMovieOrder, setFavoritesMovieOrder] = useState<string[] | null>(
+		() => getStoredFavoritesOrder()
+	);
 	const [seenMovies, setSeenMovies] = useState<Set<string>>(
 		() => getStoredSeenMovies()
 	);
@@ -231,6 +395,23 @@ const Vote = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [favoritesError, setFavoritesError] = useState<string | null>(null);
 	const [rankingError, setRankingError] = useState<string | null>(null);
+	const [markSeenCommitError, setMarkSeenCommitError] = useState<string | null>(
+		null
+	);
+	const [isCommittingSeenCounts, setIsCommittingSeenCounts] = useState(false);
+	const seenCountCommitInFlightRef = useRef(false);
+	const [submittedBallotId, setSubmittedBallotId] = useState<string | null>(null);
+	const [recommendations, setRecommendations] =
+		useState<BallotRecommendations>(EMPTY_RECOMMENDATIONS);
+	const [answeredRecommendationKeys, setAnsweredRecommendationKeys] = useState<
+		Set<BallotRecommendationKey>
+	>(new Set());
+	const [optionalQuestionIndex, setOptionalQuestionIndex] = useState(0);
+	const [optionalQuestionMovieOrder, setOptionalQuestionMovieOrder] = useState<
+		Record<BallotRecommendationKey, string[]>
+	>(() => buildOptionalQuestionMovieOrder([]));
+	const [optionalError, setOptionalError] = useState<string | null>(null);
+	const [isSavingOptionalAnswer, setIsSavingOptionalAnswer] = useState(false);
 
 	useEffect(() => {
 		// Initialize client ID on mount
@@ -320,7 +501,25 @@ const Vote = () => {
 		return orderedMovies.length === movies.length ? orderedMovies : movies;
 	}, [markSeenMovieOrder, movies]);
 
+	const sessionOrderedMoviesForFavorites = useMemo(() => {
+		if (!favoritesMovieOrder) {
+			return movies;
+		}
+
+		const movieById = new Map(movies.map((movie) => [movie.id, movie]));
+		const orderedMovies = favoritesMovieOrder
+			.map((movieId) => movieById.get(movieId))
+			.filter((movie): movie is Movie => Boolean(movie));
+
+		return orderedMovies.length === movies.length ? orderedMovies : movies;
+	}, [favoritesMovieOrder, movies]);
+
 	const seenMovieOptionsForFavorites = useMemo(
+		() =>
+			sessionOrderedMoviesForFavorites.filter((movie) => seenMovies.has(movie.id)),
+		[sessionOrderedMoviesForFavorites, seenMovies]
+	);
+	const seenMoviesForOptional = useMemo(
 		() => sessionOrderedMovies.filter((movie) => seenMovies.has(movie.id)),
 		[sessionOrderedMovies, seenMovies]
 	);
@@ -333,8 +532,19 @@ const Vote = () => {
 
 		return getBestPictureRanks(favoriteSeenMovieIds, rankedMovies);
 	}, [favoriteMovies, seenMovies, sessionOrderedMovies, rankedMovies]);
+	const currentOptionalQuestion =
+		OPTIONAL_RECOMMENDATION_QUESTIONS[optionalQuestionIndex] ?? null;
+	const currentOptionalSelection = currentOptionalQuestion
+		? recommendations[currentOptionalQuestion.key]
+		: null;
+	const canContinueOptionalQuestion = Boolean(
+		currentOptionalQuestion &&
+			(currentOptionalSelection !== null ||
+				answeredRecommendationKeys.has(currentOptionalQuestion.key))
+	);
 
 	const handleMarkSeen = (movieId: string) => {
+		setMarkSeenCommitError(null);
 		const newSeen = new Set(seenMovies);
 		if (newSeen.has(movieId)) {
 			newSeen.delete(movieId);
@@ -375,6 +585,175 @@ const Vote = () => {
 		setRankedMovies(newRanked);
 	};
 
+	const commitSeenCountsIfNeeded = async (): Promise<void> => {
+		const commitState = getStoredSeenCountCommitState();
+		const alreadyCommittedIds = new Set(commitState.committedMovieIds);
+		const currentSeenMovieIds = Array.from(seenMovies).filter((movieId) =>
+			MASTER_MOVIE_ID_SET.has(movieId)
+		);
+		const movieIdsToIncrement = currentSeenMovieIds.filter(
+			(movieId) => !alreadyCommittedIds.has(movieId)
+		);
+
+		if (movieIdsToIncrement.length > 0) {
+			await incrementSeenCounts(movieIdsToIncrement);
+		}
+
+		storeSeenCountCommitState({
+			committedMovieIds: Array.from(
+				new Set([...commitState.committedMovieIds, ...currentSeenMovieIds])
+			),
+			committedAt: new Date().toISOString(),
+		});
+	};
+
+	const moveToNextOptionalQuestionOrFinish = () => {
+		if (optionalQuestionIndex >= OPTIONAL_RECOMMENDATION_QUESTIONS.length - 1) {
+			clearVoteSessionData();
+			setScreen(SCREEN_DONE);
+			return;
+		}
+
+		setOptionalQuestionIndex((previousIndex) =>
+			Math.min(
+				previousIndex + 1,
+				OPTIONAL_RECOMMENDATION_QUESTIONS.length - 1
+			)
+		);
+	};
+
+	const saveOptionalAnswerAndAdvance = async (
+		questionKey: BallotRecommendationKey,
+		answer: string | null
+	) => {
+		if (!submittedBallotId) {
+			setOptionalError("Couldn't find your ballot. You can finish now.");
+			return;
+		}
+
+		const isLastQuestion =
+			optionalQuestionIndex >= OPTIONAL_RECOMMENDATION_QUESTIONS.length - 1;
+		const completedAt = isLastQuestion ? new Date().toISOString() : undefined;
+		setIsSavingOptionalAnswer(true);
+		setOptionalError(null);
+
+		try {
+			await updateBallotRecommendation(
+				submittedBallotId,
+				questionKey,
+				answer,
+				completedAt ? { recommendationsCompletedAt: completedAt } : undefined
+			);
+
+			setRecommendations((previousAnswers) => ({
+				...previousAnswers,
+				[questionKey]: answer,
+			}));
+			setAnsweredRecommendationKeys((previousKeys) => {
+				const nextKeys = new Set(previousKeys);
+				nextKeys.add(questionKey);
+				return nextKeys;
+			});
+
+			moveToNextOptionalQuestionOrFinish();
+		} catch (saveError) {
+			setOptionalError(
+				saveError instanceof Error
+					? saveError.message
+					: "Couldn't save that answer yet. Please try again."
+			);
+		} finally {
+			setIsSavingOptionalAnswer(false);
+		}
+	};
+
+	const handleStartOptionalRecommendations = () => {
+		setOptionalError(null);
+		setOptionalQuestionIndex(0);
+		setScreen(SCREEN_OPTIONAL_RECOMMENDATIONS);
+	};
+
+	const handleSkipOptionalRecommendations = () => {
+		clearVoteSessionData();
+		setScreen(SCREEN_DONE);
+	};
+
+	const handleOptionalBack = () => {
+		setOptionalError(null);
+		if (optionalQuestionIndex === 0) {
+			setScreen(SCREEN_POST_SUBMIT_CONFIRMATION);
+			return;
+		}
+
+		setOptionalQuestionIndex((previousIndex) => Math.max(0, previousIndex - 1));
+	};
+
+	const handleOptionalSelectMovie = (movieId: string) => {
+		if (!currentOptionalQuestion) {
+			return;
+		}
+
+		setOptionalError(null);
+		setRecommendations((previousAnswers) => ({
+			...previousAnswers,
+			[currentOptionalQuestion.key]: movieId,
+		}));
+	};
+
+	const handleOptionalSkipQuestion = async () => {
+		if (!currentOptionalQuestion || isSavingOptionalAnswer) {
+			return;
+		}
+
+		await saveOptionalAnswerAndAdvance(currentOptionalQuestion.key, null);
+	};
+
+	const handleOptionalContinueQuestion = async () => {
+		if (!currentOptionalQuestion || isSavingOptionalAnswer) {
+			return;
+		}
+
+		if (currentOptionalSelection !== null) {
+			await saveOptionalAnswerAndAdvance(
+				currentOptionalQuestion.key,
+				currentOptionalSelection
+			);
+			return;
+		}
+
+		if (answeredRecommendationKeys.has(currentOptionalQuestion.key)) {
+			moveToNextOptionalQuestionOrFinish();
+		}
+	};
+
+	const handleFinishOptionalWithoutSeen = async () => {
+		if (!submittedBallotId) {
+			clearVoteSessionData();
+			setScreen(SCREEN_DONE);
+			return;
+		}
+
+		setIsSavingOptionalAnswer(true);
+		setOptionalError(null);
+
+		try {
+			await setBallotRecommendationsCompletedAt(
+				submittedBallotId,
+				new Date().toISOString()
+			);
+			clearVoteSessionData();
+			setScreen(SCREEN_DONE);
+		} catch (saveError) {
+			setOptionalError(
+				saveError instanceof Error
+					? saveError.message
+					: "Couldn't finish optional selections yet. Please try again."
+			);
+		} finally {
+			setIsSavingOptionalAnswer(false);
+		}
+	};
+
 	const handleSubmit = async () => {
 		if (!bestPictureRanksForSubmit) {
 			setRankingError("Rank your 5 favorites (#1-#5) before submitting.");
@@ -388,6 +767,7 @@ const Vote = () => {
 		try {
 			const clientId = getOrCreateClientId();
 			const ipHash = hashIP();
+			const topFiveSubmittedAt = new Date().toISOString();
 			const rankByMovieId = new Map(
 				bestPictureRanksForSubmit.map((movieId, index) => [movieId, index + 1])
 			);
@@ -402,24 +782,35 @@ const Vote = () => {
 			const ballot: Ballot = {
 				schemaVersion: BALLOT_SCHEMA_VERSION,
 				clientId,
-				timestamp: new Date().toISOString(),
+				timestamp: topFiveSubmittedAt,
+				topFiveSubmittedAt,
 				ipHash,
 				voterName: voterName.trim(),
 				movies: ballotMovies,
 				bestPictureRanks: bestPictureRanksForSubmit,
 				flagged: false,
+				recommendations: EMPTY_RECOMMENDATIONS,
+				recommendationsCompletedAt: null,
 			};
 
-			await submitBallot(ballot);
-
-			try {
-				await incrementSeenCounts(Array.from(seenMovies));
-			} catch (seenCountError) {
-				console.warn("Ballot submitted, but seenCount update failed:", seenCountError);
+			const submitResult = await submitBallot(ballot);
+			if (!submitResult.id) {
+				throw new Error("Ballot was submitted but no ID was returned.");
 			}
 
-			clearVoteSessionData();
-			setScreen(SCREEN_SUCCESS);
+			setSubmittedBallotId(submitResult.id);
+			setRecommendations(EMPTY_RECOMMENDATIONS);
+			setAnsweredRecommendationKeys(new Set());
+			setOptionalQuestionIndex(0);
+			setOptionalQuestionMovieOrder(
+				buildOptionalQuestionMovieOrder(
+					sessionOrderedMovies
+						.filter((movie) => seenMovies.has(movie.id))
+						.map((movie) => movie.id)
+				)
+			);
+			setOptionalError(null);
+			setScreen(SCREEN_POST_SUBMIT_CONFIRMATION);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to submit ballot");
 		} finally {
@@ -427,7 +818,7 @@ const Vote = () => {
 		}
 	};
 
-	const handleNext = () => {
+	const handleNext = async () => {
 		if (screen === SCREEN_WELCOME) {
 			if (voterName.trim().length > 0) {
 				setScreen(SCREEN_INTRO_MARK_SEEN);
@@ -435,9 +826,40 @@ const Vote = () => {
 		} else if (screen === SCREEN_INTRO_MARK_SEEN) {
 			setScreen(SCREEN_MARK_SEEN);
 		} else if (screen === SCREEN_MARK_SEEN) {
+			if (seenCountCommitInFlightRef.current || isCommittingSeenCounts) {
+				return;
+			}
+
+			setMarkSeenCommitError(null);
+			seenCountCommitInFlightRef.current = true;
+			setIsCommittingSeenCounts(true);
+			try {
+				await commitSeenCountsIfNeeded();
+			} catch (commitError) {
+				console.error("Failed to commit seen counts on Mark Seen exit:", commitError);
+				setMarkSeenCommitError(
+					"Couldn't sync seen counts yet. Check your connection and tap Next again."
+				);
+				return;
+			} finally {
+				seenCountCommitInFlightRef.current = false;
+				setIsCommittingSeenCounts(false);
+			}
+
 			setFavoritesError(null);
 			setScreen(SCREEN_INTRO_CHOOSE_FAVORITES);
 		} else if (screen === SCREEN_INTRO_CHOOSE_FAVORITES) {
+			if (favoritesMovieOrder === null) {
+				const shuffledOrder = getShuffledMovieIds(MASTER_MOVIE_IDS);
+				setFavoritesMovieOrder(shuffledOrder);
+				if (typeof window !== "undefined") {
+					sessionStorage.setItem(
+						FAVORITES_ORDER_STORAGE_KEY,
+						JSON.stringify(shuffledOrder)
+					);
+				}
+			}
+
 			setScreen(SCREEN_CHOOSE_FAVORITES);
 		} else if (screen === SCREEN_CHOOSE_FAVORITES) {
 			if (seenMovieOptionsForFavorites.length < REQUIRED_FAVORITES_COUNT) {
@@ -451,7 +873,7 @@ const Vote = () => {
 				const favoriteSeenMovieIds = getFavoriteSeenMovieIds(
 					favoriteMovies,
 					seenMovies,
-					sessionOrderedMovies
+					seenMovieOptionsForFavorites
 				);
 				setRankedMovies(buildNormalizedRankMap(favoriteSeenMovieIds, rankedMovies));
 				setFavoritesError(null);
@@ -480,15 +902,18 @@ const Vote = () => {
 				<Welcome
 					voterName={voterName}
 					onNameChange={setVoterName}
-					onStart={handleNext}
+					onStart={() => {
+						void handleNext();
+					}}
 				/>
 			)}
 			{screen === SCREEN_INTRO_MARK_SEEN && (
 				<StepMessage
-					title="First up"
+					title="Let's Start"
 					message="First, you'll pick all the movies you've seen in the last year."
-					onNext={handleNext}
-					onBack={handleBack}
+					onNext={() => {
+						void handleNext();
+					}}
 					nextLabel="Let's do it"
 				/>
 			)}
@@ -497,16 +922,22 @@ const Vote = () => {
 					movies={sessionOrderedMovies}
 					seenMovies={seenMovies}
 					onMarkSeen={handleMarkSeen}
-					onNext={handleNext}
+					onNext={() => {
+						void handleNext();
+					}}
 					onBack={handleBack}
 					isLoadingOrder={isLoadingMarkSeenOrder}
+					isCommittingSeenCounts={isCommittingSeenCounts}
+					error={markSeenCommitError}
 				/>
 			)}
 			{screen === SCREEN_INTRO_CHOOSE_FAVORITES && (
 				<StepMessage
 					title="Nice work"
 					message="Great, next, you'll pick your five favorite films out of the ones you've seen."
-					onNext={handleNext}
+					onNext={() => {
+						void handleNext();
+					}}
 					onBack={handleBack}
 					nextLabel="Next"
 				/>
@@ -516,7 +947,9 @@ const Vote = () => {
 					movies={seenMovieOptionsForFavorites}
 					favoriteMovies={favoriteMovies}
 					onToggleFavorite={handleToggleFavorite}
-					onNext={handleNext}
+					onNext={() => {
+						void handleNext();
+					}}
 					onBack={handleBack}
 					error={favoritesError}
 					requiredCount={REQUIRED_FAVORITES_COUNT}
@@ -526,7 +959,9 @@ const Vote = () => {
 				<StepMessage
 					title="Almost done"
 					message="Great, now let's rank those five films so you can submit your ballot."
-					onNext={handleNext}
+					onNext={() => {
+						void handleNext();
+					}}
 					onBack={handleBack}
 					nextLabel="Start ranking"
 				/>
@@ -538,17 +973,69 @@ const Vote = () => {
 					)}
 					rankedMovies={rankedMovies}
 					onUpdateRankings={handleUpdateRankings}
-					onNext={handleNext}
+					onNext={() => {
+						void handleNext();
+					}}
 					onBack={handleBack}
 					error={rankingError ?? error}
 					requiredCount={REQUIRED_FAVORITES_COUNT}
 					submitting={submitting}
 				/>
 			)}
-			{screen === SCREEN_SUCCESS && (
+			{screen === SCREEN_POST_SUBMIT_CONFIRMATION && (
+				<div className="vote-success post-submit-confirmation">
+					<h1>Your top five have been submitted!</h1>
+					<p>
+						Anything below is optional. You can finish now, or answer a few
+						quick recommendation questions.
+					</p>
+					<div className="post-submit-actions">
+						<button
+							type="button"
+							className="btn btn-primary"
+							onClick={handleStartOptionalRecommendations}
+						>
+							Continue for a few more optional selections
+						</button>
+						<button
+							type="button"
+							className="btn-link"
+							onClick={handleSkipOptionalRecommendations}
+						>
+							No thanks
+						</button>
+					</div>
+				</div>
+			)}
+			{screen === SCREEN_OPTIONAL_RECOMMENDATIONS && currentOptionalQuestion && (
+				<OptionalRecommendations
+					questions={OPTIONAL_RECOMMENDATION_QUESTIONS}
+					currentQuestionIndex={optionalQuestionIndex}
+					seenMovies={seenMoviesForOptional}
+					currentQuestionMovieOrder={
+						optionalQuestionMovieOrder[currentOptionalQuestion.key] ?? []
+					}
+					selectedMovieId={currentOptionalSelection}
+					canContinue={canContinueOptionalQuestion}
+					isSaving={isSavingOptionalAnswer}
+					error={optionalError}
+					onSelectMovie={handleOptionalSelectMovie}
+					onBack={handleOptionalBack}
+					onSkip={() => {
+						void handleOptionalSkipQuestion();
+					}}
+					onContinue={() => {
+						void handleOptionalContinueQuestion();
+					}}
+					onFinishWithoutSeen={() => {
+						void handleFinishOptionalWithoutSeen();
+					}}
+				/>
+			)}
+			{screen === SCREEN_DONE && (
 				<div className="vote-success">
-					<h1>All set</h1>
-					<p>Great, your ranking has been submitted.</p>
+					<h1>Thank you!</h1>
+					<p>Your ballot has been submitted.</p>
 					<button onClick={() => navigate("/")} className="btn btn-primary">
 						Return to Home
 					</button>

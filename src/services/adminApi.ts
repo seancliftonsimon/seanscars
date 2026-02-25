@@ -31,6 +31,7 @@ export interface Ballot {
 	id: string;
 	clientId: string;
 	timestamp: string;
+	topFiveSubmittedAt?: string;
 	ipHash?: string;
 	voterName?: string;
 	movies: Array<{
@@ -41,6 +42,14 @@ export interface Ballot {
 	}>;
 	bestPictureRanks?: string[];
 	flagged?: boolean;
+	recommendations?: {
+		toParents: string | null;
+		toKid: string | null;
+		underseenGem: string | null;
+		toFreakiestFriend: string | null;
+		leastFavorite: string | null;
+	};
+	recommendationsCompletedAt?: string | null;
 }
 
 export interface Overview {

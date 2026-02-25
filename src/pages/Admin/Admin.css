@@ -484,6 +484,21 @@
   background: rgba(139, 0, 0, 0.18);
 }
 
+.ballot-excluded-label {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--spacing-xs);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(139, 0, 0, 0.55);
+  border: 1px solid rgba(255, 182, 193, 0.6);
+  color: #FFCDD7;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .flag-toggle-cell {
   display: flex;
   align-items: center;
@@ -758,6 +773,22 @@
 }
 
 .btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-warning {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--color-gold);
+  border: 2px solid var(--color-gold);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--color-gold);
+  color: var(--color-black);
+}
+
+.btn-warning:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
