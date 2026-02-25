@@ -136,33 +136,6 @@ const HallOfFame = () => {
 						</div>
 					</div>
 
-					<div className="honorees-grid">
-						<div className="honoree-card" style={{ animationDelay: "0s" }}>
-							<div className="honoree-year">
-								<Award size={24} />
-								<span>Placeholder Year</span>
-							</div>
-
-							<div className="honoree-image-placeholder">
-								<Star size={80} />
-								<span className="image-label">Honoree Photo</span>
-							</div>
-
-							<div className="honoree-content">
-								<h2>Placeholder Name</h2>
-								<p className="honoree-bio">Placeholder bio information</p>
-
-								<div className="notable-works">
-									<h3>Notable Works</h3>
-									<ul>
-										<li>Placeholder Work 1</li>
-										<li>Placeholder Work 2</li>
-										<li>Placeholder Work 3</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
 				</div>
 			</section>
 		</div>
