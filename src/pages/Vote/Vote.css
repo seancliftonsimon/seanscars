@@ -780,3 +780,41 @@
   text-align: center;
   flex-shrink: 0;
 }
+
+.step-message-screen {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.step-message-content {
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.step-message-content h1 {
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  margin: 0;
+}
+
+.step-message-text {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 1.2rem;
+  line-height: 1.45;
+  color: var(--color-cream);
+}
+
+.step-message-actions {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.step-message-actions .btn {
+  width: 100%;
+}

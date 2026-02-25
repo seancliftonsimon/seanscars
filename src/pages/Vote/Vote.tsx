@@ -4,6 +4,7 @@ import Welcome from "./Welcome";
 import MarkSeen from "./MarkSeen";
 import ChooseFavorites from "./ChooseFavorites";
 import RankFavorites from "./RankFavorites";
+import StepMessage from "./StepMessage";
 import moviesData from "../../data/movies.json";
 import { getOrCreateClientId } from "../../utils/voting";
 import {
@@ -194,9 +195,18 @@ const buildNormalizedRankMap = (
 	return normalizedMap;
 };
 
+const SCREEN_WELCOME = 0;
+const SCREEN_INTRO_MARK_SEEN = 1;
+const SCREEN_MARK_SEEN = 2;
+const SCREEN_INTRO_CHOOSE_FAVORITES = 3;
+const SCREEN_CHOOSE_FAVORITES = 4;
+const SCREEN_INTRO_RANK_FAVORITES = 5;
+const SCREEN_RANK_FAVORITES = 6;
+const SCREEN_SUCCESS = 7;
+
 const Vote = () => {
 	const navigate = useNavigate();
-	const [screen, setScreen] = useState(0);
+	const [screen, setScreen] = useState(SCREEN_WELCOME);
 	const [voterName, setVoterName] = useState(() => {
 		if (typeof window === "undefined") {
 			return "";
@@ -409,7 +419,7 @@ const Vote = () => {
 			}
 
 			clearVoteSessionData();
-			setScreen(4); // Success screen
+			setScreen(SCREEN_SUCCESS);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to submit ballot");
 		} finally {
@@ -418,15 +428,18 @@ const Vote = () => {
 	};
 
 	const handleNext = () => {
-		if (screen === 0) {
+		if (screen === SCREEN_WELCOME) {
 			if (voterName.trim().length > 0) {
-				setScreen(1);
+				setScreen(SCREEN_INTRO_MARK_SEEN);
 			}
-		} else if (screen === 1) {
-			if (seenMovies.size > 0) {
-				setScreen(2);
-			}
-		} else if (screen === 2) {
+		} else if (screen === SCREEN_INTRO_MARK_SEEN) {
+			setScreen(SCREEN_MARK_SEEN);
+		} else if (screen === SCREEN_MARK_SEEN) {
+			setFavoritesError(null);
+			setScreen(SCREEN_INTRO_CHOOSE_FAVORITES);
+		} else if (screen === SCREEN_INTRO_CHOOSE_FAVORITES) {
+			setScreen(SCREEN_CHOOSE_FAVORITES);
+		} else if (screen === SCREEN_CHOOSE_FAVORITES) {
 			if (seenMovieOptionsForFavorites.length < REQUIRED_FAVORITES_COUNT) {
 				setFavoritesError(
 					`You need at least ${REQUIRED_FAVORITES_COUNT} seen movies before choosing favorites.`
@@ -442,12 +455,15 @@ const Vote = () => {
 				);
 				setRankedMovies(buildNormalizedRankMap(favoriteSeenMovieIds, rankedMovies));
 				setFavoritesError(null);
-				setScreen(3);
+				setScreen(SCREEN_INTRO_RANK_FAVORITES);
 				return;
 			}
 
 			setFavoritesError(`Pick exactly ${REQUIRED_FAVORITES_COUNT} favorites to continue.`);
-		} else if (screen === 3) {
+		} else if (screen === SCREEN_INTRO_RANK_FAVORITES) {
+			setRankingError(null);
+			setScreen(SCREEN_RANK_FAVORITES);
+		} else if (screen === SCREEN_RANK_FAVORITES) {
 			void handleSubmit();
 		}
 	};
@@ -460,14 +476,23 @@ const Vote = () => {
 
 	return (
 		<div className="vote-container">
-			{screen === 0 && (
+			{screen === SCREEN_WELCOME && (
 				<Welcome
 					voterName={voterName}
 					onNameChange={setVoterName}
 					onStart={handleNext}
 				/>
 			)}
-			{screen === 1 && (
+			{screen === SCREEN_INTRO_MARK_SEEN && (
+				<StepMessage
+					title="First up"
+					message="First, you'll pick all the movies you've seen in the last year."
+					onNext={handleNext}
+					onBack={handleBack}
+					nextLabel="Let's do it"
+				/>
+			)}
+			{screen === SCREEN_MARK_SEEN && (
 				<MarkSeen
 					movies={sessionOrderedMovies}
 					seenMovies={seenMovies}
@@ -477,7 +502,16 @@ const Vote = () => {
 					isLoadingOrder={isLoadingMarkSeenOrder}
 				/>
 			)}
-			{screen === 2 && (
+			{screen === SCREEN_INTRO_CHOOSE_FAVORITES && (
+				<StepMessage
+					title="Nice work"
+					message="Great, next, you'll pick your five favorite films out of the ones you've seen."
+					onNext={handleNext}
+					onBack={handleBack}
+					nextLabel="Next"
+				/>
+			)}
+			{screen === SCREEN_CHOOSE_FAVORITES && (
 				<ChooseFavorites
 					movies={seenMovieOptionsForFavorites}
 					favoriteMovies={favoriteMovies}
@@ -488,7 +522,16 @@ const Vote = () => {
 					requiredCount={REQUIRED_FAVORITES_COUNT}
 				/>
 			)}
-			{screen === 3 && (
+			{screen === SCREEN_INTRO_RANK_FAVORITES && (
+				<StepMessage
+					title="Almost done"
+					message="Great, now let's rank those five films so you can submit your ballot."
+					onNext={handleNext}
+					onBack={handleBack}
+					nextLabel="Start ranking"
+				/>
+			)}
+			{screen === SCREEN_RANK_FAVORITES && (
 				<RankFavorites
 					movies={sessionOrderedMovies.filter((movie) =>
 						favoriteMovies.has(movie.id)
@@ -502,10 +545,10 @@ const Vote = () => {
 					submitting={submitting}
 				/>
 			)}
-			{screen === 4 && (
+			{screen === SCREEN_SUCCESS && (
 				<div className="vote-success">
-					<h1>Thank You!</h1>
-					<p>Your vote has been submitted successfully.</p>
+					<h1>All set</h1>
+					<p>Great, your ranking has been submitted.</p>
 					<button onClick={() => navigate("/")} className="btn btn-primary">
 						Return to Home
 					</button>

@@ -126,7 +126,7 @@ const ChooseFavorites = ({
             className="btn btn-primary"
             disabled={!hasEnoughSeenMovies || favoriteMovies.size !== requiredCount}
           >
-            Rank Favorites
+            Continue
           </button>
         </div>
       </div>
