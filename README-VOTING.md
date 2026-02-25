@@ -10,9 +10,9 @@ A mobile-first web-based voting system for an in-person awards event.
 - **5-screen voting flow**:
   1. Welcome screen
   2. Mark movies seen
-  3. Choose up to 5 favorites
+  3. Choose exactly 5 favorites
   4. Rank favorites (1-5)
-  5. Optional extra questions (under-seen, scary, funny, best time)
+  5. Submit confirmation
 - **Real-time data storage** to Firebase Firestore
 - **Client ID tracking** via localStorage (honesty-based)
 
@@ -23,8 +23,7 @@ A mobile-first web-based voting system for an in-person awards event.
 - **Multiple views**:
   - Overview statistics
   - Best Picture results (Borda count)
-  - Under-Seen/Hidden Gem award
-  - Fun categories (scary, funny, best time)
+  - Voter leaderboard
   - Raw ballots with pagination
   - Export tools (JSON/CSV)
 
@@ -104,8 +103,6 @@ Edit `src/data/movies.json` to update the list of films. Format:
 - `GET /api/ballots` - Get all ballots (admin only)
 - `GET /api/results/best-picture` - Get Borda score results
 - `GET /api/results/overview` - Get dashboard overview
-- `GET /api/results/under-seen` - Get under-seen award results
-- `GET /api/results/fun-categories` - Get fun category results
 - `POST /api/admin/auth` - Admin authentication
 
 ## Scoring System
@@ -123,17 +120,6 @@ Edit `src/data/movies.json` to update the list of films. Format:
   - Number of #1 votes
   - Seen count and fraction
   - Average points per viewer
-
-### Under-Seen Award
-
-- Films with seen fraction ≤ 40%
-- Winner determined by highest average points per viewer
-- Secondary metric: most under-seen recommendation votes
-
-### Fun Categories
-
-- Simple vote counting
-- Most votes wins
 
 ## Routes
 

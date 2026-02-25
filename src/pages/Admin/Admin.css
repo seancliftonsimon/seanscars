@@ -418,6 +418,46 @@
   flex-wrap: wrap;
 }
 
+.ballots-actions-left,
+.ballots-actions-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.ballots-actions-right label {
+  color: var(--color-gold);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ballots-actions-right input {
+  width: 88px;
+  background: var(--color-charcoal);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.5rem;
+  color: var(--color-cream);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+
+.ballots-actions-right input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
+.ballots-actions-right input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ballots-sample-label {
+  color: var(--color-cream);
+  font-size: 0.95rem;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -486,6 +526,19 @@
 }
 
 /* Buttons */
+.admin-dashboard .btn {
+  padding: 0.65rem 1.2rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.admin-dashboard .btn:hover {
+  transform: translateY(-1px);
+}
+
 .btn-secondary {
   background: transparent;
   border: 2px solid var(--color-gold);
@@ -757,6 +810,11 @@
   .ballots-actions {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .ballots-actions-left,
+  .ballots-actions-right {
+    width: 100%;
   }
 
   .ballots-info {

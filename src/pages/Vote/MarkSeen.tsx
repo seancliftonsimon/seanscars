@@ -11,7 +11,7 @@ interface MarkSeenProps {
 	isLoadingOrder: boolean;
 }
 
-const MOVIES_PER_PAGE = 5;
+const MOVIES_PER_PAGE = 11;
 
 const MarkSeen = ({
 	movies,
@@ -48,11 +48,6 @@ const MarkSeen = ({
 	);
 	const hasPreviousPage = effectivePage > 0;
 	const hasMorePages = effectivePage < totalPages - 1;
-	const shownStartIndex = movies.length === 0 ? 0 : effectivePage * MOVIES_PER_PAGE + 1;
-	const shownEndIndex =
-		movies.length === 0
-			? 0
-			: Math.min(shownStartIndex + paginatedMovies.length - 1, movies.length);
 
 	const getNewSelectionsThisPage = () =>
 		paginatedMovies.filter(
@@ -63,12 +58,22 @@ const MarkSeen = ({
 
 	const handleBackClick = () => {
 		setShowEarlyFinishPrompt(false);
+		setZeroNewSelectionPageStreak(0);
 		if (hasPreviousPage) {
 			setCurrentPage(effectivePage - 1);
 			return;
 		}
 
 		onBack();
+	};
+
+	const goForward = () => {
+		if (hasMorePages) {
+			setCurrentPage(effectivePage + 1);
+			return;
+		}
+
+		onNext();
 	};
 
 	const handleNextClick = () => {
@@ -78,35 +83,32 @@ const MarkSeen = ({
 		const shouldShowEarlyFinishPrompt = nextZeroStreak >= 2;
 
 		setZeroNewSelectionPageStreak(nextZeroStreak);
-		setShowEarlyFinishPrompt(shouldShowEarlyFinishPrompt);
-
-		if (hasMorePages) {
-			setCurrentPage(effectivePage + 1);
-			return;
-		}
-
 		if (shouldShowEarlyFinishPrompt) {
+			setShowEarlyFinishPrompt(true);
 			return;
 		}
 
-		onNext();
+		setShowEarlyFinishPrompt(false);
+		goForward();
+	};
+
+	const handleKeepGoingClick = () => {
+		setShowEarlyFinishPrompt(false);
+		setZeroNewSelectionPageStreak(0);
+		goForward();
 	};
 
 	return (
 		<div className="vote-screen mark-seen-screen">
 			<div className="vote-header">
-				<h2>Select the Movies You've Seen</h2>
+				<h2>Tap every movie you've seen.</h2>
 				<div className="seen-count">
 					Seen: {seenMovies.size} / {movies.length}
 				</div>
 			</div>
 
 			<div className="vote-content">
-				<div className="instruction-text">Tap every movie you've seen.</div>
-				<div className="mark-seen-progress">
-					Page {effectivePage + 1} of {totalPages} | Shown {shownStartIndex}-
-					{shownEndIndex} of {movies.length}
-				</div>
+				<div className="mark-seen-progress">Page {effectivePage + 1} of {totalPages}</div>
 
 				{isLoadingOrder ? (
 					<div className="mark-seen-loading">Loading movies...</div>
@@ -132,28 +134,6 @@ const MarkSeen = ({
 					</div>
 				)}
 
-				{showEarlyFinishPrompt && (
-					<div className="mark-seen-early-finish">
-						<button
-							type="button"
-							className="btn btn-primary"
-							onClick={onNext}
-						>
-							That's probably all I've seen
-						</button>
-						<button
-							type="button"
-							className="btn btn-secondary"
-							onClick={() => {
-								setShowEarlyFinishPrompt(false);
-								setZeroNewSelectionPageStreak(0);
-							}}
-						>
-							Keep going
-						</button>
-					</div>
-				)}
-
 				<div className="vote-footer mark-seen-footer">
 					<button
 						type="button"
@@ -163,14 +143,41 @@ const MarkSeen = ({
 					>
 						Back
 					</button>
-					<button
-						type="button"
-						onClick={handleNextClick}
-						className="btn btn-primary"
-						disabled={isLoadingOrder}
+					<div
+						className={`mark-seen-forward-actions ${
+							showEarlyFinishPrompt ? "prompt-actions" : "single-action"
+						}`}
 					>
-						{pageHasSeenSelections ? "Next" : "Next (none of these)"}
-					</button>
+						{showEarlyFinishPrompt ? (
+							<>
+								<button
+									type="button"
+									onClick={handleKeepGoingClick}
+									className="btn btn-secondary"
+									disabled={isLoadingOrder}
+								>
+									Keep going
+								</button>
+								<button
+									type="button"
+									onClick={onNext}
+									className="btn btn-primary"
+									disabled={isLoadingOrder}
+								>
+									That's probably all I've seen
+								</button>
+							</>
+						) : (
+							<button
+								type="button"
+								onClick={handleNextClick}
+								className="btn btn-primary"
+								disabled={isLoadingOrder}
+							>
+								{pageHasSeenSelections ? "Next" : "Next (none of these)"}
+							</button>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>

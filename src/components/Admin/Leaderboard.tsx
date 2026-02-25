@@ -92,7 +92,6 @@ const Leaderboard = () => {
 							<th>Rank</th>
 							<th>Voter Name</th>
 							<th>Movies Seen</th>
-							<th>Want to See</th>
 							<th>Voted</th>
 						</tr>
 					</thead>
@@ -114,7 +113,6 @@ const Leaderboard = () => {
 								<td>
 									<strong>{entry.moviesSeen}</strong>
 								</td>
-								<td>{entry.wantToSee}</td>
 								<td>{new Date(entry.timestamp).toLocaleString()}</td>
 							</tr>
 						))}

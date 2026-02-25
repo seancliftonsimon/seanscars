@@ -10,27 +10,20 @@ import {
 import {
 	calculateBordaScores,
 	calculateWeightedScores,
-	calculateUnderSeenAwards,
-	calculateFunCategories,
 	type MovieStats as BestPictureResult,
 	type WeightedMovieStats,
-	type UnderSeenResult,
-	type FunCategories,
 } from "../utils/scoring";
 
 // Re-export types for compatibility
 export type {
 	BestPictureResult,
 	WeightedMovieStats,
-	UnderSeenResult,
-	FunCategories,
 };
 
 export interface LeaderboardEntry {
 	clientId: string;
 	voterName: string;
 	moviesSeen: number;
-	wantToSee: number;
 	timestamp: string;
 }
 
@@ -43,12 +36,7 @@ export interface Ballot {
 	movies: Array<{
 		id: string;
 		seen: boolean;
-		wantToSee?: boolean;
 		rank?: number | null;
-		underSeenRec?: boolean;
-		favoriteScary?: boolean;
-		funniest?: boolean;
-		bestTimeAtMovies?: boolean;
 		title?: string;
 	}>;
 	bestPictureRanks?: string[];
@@ -74,6 +62,16 @@ export async function updateBallotFlagged(
 		await updateDoc(doc(db, "ballots", ballotId), { flagged });
 	} catch (error) {
 		console.error("Error updating ballot flag:", error);
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
+			(error as { code?: string }).code === "permission-denied"
+		) {
+			throw new Error(
+				"Firestore denied ballot updates. Update Firestore Rules to allow admin access to ballots."
+			);
+		}
 		throw error;
 	}
 }
@@ -97,6 +95,16 @@ export async function getAllBallots(): Promise<Ballot[]> {
 		);
 	} catch (error) {
 		console.error("Error getting ballots:", error);
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
+			(error as { code?: string }).code === "permission-denied"
+		) {
+			throw new Error(
+				"Firestore denied ballot reads. Update Firestore Rules to allow admin access to ballots."
+			);
+		}
 		throw error;
 	}
 }
@@ -143,39 +151,17 @@ export async function getOverview(): Promise<Overview> {
 	}
 }
 
-export async function getUnderSeenResults(): Promise<UnderSeenResult[]> {
-	try {
-		const ballots = await getIncludedBallots();
-		return calculateUnderSeenAwards(ballots);
-	} catch (error) {
-		console.error("Error calculating under-seen results:", error);
-		throw error;
-	}
-}
-
-export async function getFunCategories(): Promise<FunCategories> {
-	try {
-		const ballots = await getIncludedBallots();
-		return calculateFunCategories(ballots);
-	} catch (error) {
-		console.error("Error calculating fun categories:", error);
-		throw error;
-	}
-}
-
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
 	try {
 		const ballots = await getIncludedBallots();
 
 		const leaderboard: LeaderboardEntry[] = ballots.map((ballot) => {
 			const moviesSeen = ballot.movies.filter((m) => m.seen).length;
-			const wantToSee = ballot.movies.filter((m) => m.wantToSee).length;
 
 			return {
 				clientId: ballot.clientId,
 				voterName: ballot.voterName || "Anonymous",
 				moviesSeen,
-				wantToSee,
 				timestamp: ballot.timestamp,
 			};
 		});

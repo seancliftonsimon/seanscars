@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { getAllBallots, getBestPictureResults, getUnderSeenResults, getFunCategories } from '../../services/adminApi';
+import {
+  getAllBallots,
+  getBestPictureResults,
+  getWeightedResults
+} from '../../services/adminApi';
 import { getCanonicalBestPictureRanks } from '../../utils/bestPictureRanks';
 import './Admin.css';
 
@@ -12,11 +16,10 @@ const Export = () => {
     setError(null);
 
     try {
-      const [ballots, bestPicture, underSeen, funCategories] = await Promise.all([
+      const [ballots, bestPicture, weightedBestPicture] = await Promise.all([
         getAllBallots(),
         getBestPictureResults(),
-        getUnderSeenResults(),
-        getFunCategories()
+        getWeightedResults()
       ]);
 
       const exportData = {
@@ -24,8 +27,7 @@ const Export = () => {
         ballots,
         results: {
           bestPicture,
-          underSeen,
-          funCategories
+          weightedBestPicture
         }
       };
 
@@ -56,14 +58,11 @@ const Export = () => {
       const headers = [
         'ID',
         'Client ID',
+        'Voter Name',
         'Timestamp',
         'Flagged',
         'Seen Movies',
-        'Ranked Movies',
-        'Under-Seen Rec',
-        'Favorite Scary',
-        'Funniest',
-        'Best Time at Movies'
+        'Ranked Movies'
       ];
 
       // Create CSV rows
@@ -72,22 +71,15 @@ const Export = () => {
         const rankedMovies = getCanonicalBestPictureRanks(ballot)
           .map((movieId, index) => `${movieId} (#${index + 1})`)
           .join('; ');
-        const underSeenRec = ballot.movies.find(m => m.underSeenRec)?.id || '';
-        const favoriteScary = ballot.movies.find(m => m.favoriteScary)?.id || '';
-        const funniest = ballot.movies.find(m => m.funniest)?.id || '';
-        const bestTime = ballot.movies.find(m => m.bestTimeAtMovies)?.id || '';
 
         return [
           ballot.id,
           ballot.clientId,
+          ballot.voterName || '',
           ballot.timestamp,
           ballot.flagged ? 'Yes' : 'No',
           seenMovies,
-          rankedMovies,
-          underSeenRec,
-          favoriteScary,
-          funniest,
-          bestTime
+          rankedMovies
         ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
       });
 
@@ -140,7 +132,7 @@ const Export = () => {
       <div className="export-info">
         <h3>Export Contents:</h3>
         <ul>
-          <li><strong>JSON:</strong> Complete data including all ballots and aggregated results</li>
+          <li><strong>JSON:</strong> Complete ballot data plus Best Picture results</li>
           <li><strong>CSV:</strong> All ballots in spreadsheet format</li>
         </ul>
       </div>

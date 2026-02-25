@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { addDoc, collection, deleteDoc, getDocs } from "firebase/firestore";
 import {
 	getAllBallots,
-	updateBallotFlagged,
-	type Ballot,
+	type Ballot as AdminBallot,
 } from "../../services/adminApi";
+import { BALLOT_SCHEMA_VERSION, type Ballot } from "../../services/api";
+import { db } from "../../services/firebase";
+import moviesData from "../../data/movies.json";
 import { getCanonicalBestPictureRanks } from "../../utils/bestPictureRanks";
+import { v4 as uuidv4 } from "uuid";
 import "./Admin.css";
 
 interface RawBallotsProps {
@@ -12,15 +16,35 @@ interface RawBallotsProps {
 }
 
 const REQUIRED_RANK_COUNT = 5;
+const MIN_SEEN_COUNT = REQUIRED_RANK_COUNT;
+const MAX_SEEN_COUNT = 20;
+const MAX_GENERATED_BALLOTS = 200;
+
+const getRandomInt = (min: number, max: number): number => {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const shuffleArray = <T,>(items: T[]): T[] => {
+	const shuffled = [...items];
+
+	for (let i = shuffled.length - 1; i > 0; i -= 1) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	}
+
+	return shuffled;
+};
 
 const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
-	const [ballots, setBallots] = useState<Ballot[]>([]);
+	const [ballots, setBallots] = useState<AdminBallot[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
+	const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
-	const [pendingFlags, setPendingFlags] = useState<Record<string, boolean>>({});
+	const [numGeneratedBallots, setNumGeneratedBallots] = useState(50);
+	const [isGeneratingBallots, setIsGeneratingBallots] = useState(false);
+	const [isClearingBallots, setIsClearingBallots] = useState(false);
 	const itemsPerPage = 20;
 
 	const fetchData = async () => {
@@ -36,6 +60,117 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		}
 	};
 
+	const generateRandomBallot = (index: number): Ballot => {
+		const shuffledMovies = shuffleArray(moviesData);
+		const maxSeenCount = Math.min(MAX_SEEN_COUNT, moviesData.length);
+		const seenCount = getRandomInt(MIN_SEEN_COUNT, maxSeenCount);
+		const seenMovies = shuffledMovies.slice(0, seenCount);
+		const seenMovieIds = new Set(seenMovies.map((movie) => movie.id));
+		const bestPictureRanks = shuffleArray(seenMovies)
+			.slice(0, REQUIRED_RANK_COUNT)
+			.map((movie) => movie.id);
+		const rankByMovieId = new Map(
+			bestPictureRanks.map((movieId, rankIndex) => [movieId, rankIndex + 1])
+		);
+
+		const movies = moviesData.map((movie) => {
+			const seen = seenMovieIds.has(movie.id);
+
+			return {
+				id: movie.id,
+				title: movie.title,
+				seen,
+				rank: rankByMovieId.get(movie.id) ?? null,
+			};
+		});
+
+		return {
+			schemaVersion: BALLOT_SCHEMA_VERSION,
+			clientId: `sim-${uuidv4()}`,
+			ipHash: `sim-ip-${uuidv4()}`,
+			voterName: `Simulated Voter ${index + 1}`,
+			timestamp: new Date().toISOString(),
+			movies,
+			bestPictureRanks,
+			flagged: false,
+		};
+	};
+
+	const handleGenerateRandomBallots = async () => {
+		const parsedCount = Math.floor(numGeneratedBallots);
+		const ballotCount = Number.isFinite(parsedCount) ? parsedCount : 1;
+		const safeBallotCount = Math.min(
+			MAX_GENERATED_BALLOTS,
+			Math.max(1, ballotCount)
+		);
+
+		setNumGeneratedBallots(safeBallotCount);
+		setActionError(null);
+		setActionSuccess(null);
+		setIsGeneratingBallots(true);
+
+		try {
+			const ballotsToInsert = Array.from(
+				{ length: safeBallotCount },
+				(_, index) => generateRandomBallot(index)
+			);
+
+			await Promise.all(
+				ballotsToInsert.map((ballot) => addDoc(collection(db, "ballots"), ballot))
+			);
+
+			setActionSuccess(
+				`Generated ${safeBallotCount} random ballot${
+					safeBallotCount === 1 ? "" : "s"
+				}.`
+			);
+			window.dispatchEvent(new Event("refresh-data"));
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to generate random ballots"
+			);
+		} finally {
+			setIsGeneratingBallots(false);
+		}
+	};
+
+	const handleClearAllBallots = async () => {
+		const firstConfirmation = window.confirm(
+			"Are you sure you want to delete ALL voter data?"
+		);
+		if (!firstConfirmation) {
+			return;
+		}
+
+		const secondConfirmation = window.confirm(
+			"Really sure? This permanently deletes every ballot."
+		);
+		if (!secondConfirmation) {
+			return;
+		}
+
+		setActionError(null);
+		setActionSuccess(null);
+		setIsClearingBallots(true);
+
+		try {
+			const ballotsSnapshot = await getDocs(collection(db, "ballots"));
+			await Promise.all(ballotsSnapshot.docs.map((docSnapshot) => deleteDoc(docSnapshot.ref)));
+			setActionSuccess(
+				`Deleted ${ballotsSnapshot.size} ballot${
+					ballotsSnapshot.size === 1 ? "" : "s"
+				}.`
+			);
+			window.dispatchEvent(new Event("refresh-data"));
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to clear all voter data"
+			);
+		} finally {
+			setIsClearingBallots(false);
+		}
+	};
+
 	useEffect(() => {
 		fetchData();
 
@@ -47,53 +182,15 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		return () => window.removeEventListener("refresh-data", handleRefresh);
 	}, []);
 
-	const handleFlaggedToggle = async (ballotId: string, flagged: boolean) => {
-		const previousFlagged =
-			ballots.find((ballot) => ballot.id === ballotId)?.flagged === true;
-
-		setActionError(null);
-		setPendingFlags((prev) => ({ ...prev, [ballotId]: true }));
-		setBallots((prev) =>
-			prev.map((ballot) =>
-				ballot.id === ballotId ? { ...ballot, flagged } : ballot
-			)
-		);
-
-		try {
-			await updateBallotFlagged(ballotId, flagged);
-			window.dispatchEvent(new Event("refresh-data"));
-		} catch (err) {
-			setBallots((prev) =>
-				prev.map((ballot) =>
-					ballot.id === ballotId
-						? { ...ballot, flagged: previousFlagged }
-						: ballot
-				)
-			);
-			setActionError(
-				err instanceof Error ? err.message : "Failed to update ballot flag"
-			);
-		} finally {
-			setPendingFlags((prev) => {
-				const next = { ...prev };
-				delete next[ballotId];
-				return next;
-			});
-		}
-	};
-
-	const filteredBallots = showFlaggedOnly
-		? ballots.filter((b) => b.flagged === true)
-		: ballots;
-
+	const filteredBallots = ballots;
 	const totalPages = Math.max(1, Math.ceil(filteredBallots.length / itemsPerPage));
 	const startIndex = (currentPage - 1) * itemsPerPage;
 	const paginatedBallots = filteredBallots.slice(
 		startIndex,
 		startIndex + itemsPerPage
 	);
-	const excludedCount = ballots.filter((ballot) => ballot.flagged === true).length;
-	const includedCount = ballots.length - excludedCount;
+	const includedCount = ballots.filter((ballot) => ballot.flagged !== true).length;
+	const titlesByMovieId = new Map(moviesData.map((movie) => [movie.id, movie.title]));
 
 	useEffect(() => {
 		if (currentPage > totalPages) {
@@ -103,10 +200,6 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 
 	const obfuscateClientId = (clientId: string) => {
 		return `${clientId.substring(0, 8)}...`;
-	};
-
-	const formatDate = (timestamp: string) => {
-		return new Date(timestamp).toLocaleString();
 	};
 
 	if (loading) {
@@ -127,20 +220,41 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 			</div>
 
 			<div className="ballots-actions">
-				<label className="checkbox-label">
+				<div className="ballots-actions-left">
+					<button onClick={fetchData} className="btn btn-secondary">
+						Refresh
+					</button>
+					<button
+						onClick={handleClearAllBallots}
+						className="btn btn-danger"
+						disabled={isClearingBallots}
+					>
+						{isClearingBallots ? "Clearing..." : "Clear All Voter Data"}
+					</button>
+				</div>
+				<div className="ballots-actions-right">
+					<button
+						onClick={handleGenerateRandomBallots}
+						className="btn btn-primary"
+						disabled={isGeneratingBallots}
+					>
+						{isGeneratingBallots ? "Generating..." : "Generate"}
+					</button>
 					<input
-						type="checkbox"
-						checked={showFlaggedOnly}
+						id="generate-random-ballots"
+						type="number"
+						min={1}
+						max={MAX_GENERATED_BALLOTS}
+						step={1}
+						value={numGeneratedBallots}
 						onChange={(e) => {
-							setShowFlaggedOnly(e.target.checked);
-							setCurrentPage(1);
+							const nextValue = parseInt(e.target.value, 10);
+							setNumGeneratedBallots(Number.isFinite(nextValue) ? nextValue : 1);
 						}}
+						disabled={isGeneratingBallots}
 					/>
-					Show flagged only
-				</label>
-				<button onClick={fetchData} className="btn btn-secondary">
-					Refresh
-				</button>
+					<span className="ballots-sample-label">sample ballots</span>
+				</div>
 			</div>
 
 			<div className="ballots-info">
@@ -148,71 +262,56 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 					Included in analysis: <strong>{includedCount}</strong>
 				</span>
 				<span>
-					Excluded: <strong>{excludedCount}</strong>
-				</span>
-				<span>
 					Showing {paginatedBallots.length} of {filteredBallots.length} ballots
 				</span>
 			</div>
 
 			{actionError && <div className="error-message">{actionError}</div>}
+			{actionSuccess && <div className="message success">{actionSuccess}</div>}
 
 			<div className="table-container">
 				<table className="results-table raw-ballots-table">
 					<thead>
 						<tr>
-							<th>Voter</th>
-							<th>Submitted</th>
+							<th>Name</th>
+							<th>1st</th>
+							<th>2nd</th>
+							<th>3rd</th>
+							<th>4th</th>
+							<th>5th</th>
 							<th>Seen Count</th>
-							<th>Ranking Valid</th>
-							<th>Status</th>
-							<th>Exclude from Analysis</th>
 						</tr>
 					</thead>
 					<tbody>
 						{paginatedBallots.length === 0 && (
 							<tr>
-								<td colSpan={6}>No ballots found.</td>
+								<td colSpan={7}>No ballots found.</td>
 							</tr>
 						)}
 						{paginatedBallots.map((ballot) => {
 							const seenCount = ballot.movies.filter((movie) => movie.seen).length;
-							const rankedCount = getCanonicalBestPictureRanks(ballot).length;
-							const isRankingValid = rankedCount === REQUIRED_RANK_COUNT;
-							const isExcluded = ballot.flagged === true;
-							const isPending = pendingFlags[ballot.id] === true;
+							const rankedMovieIds = getCanonicalBestPictureRanks(ballot);
+							const rankedTitles = Array.from({ length: REQUIRED_RANK_COUNT }, (_, index) => {
+								const movieId = rankedMovieIds[index];
+								if (!movieId) {
+									return "—";
+								}
+
+								const fallbackTitle = ballot.movies.find((movie) => movie.id === movieId)?.title;
+								return titlesByMovieId.get(movieId) || fallbackTitle || movieId;
+							});
 
 							return (
-								<tr key={ballot.id} className={isExcluded ? "flagged-row" : ""}>
+								<tr key={ballot.id}>
 									<td className="movie-title-cell">
 										{ballot.voterName || obfuscateClientId(ballot.clientId)}
 									</td>
-									<td>{formatDate(ballot.timestamp)}</td>
+									<td>{rankedTitles[0]}</td>
+									<td>{rankedTitles[1]}</td>
+									<td>{rankedTitles[2]}</td>
+									<td>{rankedTitles[3]}</td>
+									<td>{rankedTitles[4]}</td>
 									<td>{seenCount}</td>
-									<td>
-										{isRankingValid
-											? "Valid"
-											: `Invalid (${rankedCount}/${REQUIRED_RANK_COUNT})`}
-									</td>
-									<td>{isExcluded ? "Excluded" : "Included"}</td>
-									<td>
-										<div className="flag-toggle-cell">
-											<label className="checkbox-label">
-												<input
-													type="checkbox"
-													checked={isExcluded}
-													disabled={isPending}
-													onChange={(e) =>
-														handleFlaggedToggle(ballot.id, e.target.checked)
-													}
-												/>
-												Exclude
-											</label>
-											{isPending && (
-												<span className="flag-save-status">Saving...</span>
-											)}
-										</div>
-									</td>
 								</tr>
 							);
 						})}

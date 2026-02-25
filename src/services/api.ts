@@ -18,12 +18,7 @@ export interface Movie {
 export interface BallotMovie {
 	id: string;
 	seen: boolean;
-	wantToSee?: boolean;
 	rank?: number | null;
-	underSeenRec?: boolean;
-	favoriteScary?: boolean;
-	funniest?: boolean;
-	bestTimeAtMovies?: boolean;
 	title?: string; // Optional, for reference
 }
 
