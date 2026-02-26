@@ -611,6 +611,12 @@
   margin-bottom: var(--spacing-sm);
 }
 
+.optional-recommendation-emphasis {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.12em;
+}
+
 .optional-recommendations-list {
   flex: 1;
   overflow-y: auto;
@@ -671,6 +677,12 @@
 
 .optional-recommendations-footer > .btn {
   width: auto;
+}
+
+.optional-recommendation-count {
+  text-align: center;
+  justify-self: center;
+  margin: 0;
 }
 
 .optional-empty-state {

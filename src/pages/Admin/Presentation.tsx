@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import moviesData from '../../data/movies.json';
 import {
@@ -27,7 +28,6 @@ type RecommendationTileSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 
 interface RecommendationSlideConfig {
   key: RecommendationFieldKey;
-  title: string;
   prompt: string;
 }
 
@@ -45,7 +45,6 @@ interface RecommendationCloudRow {
 
 interface RecommendationSlideData {
   id: RecommendationFieldKey;
-  title: string;
   prompt: string;
   responsesCount: number;
   rows: RecommendationCloudRow[];
@@ -93,27 +92,22 @@ const RECOMMENDATION_TOP_LIMIT = 20;
 const RECOMMENDATION_SLIDES: RecommendationSlideConfig[] = [
   {
     key: 'toParents',
-    title: 'Recommendations: Parents',
     prompt: "Movies you'd recommend to your parents",
   },
   {
     key: 'toKid',
-    title: 'Recommendations: 9-year-old niece or nephew',
     prompt: "Movies you'd recommend to your 9-year-old niece or nephew",
   },
   {
     key: 'underseenGem',
-    title: 'Recommendations: Underseen gem',
     prompt: 'Underseen gems more people should see',
   },
   {
     key: 'toFreakiestFriend',
-    title: 'Recommendations: Freakiest friend',
     prompt: "Movies you'd recommend to your freakiest friend",
   },
   {
     key: 'leastFavorite',
-    title: 'Least Favorite',
     prompt: 'Least favorite movies',
   },
 ];
@@ -256,7 +250,6 @@ const buildRecommendationSlides = (
 
     return {
       id: slideConfig.key,
-      title: slideConfig.title,
       prompt: slideConfig.prompt,
       responsesCount: sortedEntries.reduce(
         (totalCount, entry) => totalCount + entry.count,
@@ -272,12 +265,17 @@ const buildPresentationData = (allBallots: AdminBallot[]): PresentationData => {
   const stats = calculateParticipationStats(includedBallots, allBallots.length);
   const rcv = calculateRankedChoiceRounds(includedBallots);
   const recommendationSlides = buildRecommendationSlides(includedBallots);
+  const uniqueSeenMovieIds = new Set<string>();
+  includedBallots.forEach((ballot) => {
+    ballot.movies.forEach((movie) => {
+      if (movie.seen && movie.id) {
+        uniqueSeenMovieIds.add(movie.id);
+      }
+    });
+  });
   const overview = {
     ballotsReceived: allBallots.length,
-    moviesSeen: allBallots.reduce(
-      (total, ballot) => total + ballot.movies.filter((movie) => movie.seen).length,
-      0
-    ),
+    moviesSeen: uniqueSeenMovieIds.size,
   };
 
   return { overview, stats, rcv, recommendationSlides };
@@ -304,6 +302,22 @@ const getRcvDisplayCopy = (step: RcvPresentationStep) => {
     };
   }
 
+  if (step.type === 'standings') {
+    const leadingCandidate = [...step.candidates]
+      .filter((candidate) => candidate.status !== 'eliminated')
+      .sort((left, right) => {
+        if (right.votes !== left.votes) {
+          return right.votes - left.votes;
+        }
+        return left.title.localeCompare(right.title);
+      })[0];
+
+    return {
+      title: 'Here are the current standings.',
+      subtitle: leadingCandidate ? `${leadingCandidate.title} is in the lead.` : '',
+    };
+  }
+
   const eliminatedCandidateId = step.newlyEliminated[0];
   const eliminatedCandidate = eliminatedCandidateId
     ? step.candidates.find((candidate) => candidate.candidateId === eliminatedCandidateId)
@@ -320,8 +334,8 @@ const getRcvDisplayCopy = (step: RcvPresentationStep) => {
 
   return {
     title: eliminatedCandidate
-      ? `${eliminatedCandidate.title} ballots have been exhausted.`
-      : 'Some ballots have been exhausted.',
+      ? `Ballot exhausted for ${eliminatedCandidate.title}`
+      : 'Ballot exhausted.',
     subtitle: leadingCandidate
       ? `${leadingCandidate.title} is in the lead.`
       : '',
@@ -329,6 +343,8 @@ const getRcvDisplayCopy = (step: RcvPresentationStep) => {
 };
 
 const Presentation = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [data, setData] = useState<PresentationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -413,7 +429,9 @@ const Presentation = () => {
       }))
       .filter(
         (slide) =>
-          slide.step.type === 'redistribution' || slide.step.type === 'winner'
+          slide.step.type === 'standings' ||
+          slide.step.type === 'redistribution' ||
+          slide.step.type === 'winner'
       );
 
     return [
@@ -479,15 +497,30 @@ const Presentation = () => {
         }
         event.preventDefault();
         void refreshData();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        const adminPath = location.pathname.replace(/\/present\/?$/, '');
+        navigate(adminPath || '.', { replace: false });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNextSlide, goToPreviousSlide, liveUpdatesLocked, refreshData]);
+  }, [
+    goToNextSlide,
+    goToPreviousSlide,
+    liveUpdatesLocked,
+    location.pathname,
+    navigate,
+    refreshData,
+  ]);
 
   const activeSlide = slides[activeSlideIndex] ?? null;
   const activeStep = activeSlide?.kind === 'rcv' ? activeSlide.step : null;
+  const activeStepCopy = useMemo(
+    () => (activeStep ? getRcvDisplayCopy(activeStep) : null),
+    [activeStep]
+  );
   const visibleCandidates = useMemo(() => {
     if (!activeStep) {
       return [];
@@ -693,16 +726,13 @@ const Presentation = () => {
 
         {activeSlide.kind === 'recommendation-intro' && (
           <div className="presentation-block presentation-recommendation-intro-block">
-            <h1>{activeSlide.recommendation.title}</h1>
-            <p className="presentation-step-explanation">
-              {activeSlide.recommendation.prompt}
-            </p>
+            <h1>{activeSlide.recommendation.prompt}</h1>
           </div>
         )}
 
         {activeSlide.kind === 'recommendation-cloud' && (
           <div className="presentation-block presentation-recommendation-block">
-            <h1>{activeSlide.recommendation.title}</h1>
+            <h1>{activeSlide.recommendation.prompt}</h1>
             <p className="presentation-threshold-line">
               {activeSlide.recommendation.responsesCount} response
               {activeSlide.recommendation.responsesCount === 1 ? '' : 's'}
@@ -735,17 +765,22 @@ const Presentation = () => {
         {activeSlide.kind === 'rcv' && activeStep && (
           <div className="presentation-block presentation-rcv-block">
             <div className="presentation-step-copy">
-              <h1>{getRcvDisplayCopy(activeStep).title}</h1>
-              {getRcvDisplayCopy(activeStep).subtitle && (
+              <h1
+                className={
+                  activeStep.type === 'redistribution'
+                    ? 'presentation-step-title-compact'
+                    : undefined
+                }
+              >
+                {activeStepCopy?.title}
+              </h1>
+              {activeStepCopy?.subtitle && (
                 <p className="presentation-step-explanation">
-                  {getRcvDisplayCopy(activeStep).subtitle}
+                  {activeStepCopy.subtitle}
                 </p>
               )}
               {redistributionPanels.length > 0 && (
                 <>
-                  <p className="presentation-transfer-note">
-                    Each trophy shows where ballots moved next.
-                  </p>
                   <div className="presentation-transfer-panels">
                     {redistributionPanels.map((panel) => (
                       <div className="presentation-transfer-phase" key={panel.stepId}>

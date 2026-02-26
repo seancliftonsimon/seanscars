@@ -184,7 +184,7 @@ const RankFavorites = ({
             className="btn btn-primary"
             disabled={!hasExactlyRequiredFavorites || !allRanked || submitting}
           >
-            {submitting ? "Submitting..." : "Submit Vote"}
+            {submitting ? "Submitting..." : "Continue"}
           </button>
         </div>
       </div>

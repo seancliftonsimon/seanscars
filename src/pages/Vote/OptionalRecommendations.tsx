@@ -5,22 +5,23 @@ import "./Vote.css";
 export interface OptionalRecommendationQuestion {
 	key: string;
 	prompt: string;
+	emphasis: string;
 }
 
 interface OptionalRecommendationsProps {
 	questions: OptionalRecommendationQuestion[];
 	currentQuestionIndex: number;
 	seenMovies: Movie[];
-	currentQuestionMovieOrder: string[];
 	selectedMovieId: string | null;
 	canContinue: boolean;
 	isSaving: boolean;
 	error: string | null;
 	onSelectMovie: (movieId: string) => void;
 	onBack: () => void;
-	onSkip: () => void;
 	onContinue: () => void;
 	onFinishWithoutSeen: () => void;
+	continueLabel?: string;
+	showQuestionCount?: boolean;
 }
 
 const TAP_MOVE_THRESHOLD_PX = 10;
@@ -29,16 +30,16 @@ const OptionalRecommendations = ({
 	questions,
 	currentQuestionIndex,
 	seenMovies,
-	currentQuestionMovieOrder,
 	selectedMovieId,
 	canContinue,
 	isSaving,
 	error,
 	onSelectMovie,
 	onBack,
-	onSkip,
 	onContinue,
 	onFinishWithoutSeen,
+	continueLabel,
+	showQuestionCount = true,
 }: OptionalRecommendationsProps) => {
 	const pointerStateRef = useRef<
 		Record<string, { pointerId: number; startX: number; startY: number; moved: boolean }>
@@ -46,14 +47,17 @@ const OptionalRecommendations = ({
 	const activeQuestion = questions[currentQuestionIndex];
 	const isBusy = isSaving;
 
-	const orderedSeenMovies = useMemo(() => {
-		const movieById = new Map(seenMovies.map((movie) => [movie.id, movie]));
-		const ordered = currentQuestionMovieOrder
-			.map((movieId) => movieById.get(movieId))
-			.filter((movie): movie is Movie => Boolean(movie));
-
-		return ordered.length > 0 ? ordered : seenMovies;
-	}, [currentQuestionMovieOrder, seenMovies]);
+	const orderedSeenMovies = useMemo(
+		() =>
+			[...seenMovies].sort((left, right) => {
+				const titleComparison = left.title.localeCompare(right.title);
+				if (titleComparison !== 0) {
+					return titleComparison;
+				}
+				return left.id.localeCompare(right.id);
+			}),
+		[seenMovies]
+	);
 
 	if (!activeQuestion) {
 		return null;
@@ -120,19 +124,42 @@ const OptionalRecommendations = ({
 		delete pointerStateRef.current[movieId];
 	};
 
+	const renderPrompt = () => {
+		const emphasis = activeQuestion.emphasis.trim();
+		if (!emphasis) {
+			return activeQuestion.prompt;
+		}
+
+		const promptIndex = activeQuestion.prompt
+			.toLocaleLowerCase()
+			.indexOf(emphasis.toLocaleLowerCase());
+		if (promptIndex < 0) {
+			return activeQuestion.prompt;
+		}
+
+		const promptStart = activeQuestion.prompt.slice(0, promptIndex);
+		const promptMiddle = activeQuestion.prompt.slice(
+			promptIndex,
+			promptIndex + emphasis.length
+		);
+		const promptEnd = activeQuestion.prompt.slice(promptIndex + emphasis.length);
+
+		return (
+			<>
+				{promptStart}
+				<span className="optional-recommendation-emphasis">{promptMiddle}</span>
+				{promptEnd}
+			</>
+		);
+	};
+
 	return (
 		<div className="vote-screen optional-recommendations-screen">
 			<div className="vote-header">
-				<h2>Optional Recommendations</h2>
-				<div className="rank-count">
-					Question {currentQuestionIndex + 1} of {questions.length}
-				</div>
+				<h2>{renderPrompt()}</h2>
 			</div>
 
 			<div className="vote-content">
-				<p className="instruction-text optional-recommendation-question">
-					{activeQuestion.prompt}
-				</p>
 				{error && <div className="error-message">{error}</div>}
 
 				{orderedSeenMovies.length === 0 ? (
@@ -193,14 +220,11 @@ const OptionalRecommendations = ({
 							>
 								Back
 							</button>
-							<button
-								type="button"
-								onClick={onSkip}
-								className="btn-link"
-								disabled={isBusy}
-							>
-								Skip
-							</button>
+							{showQuestionCount && (
+								<div className="rank-count optional-recommendation-count">
+									Question {currentQuestionIndex + 1} of {questions.length}
+								</div>
+							)}
 							<button
 								type="button"
 								onClick={onContinue}
@@ -209,9 +233,10 @@ const OptionalRecommendations = ({
 							>
 								{isBusy
 									? "Saving..."
-									: currentQuestionIndex === questions.length - 1
-										? "Finish"
-										: "Continue"}
+									: continueLabel ||
+										(currentQuestionIndex === questions.length - 1
+											? "Finish"
+											: "Continue")}
 							</button>
 						</div>
 					</>

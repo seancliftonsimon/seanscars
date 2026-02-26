@@ -34,7 +34,7 @@ const MARK_SEEN_ORDER_STORAGE_KEY = "vote.markSeenOrder";
 const FAVORITES_ORDER_STORAGE_KEY = "vote.favoritesOrder";
 const SEEN_COUNT_COMMIT_STATE_STORAGE_KEY = "vote.seenCountCommitState";
 const REQUIRED_FAVORITES_COUNT = 5;
-const SEAN_NEW_MOVIES_SEEN_COUNT = 57;
+const SEAN_NEW_MOVIES_SEEN_COUNT = 60;
 const MASTER_MOVIE_IDS = moviesData.map((movie) => movie.id);
 const MASTER_MOVIE_ID_SET = new Set(MASTER_MOVIE_IDS);
 
@@ -46,6 +46,7 @@ interface SeenCountCommitState {
 interface OptionalRecommendationQuestion {
 	key: BallotRecommendationKey;
 	prompt: string;
+	emphasis: string;
 }
 
 interface BallotSnapshot {
@@ -327,32 +328,39 @@ const SCREEN_INTRO_CHOOSE_FAVORITES = 3;
 const SCREEN_CHOOSE_FAVORITES = 4;
 const SCREEN_INTRO_RANK_FAVORITES = 5;
 const SCREEN_RANK_FAVORITES = 6;
-const SCREEN_POST_SUBMIT_CONFIRMATION = 7;
-const SCREEN_OPTIONAL_RECOMMENDATIONS = 8;
-const SCREEN_DONE = 9;
+const SCREEN_LEAST_FAVORITE = 7;
+const SCREEN_POST_SUBMIT_CONFIRMATION = 8;
+const SCREEN_OPTIONAL_RECOMMENDATIONS = 9;
+const SCREEN_DONE = 10;
 
 const OPTIONAL_RECOMMENDATION_QUESTIONS: OptionalRecommendationQuestion[] = [
 	{
 		key: "toParents",
 		prompt: "Choose one movie you’d recommend to your parents",
+		emphasis: "your parents",
 	},
 	{
 		key: "toKid",
 		prompt: "Choose one movie you’d recommend to your 9-year-old niece or nephew",
+		emphasis: "your 9-year-old niece or nephew",
 	},
 	{
 		key: "underseenGem",
 		prompt: "Choose one underseen gem more people should see",
+		emphasis: "more people",
 	},
 	{
 		key: "toFreakiestFriend",
 		prompt: "Choose one movie you’d recommend to your freakiest friend",
-	},
-	{
-		key: "leastFavorite",
-		prompt: "Choose your least favorite movie",
+		emphasis: "your freakiest friend",
 	},
 ];
+
+const REQUIRED_LEAST_FAVORITE_QUESTION: OptionalRecommendationQuestion = {
+	key: "leastFavorite",
+	prompt: "Choose your least favorite movie",
+	emphasis: "least favorite",
+};
 
 const EMPTY_RECOMMENDATIONS: BallotRecommendations = {
 	toParents: null,
@@ -361,16 +369,6 @@ const EMPTY_RECOMMENDATIONS: BallotRecommendations = {
 	toFreakiestFriend: null,
 	leastFavorite: null,
 };
-
-const buildOptionalQuestionMovieOrder = (
-	seenMovieIds: string[]
-): Record<BallotRecommendationKey, string[]> => ({
-	toParents: getShuffledMovieIds(seenMovieIds),
-	toKid: getShuffledMovieIds(seenMovieIds),
-	underseenGem: getShuffledMovieIds(seenMovieIds),
-	toFreakiestFriend: getShuffledMovieIds(seenMovieIds),
-	leastFavorite: getShuffledMovieIds(seenMovieIds),
-});
 
 const Vote = () => {
 	const navigate = useNavigate();
@@ -410,13 +408,11 @@ const Vote = () => {
 	const [submittedBallotId, setSubmittedBallotId] = useState<string | null>(null);
 	const [recommendations, setRecommendations] =
 		useState<BallotRecommendations>(EMPTY_RECOMMENDATIONS);
-	const [answeredRecommendationKeys, setAnsweredRecommendationKeys] = useState<
-		Set<BallotRecommendationKey>
-	>(new Set());
+	const [leastFavoriteMovieId, setLeastFavoriteMovieId] = useState<string | null>(
+		null
+	);
 	const [optionalQuestionIndex, setOptionalQuestionIndex] = useState(0);
-	const [optionalQuestionMovieOrder, setOptionalQuestionMovieOrder] = useState<
-		Record<BallotRecommendationKey, string[]>
-	>(() => buildOptionalQuestionMovieOrder([]));
+	const [leastFavoriteError, setLeastFavoriteError] = useState<string | null>(null);
 	const [optionalError, setOptionalError] = useState<string | null>(null);
 	const [isSavingOptionalAnswer, setIsSavingOptionalAnswer] = useState(false);
 	const [ballotSnapshot, setBallotSnapshot] = useState<BallotSnapshot | null>(
@@ -548,9 +544,7 @@ const Vote = () => {
 		? recommendations[currentOptionalQuestion.key]
 		: null;
 	const canContinueOptionalQuestion = Boolean(
-		currentOptionalQuestion &&
-			(currentOptionalSelection !== null ||
-				answeredRecommendationKeys.has(currentOptionalQuestion.key))
+		currentOptionalQuestion && currentOptionalSelection !== null
 	);
 	const movieTitleById = useMemo(
 		() => new Map(movies.map((movie) => [movie.id, movie.title])),
@@ -577,20 +571,9 @@ const Vote = () => {
 		}
 
 		return `That's ${Math.abs(difference)} ${
-			difference > 0 ? "more" : "less"
+			difference > 0 ? "more" : "fewer"
 		} than Sean.`;
 	}, [ballotSnapshot]);
-	const ballotSnapshotLeastFavoriteTitle = useMemo(() => {
-		if (!ballotSnapshot) {
-			return null;
-		}
-
-		if (recommendations.leastFavorite) {
-			return getMovieTitleById(recommendations.leastFavorite);
-		}
-
-		return ballotSnapshot.leastFavoriteTitle;
-	}, [ballotSnapshot, getMovieTitleById, recommendations.leastFavorite]);
 
 	const handleMarkSeen = (movieId: string) => {
 		setMarkSeenCommitError(null);
@@ -673,7 +656,7 @@ const Vote = () => {
 
 	const saveOptionalAnswerAndAdvance = async (
 		questionKey: BallotRecommendationKey,
-		answer: string | null
+		answer: string
 	) => {
 		if (!submittedBallotId) {
 			setOptionalError("Couldn't find your ballot. You can finish now.");
@@ -698,11 +681,6 @@ const Vote = () => {
 				...previousAnswers,
 				[questionKey]: answer,
 			}));
-			setAnsweredRecommendationKeys((previousKeys) => {
-				const nextKeys = new Set(previousKeys);
-				nextKeys.add(questionKey);
-				return nextKeys;
-			});
 
 			moveToNextOptionalQuestionOrFinish();
 		} catch (saveError) {
@@ -749,14 +727,6 @@ const Vote = () => {
 		}));
 	};
 
-	const handleOptionalSkipQuestion = async () => {
-		if (!currentOptionalQuestion || isSavingOptionalAnswer) {
-			return;
-		}
-
-		await saveOptionalAnswerAndAdvance(currentOptionalQuestion.key, null);
-	};
-
 	const handleOptionalContinueQuestion = async () => {
 		if (!currentOptionalQuestion || isSavingOptionalAnswer) {
 			return;
@@ -767,12 +737,12 @@ const Vote = () => {
 				currentOptionalQuestion.key,
 				currentOptionalSelection
 			);
-			return;
 		}
+	};
 
-		if (answeredRecommendationKeys.has(currentOptionalQuestion.key)) {
-			moveToNextOptionalQuestionOrFinish();
-		}
+	const handleLeastFavoriteSelectMovie = (movieId: string) => {
+		setLeastFavoriteError(null);
+		setLeastFavoriteMovieId(movieId);
 	};
 
 	const handleFinishOptionalWithoutSeen = async () => {
@@ -803,7 +773,7 @@ const Vote = () => {
 		}
 	};
 
-	const handleSubmit = async () => {
+	const handleSubmit = async (requiredLeastFavoriteMovieId: string) => {
 		if (!bestPictureRanksForSubmit) {
 			setRankingError("Rank your 5 favorites (#1-#5) before submitting.");
 			return;
@@ -838,7 +808,10 @@ const Vote = () => {
 				movies: ballotMovies,
 				bestPictureRanks: bestPictureRanksForSubmit,
 				flagged: false,
-				recommendations: EMPTY_RECOMMENDATIONS,
+				recommendations: {
+					...EMPTY_RECOMMENDATIONS,
+					leastFavorite: requiredLeastFavoriteMovieId,
+				},
 				recommendationsCompletedAt: null,
 			};
 
@@ -849,24 +822,17 @@ const Vote = () => {
 
 			const seenCount = ballotMovies.filter((movie) => movie.seen).length;
 			const topFavoriteMovieId = bestPictureRanksForSubmit[0] ?? null;
-			const leastFavoriteMovieId =
-				bestPictureRanksForSubmit[bestPictureRanksForSubmit.length - 1] ?? null;
 			setBallotSnapshot({
 				seenCount,
 				topFavoriteTitle: getMovieTitleById(topFavoriteMovieId),
-				leastFavoriteTitle: getMovieTitleById(leastFavoriteMovieId),
+				leastFavoriteTitle: getMovieTitleById(requiredLeastFavoriteMovieId),
 			});
 			setSubmittedBallotId(submitResult.id);
-			setRecommendations(EMPTY_RECOMMENDATIONS);
-			setAnsweredRecommendationKeys(new Set());
+			setRecommendations({
+				...EMPTY_RECOMMENDATIONS,
+				leastFavorite: requiredLeastFavoriteMovieId,
+			});
 			setOptionalQuestionIndex(0);
-			setOptionalQuestionMovieOrder(
-				buildOptionalQuestionMovieOrder(
-					sessionOrderedMovies
-						.filter((movie) => seenMovies.has(movie.id))
-						.map((movie) => movie.id)
-				)
-			);
 			setOptionalError(null);
 			setScreen(SCREEN_POST_SUBMIT_CONFIRMATION);
 		} catch (err) {
@@ -874,6 +840,15 @@ const Vote = () => {
 		} finally {
 			setSubmitting(false);
 		}
+	};
+
+	const handleSubmitWithLeastFavorite = async () => {
+		if (!leastFavoriteMovieId) {
+			setLeastFavoriteError("Choose your least favorite movie before submitting.");
+			return;
+		}
+
+		await handleSubmit(leastFavoriteMovieId);
 	};
 
 	const handleNext = async () => {
@@ -944,7 +919,9 @@ const Vote = () => {
 			setRankingError(null);
 			setScreen(SCREEN_RANK_FAVORITES);
 		} else if (screen === SCREEN_RANK_FAVORITES) {
-			void handleSubmit();
+			setLeastFavoriteError(null);
+			setLeastFavoriteMovieId(null);
+			setScreen(SCREEN_LEAST_FAVORITE);
 		}
 	};
 
@@ -1040,6 +1017,27 @@ const Vote = () => {
 					submitting={submitting}
 				/>
 			)}
+			{screen === SCREEN_LEAST_FAVORITE && (
+				<OptionalRecommendations
+					questions={[REQUIRED_LEAST_FAVORITE_QUESTION]}
+					currentQuestionIndex={0}
+					seenMovies={seenMoviesForOptional}
+					selectedMovieId={leastFavoriteMovieId}
+					canContinue={leastFavoriteMovieId !== null}
+					isSaving={submitting}
+					error={leastFavoriteError ?? error}
+					onSelectMovie={handleLeastFavoriteSelectMovie}
+					onBack={handleBack}
+					onContinue={() => {
+						void handleSubmitWithLeastFavorite();
+					}}
+					onFinishWithoutSeen={() => {
+						void handleSubmitWithLeastFavorite();
+					}}
+					continueLabel="Submit Vote"
+					showQuestionCount={false}
+				/>
+			)}
 			{screen === SCREEN_POST_SUBMIT_CONFIRMATION && (
 				<div className="vote-success post-submit-confirmation">
 					<h1>Your top five have been submitted!</h1>
@@ -1054,8 +1052,8 @@ const Vote = () => {
 								<li>You saw {ballotSnapshot.seenCount} new movies in 2025.</li>
 								<li>{ballotSnapshotComparisonText}</li>
 								<li>Your number one favorite was {ballotSnapshot.topFavoriteTitle}.</li>
-								{ballotSnapshotLeastFavoriteTitle && (
-									<li>Your least favorite was {ballotSnapshotLeastFavoriteTitle}.</li>
+								{ballotSnapshot.leastFavoriteTitle && (
+									<li>Your least favorite was {ballotSnapshot.leastFavoriteTitle}.</li>
 								)}
 							</ul>
 						</div>
@@ -1066,7 +1064,7 @@ const Vote = () => {
 							className="btn btn-primary"
 							onClick={handleStartOptionalRecommendations}
 						>
-							Continue for a few more optional selections
+							Continue to share your recs!
 						</button>
 						<button
 							type="button"
@@ -1083,18 +1081,12 @@ const Vote = () => {
 					questions={OPTIONAL_RECOMMENDATION_QUESTIONS}
 					currentQuestionIndex={optionalQuestionIndex}
 					seenMovies={seenMoviesForOptional}
-					currentQuestionMovieOrder={
-						optionalQuestionMovieOrder[currentOptionalQuestion.key] ?? []
-					}
 					selectedMovieId={currentOptionalSelection}
 					canContinue={canContinueOptionalQuestion}
 					isSaving={isSavingOptionalAnswer}
 					error={optionalError}
 					onSelectMovie={handleOptionalSelectMovie}
 					onBack={handleOptionalBack}
-					onSkip={() => {
-						void handleOptionalSkipQuestion();
-					}}
 					onContinue={() => {
 						void handleOptionalContinueQuestion();
 					}}
@@ -1107,19 +1099,6 @@ const Vote = () => {
 				<div className="vote-success">
 					<h1>Thank you!</h1>
 					<p>Your ballot has been submitted.</p>
-					{ballotSnapshot && ballotSnapshotComparisonText && (
-						<div className="ballot-snapshot-card">
-							<h2>Your Ballot Snapshot</h2>
-							<ul>
-								<li>You saw {ballotSnapshot.seenCount} new movies in 2025.</li>
-								<li>{ballotSnapshotComparisonText}</li>
-								<li>Your number one favorite was {ballotSnapshot.topFavoriteTitle}.</li>
-								{ballotSnapshotLeastFavoriteTitle && (
-									<li>Your least favorite was {ballotSnapshotLeastFavoriteTitle}.</li>
-								)}
-							</ul>
-						</div>
-					)}
 					<button onClick={() => navigate("/")} className="btn btn-primary">
 						Return to Home
 					</button>

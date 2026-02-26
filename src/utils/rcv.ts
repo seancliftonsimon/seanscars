@@ -71,6 +71,7 @@ export interface VoteMovement {
 }
 
 export type RcvStepType =
+  | 'standings'
   | 'tally'
   | 'elimination'
   | 'redistribution'
@@ -586,10 +587,10 @@ export function calculateRankedChoiceRounds(
     }
 
     steps.push({
-      id: `round-${roundNumber}-tally`,
+      id: `round-${roundNumber}-standings-start`,
       roundNumber,
-      type: 'tally',
-      title: `Round ${roundNumber} — Tally`,
+      type: 'standings',
+      title: `Round ${roundNumber} — Standings`,
       explanation: `No majority yet. ${leadingCandidate.title} leads with ${leadingCandidate.votes} of ${activeBallots} votes. ${threshold} needed to win.`,
       activeBallots,
       threshold,
@@ -701,6 +702,28 @@ export function calculateRankedChoiceRounds(
         ),
         voteMovements,
       });
+
+      if (phaseIndex < phaseEliminated.length - 1) {
+        steps.push({
+          id: `round-${roundNumber}-standings-${phaseIndex + 1}`,
+          roundNumber,
+          type: 'standings',
+          title: `Round ${roundNumber} — Standings`,
+          explanation: `Current standings after ${eliminatedTitle} elimination.`,
+          activeBallots: stepActiveBallots,
+          threshold: stepThreshold,
+          exhaustedBallots: rankedBallots.length - stepActiveBallots,
+          newlyEliminated: [],
+          candidates: buildCandidateStepState(
+            candidateOrder,
+            progressiveAssignments,
+            titlesByMovieId,
+            eliminatedCandidateIds,
+            null
+          ),
+          voteMovements: [],
+        });
+      }
     });
 
     const nextActiveBallots = countActiveAssignments(nextAssignments);
