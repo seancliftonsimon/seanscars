@@ -199,6 +199,7 @@ const getTopSeenBallot = (ballots: RcvBallot[]): ParticipationLeader | null => {
 };
 
 const getRankEmoji = (_rankIndex: number | null) => {
+  void _rankIndex;
   return BALLOT_EMOJI;
 };
 
@@ -690,7 +691,7 @@ export function calculateRankedChoiceRounds(
         activeBallots: stepActiveBallots,
         threshold: stepThreshold,
         exhaustedBallots: rankedBallots.length - stepActiveBallots,
-        newlyEliminated: [],
+        newlyEliminated: [eliminatedCandidateId],
         candidates: buildCandidateStepState(
           candidateOrder,
           progressiveAssignments,

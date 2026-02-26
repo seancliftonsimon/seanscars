@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import moviesData from '../../data/movies.json';
 import {
   getAllBallots,
   isIncludedInAnalysis,
   type Ballot as AdminBallot,
 } from '../../services/adminApi';
+import { db } from '../../services/firebase';
 import {
   calculateParticipationStats,
   calculateRankedChoiceRounds,
@@ -36,15 +38,24 @@ interface RecommendationCloudItem {
   size: RecommendationTileSize;
 }
 
+interface RecommendationCloudRow {
+  count: number;
+  items: RecommendationCloudItem[];
+}
+
 interface RecommendationSlideData {
   id: RecommendationFieldKey;
   title: string;
   prompt: string;
   responsesCount: number;
-  items: RecommendationCloudItem[];
+  rows: RecommendationCloudRow[];
 }
 
 interface PresentationData {
+  overview: {
+    ballotsReceived: number;
+    moviesSeen: number;
+  };
   stats: ParticipationStats;
   rcv: RcvComputationResult;
   recommendationSlides: RecommendationSlideData[];
@@ -65,7 +76,11 @@ type PresentationSlide =
       kind: 'overview';
     }
   | {
-      kind: 'recommendation';
+      kind: 'recommendation-intro';
+      recommendation: RecommendationSlideData;
+    }
+  | {
+      kind: 'recommendation-cloud';
       recommendation: RecommendationSlideData;
     }
   | {
@@ -79,36 +94,42 @@ const RECOMMENDATION_SLIDES: RecommendationSlideConfig[] = [
   {
     key: 'toParents',
     title: 'Recommendations: Parents',
-    prompt: "Choose one movie you'd recommend to your parents",
+    prompt: "Movies you'd recommend to your parents",
   },
   {
     key: 'toKid',
     title: 'Recommendations: 9-year-old niece or nephew',
-    prompt: "Choose one movie you'd recommend to your 9-year-old niece or nephew",
+    prompt: "Movies you'd recommend to your 9-year-old niece or nephew",
   },
   {
     key: 'underseenGem',
     title: 'Recommendations: Underseen gem',
-    prompt: 'Choose one underseen gem more people should see',
+    prompt: 'Underseen gems more people should see',
   },
   {
     key: 'toFreakiestFriend',
     title: 'Recommendations: Freakiest friend',
-    prompt: "Choose one movie you'd recommend to your freakiest friend",
+    prompt: "Movies you'd recommend to your freakiest friend",
   },
   {
     key: 'leastFavorite',
     title: 'Least Favorite',
-    prompt: 'Choose your least favorite movie',
+    prompt: 'Least favorite movies',
   },
 ];
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 const BALLOT_EMOJI = '🏆';
-const expandEmojiTokens = (count: number, keyPrefix = 'ballot') =>
+const EXHAUSTED_EMOJI = '💨';
+
+const expandEmojiTokens = (
+  count: number,
+  emoji: string,
+  keyPrefix = 'token'
+) =>
   Array.from({ length: count }, (_, index) => (
-    <span key={`${keyPrefix}-${index}`}>{BALLOT_EMOJI}</span>
+    <span key={`${keyPrefix}-${index}`}>{emoji}</span>
   ));
 
 const buildMovieTitleMap = (ballots: AdminBallot[]) => {
@@ -154,7 +175,6 @@ const getRecommendationTileSize = (
   if (ratio >= 0.2) {
     return 's';
   }
-
   return 'xs';
 };
 
@@ -207,6 +227,33 @@ const buildRecommendationSlides = (
     const maxCount = counts.length > 0 ? Math.max(...counts) : 0;
     const minCount = counts.length > 0 ? Math.min(...counts) : 0;
 
+    const items = topEntries.map((entry) => ({
+      movieId: entry.movieId,
+      title: entry.title,
+      count: entry.count,
+      size: getRecommendationTileSize(entry.count, minCount, maxCount),
+    }));
+
+    const rowsByCount = new Map<number, RecommendationCloudItem[]>();
+    items.forEach((item) => {
+      const existingRow = rowsByCount.get(item.count) || [];
+      existingRow.push(item);
+      rowsByCount.set(item.count, existingRow);
+    });
+
+    const rows = Array.from(rowsByCount.entries())
+      .sort((left, right) => right[0] - left[0])
+      .map(([count, rowItems]) => ({
+        count,
+        items: [...rowItems].sort((left, right) => {
+          const titleComparison = left.title.localeCompare(right.title);
+          if (titleComparison !== 0) {
+            return titleComparison;
+          }
+          return left.movieId.localeCompare(right.movieId);
+        }),
+      }));
+
     return {
       id: slideConfig.key,
       title: slideConfig.title,
@@ -215,14 +262,70 @@ const buildRecommendationSlides = (
         (totalCount, entry) => totalCount + entry.count,
         0
       ),
-      items: topEntries.map((entry) => ({
-        movieId: entry.movieId,
-        title: entry.title,
-        count: entry.count,
-        size: getRecommendationTileSize(entry.count, minCount, maxCount),
-      })),
+      rows,
     };
   });
+};
+
+const buildPresentationData = (allBallots: AdminBallot[]): PresentationData => {
+  const includedBallots = allBallots.filter(isIncludedInAnalysis);
+  const stats = calculateParticipationStats(includedBallots, allBallots.length);
+  const rcv = calculateRankedChoiceRounds(includedBallots);
+  const recommendationSlides = buildRecommendationSlides(includedBallots);
+  const overview = {
+    ballotsReceived: allBallots.length,
+    moviesSeen: allBallots.reduce(
+      (total, ballot) => total + ballot.movies.filter((movie) => movie.seen).length,
+      0
+    ),
+  };
+
+  return { overview, stats, rcv, recommendationSlides };
+};
+
+const getRcvDisplayCopy = (step: RcvPresentationStep) => {
+  if (step.type === 'winner') {
+    const winnerCandidate =
+      step.candidates.find((candidate) => candidate.status === 'winner') ||
+      [...step.candidates]
+        .filter((candidate) => candidate.votes > 0)
+        .sort((left, right) => {
+          if (right.votes !== left.votes) {
+            return right.votes - left.votes;
+          }
+          return left.title.localeCompare(right.title);
+        })[0];
+
+    return {
+      title: winnerCandidate
+        ? `${winnerCandidate.title} has won.`
+        : 'We have a winner.',
+      subtitle: '',
+    };
+  }
+
+  const eliminatedCandidateId = step.newlyEliminated[0];
+  const eliminatedCandidate = eliminatedCandidateId
+    ? step.candidates.find((candidate) => candidate.candidateId === eliminatedCandidateId)
+    : null;
+
+  const leadingCandidate = [...step.candidates]
+    .filter((candidate) => candidate.status !== 'eliminated')
+    .sort((left, right) => {
+      if (right.votes !== left.votes) {
+        return right.votes - left.votes;
+      }
+      return left.title.localeCompare(right.title);
+    })[0];
+
+  return {
+    title: eliminatedCandidate
+      ? `${eliminatedCandidate.title} ballots have been exhausted.`
+      : 'Some ballots have been exhausted.',
+    subtitle: leadingCandidate
+      ? `${leadingCandidate.title} is in the lead.`
+      : '',
+  };
 };
 
 const Presentation = () => {
@@ -231,55 +334,101 @@ const Presentation = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [flightTokens, setFlightTokens] = useState<FlightToken[]>([]);
+  const [liveUpdatesLocked, setLiveUpdatesLocked] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const applyBallots = useCallback((allBallots: AdminBallot[]) => {
+    setData(buildPresentationData(allBallots));
+    setError(null);
+  }, []);
+
+  const refreshData = useCallback(async () => {
     try {
       setLoading(true);
       const allBallots = await getAllBallots();
-      const includedBallots = allBallots.filter(isIncludedInAnalysis);
-      const stats = calculateParticipationStats(includedBallots, allBallots.length);
-      const rcv = calculateRankedChoiceRounds(includedBallots);
-      const recommendationSlides = buildRecommendationSlides(includedBallots);
-
-      setData({ stats, rcv, recommendationSlides });
-      setActiveSlideIndex(0);
-      setError(null);
+      applyBallots(allBallots);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load presentation');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyBallots]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (liveUpdatesLocked) {
+      return;
+    }
+
+    setLoading(true);
+
+    const ballotsQuery = query(collection(db, 'ballots'));
+    const unsubscribe = onSnapshot(
+      ballotsQuery,
+      (snapshot) => {
+        const allBallots = snapshot.docs.map(
+          (docSnapshot) =>
+            ({
+              id: docSnapshot.id,
+              ...docSnapshot.data(),
+            } as AdminBallot)
+        );
+
+        applyBallots(allBallots);
+        setLoading(false);
+      },
+      (snapshotError) => {
+        setError(
+          snapshotError instanceof Error
+            ? snapshotError.message
+            : 'Failed to subscribe to ballots'
+        );
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [applyBallots, liveUpdatesLocked]);
 
   useEffect(() => {
-    const handleRefresh = () => {
-      fetchData();
+    const handleRefreshEvent = () => {
+      if (liveUpdatesLocked) {
+        return;
+      }
+      void refreshData();
     };
 
-    window.addEventListener('refresh-data', handleRefresh);
-    return () => window.removeEventListener('refresh-data', handleRefresh);
-  }, [fetchData]);
+    window.addEventListener('refresh-data', handleRefreshEvent);
+    return () => window.removeEventListener('refresh-data', handleRefreshEvent);
+  }, [liveUpdatesLocked, refreshData]);
 
   const slides = useMemo<PresentationSlide[]>(() => {
     if (!data) {
       return [];
     }
 
-    return [
-      { kind: 'overview' },
-      ...data.recommendationSlides.map((recommendation) => ({
-        kind: 'recommendation' as const,
-        recommendation,
-      })),
-      ...data.rcv.steps.map((step, rcvStepIndex) => ({
+    const rcvSlides = data.rcv.steps
+      .map((step, rcvStepIndex) => ({
         kind: 'rcv' as const,
         step,
         rcvStepIndex,
-      })),
+      }))
+      .filter(
+        (slide) =>
+          slide.step.type === 'redistribution' || slide.step.type === 'winner'
+      );
+
+    return [
+      { kind: 'overview' },
+      ...data.recommendationSlides.flatMap((recommendation) => [
+        {
+          kind: 'recommendation-intro' as const,
+          recommendation,
+        },
+        {
+          kind: 'recommendation-cloud' as const,
+          recommendation,
+        },
+      ]),
+      ...rcvSlides,
     ];
   }, [data]);
 
@@ -294,7 +443,7 @@ const Presentation = () => {
     setActiveSlideIndex((current) => clamp(current, 0, totalSlides - 1));
   }, [totalSlides]);
 
-  const goToPreviousStep = useCallback(() => {
+  const goToPreviousSlide = useCallback(() => {
     if (totalSlides === 0) {
       return;
     }
@@ -302,28 +451,40 @@ const Presentation = () => {
     setActiveSlideIndex((current) => clamp(current - 1, 0, totalSlides - 1));
   }, [totalSlides]);
 
-  const goToNextStep = useCallback(() => {
+  const goToNextSlide = useCallback(() => {
     if (totalSlides === 0) {
       return;
     }
 
-    setActiveSlideIndex((current) => clamp(current + 1, 0, totalSlides - 1));
+    setActiveSlideIndex((current) => {
+      const next = clamp(current + 1, 0, totalSlides - 1);
+      if (current === 0 && next > 0) {
+        setLiveUpdatesLocked(true);
+      }
+      return next;
+    });
   }, [totalSlides]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        goToPreviousStep();
+        goToPreviousSlide();
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
-        goToNextStep();
+        goToNextSlide();
+      } else if (event.key === 'r' || event.key === 'R') {
+        if (liveUpdatesLocked) {
+          return;
+        }
+        event.preventDefault();
+        void refreshData();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNextStep, goToPreviousStep]);
+  }, [goToNextSlide, goToPreviousSlide, liveUpdatesLocked, refreshData]);
 
   const activeSlide = slides[activeSlideIndex] ?? null;
   const activeStep = activeSlide?.kind === 'rcv' ? activeSlide.step : null;
@@ -348,14 +509,16 @@ const Presentation = () => {
       !activeStep ||
       activeStep.type !== 'redistribution' ||
       activeStep.voteMovements.length === 0 ||
-      !data
+      !data ||
+      !activeSlide ||
+      activeSlide.kind !== 'rcv'
     ) {
       return [];
     }
 
     const titlesByCandidateId = data.rcv.titlesByCandidateId || {};
     const phaseSteps = data.rcv.steps
-      .slice(0, activeSlide.kind === 'rcv' ? activeSlide.rcvStepIndex + 1 : 0)
+      .slice(0, activeSlide.rcvStepIndex + 1)
       .filter(
         (step) =>
           step.type === 'redistribution' &&
@@ -463,7 +626,7 @@ const Presentation = () => {
 
           return {
             id: `${activeStep.id}-${movement.tokenId}`,
-            emoji: movement.emoji,
+            emoji: movement.toCandidateId ? BALLOT_EMOJI : EXHAUSTED_EMOJI,
             startX,
             startY,
             deltaX: endX - startX,
@@ -503,9 +666,7 @@ const Presentation = () => {
     return (
       <div className="presentation-loading">
         <div className="presentation-error">{error}</div>
-        <button className="presentation-nav-button" onClick={fetchData}>
-          Retry
-        </button>
+        <p className="presentation-muted">Press R to refresh data.</p>
       </div>
     );
   }
@@ -514,121 +675,76 @@ const Presentation = () => {
     return <div className="presentation-loading">No presentation data found.</div>;
   }
 
-  const topbarKicker =
-    activeSlide.kind === 'rcv'
-      ? 'Best Picture RCV'
-      : activeSlide.kind === 'recommendation'
-        ? 'Recommendations'
-        : 'Ballots';
-  const topbarPageLabel =
-    activeSlide.kind === 'rcv'
-      ? `RCV Step ${activeSlide.rcvStepIndex + 1} of ${data.rcv.steps.length} | Slide ${
-          activeSlideIndex + 1
-        } of ${totalSlides}`
-      : `Slide ${activeSlideIndex + 1} of ${totalSlides}`;
-
   return (
     <div className="presentation-page">
-      <div className="presentation-topbar">
-        <span className="presentation-kicker">{topbarKicker}</span>
-        <div className="presentation-top-actions">
-          <span className="presentation-page-index">{topbarPageLabel}</span>
-          <div className="presentation-controls top">
-            <button
-              className="presentation-nav-button"
-              onClick={goToPreviousStep}
-              disabled={activeSlideIndex === 0}
-            >
-              Previous
-            </button>
-            <button className="presentation-nav-button secondary" onClick={fetchData}>
-              Refresh Data
-            </button>
-            <button
-              className="presentation-nav-button"
-              onClick={goToNextStep}
-              disabled={activeSlideIndex === totalSlides - 1}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {activeSlide.kind === 'overview' && (
-        <section className="presentation-slide">
+      <section className="presentation-slide">
+        {activeSlide.kind === 'overview' && (
           <div className="presentation-block presentation-overview-block">
-            <h1>Ballots received: {data.stats.includedBallots}</h1>
-            <p className="presentation-step-explanation">
-              Included ballots only. Excluded ballots are not counted.
-            </p>
-            <div className="presentation-overview-stats">
-              <article className="presentation-overview-chip">
-                <h3>Included</h3>
-                <p>{data.stats.includedBallots}</p>
-              </article>
-              <article className="presentation-overview-chip">
-                <h3>Excluded</h3>
-                <p>{data.stats.excludedBallots}</p>
-              </article>
-              <article className="presentation-overview-chip">
-                <h3>Total submitted</h3>
-                <p>{data.stats.totalBallots}</p>
-              </article>
-              <article className="presentation-overview-chip">
-                <h3>Unique movies seen</h3>
-                <p>{data.stats.uniqueMoviesVotedOn}</p>
-              </article>
+            <div className="presentation-overview-hero">
+              <h1>Ballots received</h1>
+              <p>{data.overview.ballotsReceived}</p>
             </div>
-            {data.rcv.steps.length === 0 && (
-              <p className="presentation-muted">
-                No ranked ballots to present in RCV rounds yet.
-              </p>
-            )}
+            <div className="presentation-overview-hero">
+              <h2>Movies seen</h2>
+              <p>{data.overview.moviesSeen}</p>
+            </div>
           </div>
-        </section>
-      )}
+        )}
 
-      {activeSlide.kind === 'recommendation' && (
-        <section className="presentation-slide">
-          <div className="presentation-block presentation-recommendation-block">
+        {activeSlide.kind === 'recommendation-intro' && (
+          <div className="presentation-block presentation-recommendation-intro-block">
             <h1>{activeSlide.recommendation.title}</h1>
             <p className="presentation-step-explanation">
               {activeSlide.recommendation.prompt}
             </p>
+          </div>
+        )}
+
+        {activeSlide.kind === 'recommendation-cloud' && (
+          <div className="presentation-block presentation-recommendation-block">
+            <h1>{activeSlide.recommendation.title}</h1>
             <p className="presentation-threshold-line">
               {activeSlide.recommendation.responsesCount} response
               {activeSlide.recommendation.responsesCount === 1 ? '' : 's'}
             </p>
-            {activeSlide.recommendation.items.length === 0 ? (
+            {activeSlide.recommendation.rows.length === 0 ? (
               <p className="presentation-muted">No responses yet.</p>
             ) : (
-              <div className="presentation-recommendation-cloud">
-                {activeSlide.recommendation.items.map((item) => (
-                  <article
-                    key={`${activeSlide.recommendation.id}-${item.movieId}`}
-                    className={`presentation-cloud-item size-${item.size}`}
+              <div className="presentation-recommendation-cloud-rows">
+                {activeSlide.recommendation.rows.map((row) => (
+                  <div
+                    key={`${activeSlide.recommendation.id}-count-${row.count}`}
+                    className="presentation-cloud-row"
                   >
-                    <span className="presentation-cloud-title">{item.title}</span>
-                    <span className="presentation-cloud-count">x{item.count}</span>
-                  </article>
+                    {row.items.map((item) => (
+                      <article
+                        key={`${activeSlide.recommendation.id}-${item.movieId}`}
+                        className={`presentation-cloud-item size-${item.size}`}
+                      >
+                        <span className="presentation-cloud-title">{item.title}</span>
+                        <span className="presentation-cloud-count">x{item.count}</span>
+                      </article>
+                    ))}
+                  </div>
                 ))}
               </div>
             )}
           </div>
-        </section>
-      )}
+        )}
 
-      {activeSlide.kind === 'rcv' && activeStep && (
-        <section className="presentation-slide">
+        {activeSlide.kind === 'rcv' && activeStep && (
           <div className="presentation-block presentation-rcv-block">
             <div className="presentation-step-copy">
-              <h1>{activeStep.title}</h1>
-              <p className="presentation-step-explanation">{activeStep.explanation}</p>
+              <h1>{getRcvDisplayCopy(activeStep).title}</h1>
+              {getRcvDisplayCopy(activeStep).subtitle && (
+                <p className="presentation-step-explanation">
+                  {getRcvDisplayCopy(activeStep).subtitle}
+                </p>
+              )}
               {redistributionPanels.length > 0 && (
                 <>
                   <p className="presentation-transfer-note">
-                    Each trophy represents one ballot reassigned in this phase.
+                    Each trophy shows where ballots moved next.
                   </p>
                   <div className="presentation-transfer-panels">
                     {redistributionPanels.map((panel) => (
@@ -646,6 +762,7 @@ const Presentation = () => {
                                 <div className="presentation-transfer-origin-emojis">
                                   {expandEmojiTokens(
                                     source.count,
+                                    BALLOT_EMOJI,
                                     `${panel.stepId}-${source.candidateId}-from`
                                   )}
                                 </div>
@@ -669,6 +786,7 @@ const Presentation = () => {
                                   <span className="presentation-transfer-delta-emojis">
                                     {expandEmojiTokens(
                                       destination.count,
+                                      BALLOT_EMOJI,
                                       `${panel.stepId}-${destination.candidateId}-to`
                                     )}
                                   </span>
@@ -676,18 +794,16 @@ const Presentation = () => {
                               </div>
                             ))}
                             {panel.exhaustedCount > 0 && (
-                              <div className="presentation-transfer-destination-item">
+                              <div className="presentation-transfer-destination-item exhausted">
                                 <span className="presentation-transfer-destination-title">
                                   Exhausted
                                 </span>
-                                <span className="presentation-transfer-delta-value">
-                                  +
-                                  <span className="presentation-transfer-delta-emojis">
-                                    {expandEmojiTokens(
-                                      panel.exhaustedCount,
-                                      `${panel.stepId}-exhausted`
-                                    )}
-                                  </span>
+                                <span className="presentation-transfer-exhausted-emojis">
+                                  {expandEmojiTokens(
+                                    panel.exhaustedCount,
+                                    EXHAUSTED_EMOJI,
+                                    `${panel.stepId}-exhausted`
+                                  )}
                                 </span>
                               </div>
                             )}
@@ -698,10 +814,6 @@ const Presentation = () => {
                   </div>
                 </>
               )}
-              <p className="presentation-threshold-line">
-                {activeStep.threshold} votes needed to win — recalculated from{' '}
-                {activeStep.activeBallots} active ballots.
-              </p>
             </div>
             <div
               className="presentation-board"
@@ -762,8 +874,8 @@ const Presentation = () => {
               </div>
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 };

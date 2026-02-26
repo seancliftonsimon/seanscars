@@ -18,8 +18,11 @@ interface RawBallotsProps {
 
 const REQUIRED_RANK_COUNT = 5;
 const MIN_SEEN_COUNT = REQUIRED_RANK_COUNT;
-const MAX_SEEN_COUNT = 20;
+const MAX_SEEN_COUNT = 70;
 const MAX_GENERATED_BALLOTS = 200;
+const OVERREPRESENTED_MOVIE_COUNT = 20;
+const OVERREPRESENTED_SEEN_PROBABILITY = 0.7;
+const BASE_SEEN_PROBABILITY = 0.15;
 
 const getRandomInt = (min: number, max: number): number => {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -66,11 +69,44 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		}
 	};
 
-	const generateRandomBallot = (index: number): Ballot => {
-		const shuffledMovies = shuffleArray(moviesData);
+	const generateRandomBallot = (
+		index: number,
+		overrepresentedMovieIds: Set<string>
+	): Ballot => {
 		const maxSeenCount = Math.min(MAX_SEEN_COUNT, moviesData.length);
-		const seenCount = getRandomInt(MIN_SEEN_COUNT, maxSeenCount);
-		const seenMovies = shuffledMovies.slice(0, seenCount);
+		const targetSeenCount = getRandomInt(MIN_SEEN_COUNT, maxSeenCount);
+		const shuffledMovieIds = shuffleArray(moviesData.map((movie) => movie.id));
+		const sampledSeenMovieIds = new Set<string>();
+
+		shuffledMovieIds.forEach((movieId) => {
+			const seenProbability = overrepresentedMovieIds.has(movieId)
+				? OVERREPRESENTED_SEEN_PROBABILITY
+				: BASE_SEEN_PROBABILITY;
+			if (Math.random() < seenProbability) {
+				sampledSeenMovieIds.add(movieId);
+			}
+		});
+
+		if (sampledSeenMovieIds.size > targetSeenCount) {
+			const trimmedSeenMovieIds = shuffleArray(Array.from(sampledSeenMovieIds)).slice(
+				0,
+				targetSeenCount
+			);
+			sampledSeenMovieIds.clear();
+			trimmedSeenMovieIds.forEach((movieId) => sampledSeenMovieIds.add(movieId));
+		}
+
+		if (sampledSeenMovieIds.size < targetSeenCount) {
+			shuffledMovieIds.forEach((movieId) => {
+				if (sampledSeenMovieIds.size >= targetSeenCount) {
+					return;
+				}
+
+				sampledSeenMovieIds.add(movieId);
+			});
+		}
+
+		const seenMovies = moviesData.filter((movie) => sampledSeenMovieIds.has(movie.id));
 		const seenMovieIds = new Set(seenMovies.map((movie) => movie.id));
 		const shuffledSeenMovieIds = shuffleArray(seenMovies.map((movie) => movie.id));
 		const pickSeenRecommendation = (position: number) =>
@@ -129,9 +165,15 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		setIsGeneratingBallots(true);
 
 		try {
+			const overrepresentedMovieIds = new Set(
+				shuffleArray(moviesData.map((movie) => movie.id)).slice(
+					0,
+					Math.min(OVERREPRESENTED_MOVIE_COUNT, moviesData.length)
+				)
+			);
 			const ballotsToInsert = Array.from(
 				{ length: safeBallotCount },
-				(_, index) => generateRandomBallot(index)
+				(_, index) => generateRandomBallot(index, overrepresentedMovieIds)
 			);
 
 			await Promise.all(

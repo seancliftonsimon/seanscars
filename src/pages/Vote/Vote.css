@@ -406,6 +406,35 @@
   gap: var(--spacing-sm);
 }
 
+.ballot-snapshot-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 0 var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: var(--radius-md);
+  background: rgba(212, 175, 55, 0.08);
+  text-align: left;
+}
+
+.ballot-snapshot-card h2 {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 1.15rem;
+  color: var(--color-gold);
+}
+
+.ballot-snapshot-card ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ballot-snapshot-card li {
+  color: var(--color-cream);
+  line-height: 1.35;
+}
+
 .btn-link {
   background: transparent;
   border: none;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Welcome from "./Welcome";
 import MarkSeen from "./MarkSeen";
@@ -34,6 +34,7 @@ const MARK_SEEN_ORDER_STORAGE_KEY = "vote.markSeenOrder";
 const FAVORITES_ORDER_STORAGE_KEY = "vote.favoritesOrder";
 const SEEN_COUNT_COMMIT_STATE_STORAGE_KEY = "vote.seenCountCommitState";
 const REQUIRED_FAVORITES_COUNT = 5;
+const SEAN_NEW_MOVIES_SEEN_COUNT = 57;
 const MASTER_MOVIE_IDS = moviesData.map((movie) => movie.id);
 const MASTER_MOVIE_ID_SET = new Set(MASTER_MOVIE_IDS);
 
@@ -45,6 +46,12 @@ interface SeenCountCommitState {
 interface OptionalRecommendationQuestion {
 	key: BallotRecommendationKey;
 	prompt: string;
+}
+
+interface BallotSnapshot {
+	seenCount: number;
+	topFavoriteTitle: string;
+	leastFavoriteTitle: string;
 }
 
 const parseStoredStringArray = (storedValue: string | null): string[] | null => {
@@ -412,6 +419,9 @@ const Vote = () => {
 	>(() => buildOptionalQuestionMovieOrder([]));
 	const [optionalError, setOptionalError] = useState<string | null>(null);
 	const [isSavingOptionalAnswer, setIsSavingOptionalAnswer] = useState(false);
+	const [ballotSnapshot, setBallotSnapshot] = useState<BallotSnapshot | null>(
+		null
+	);
 
 	useEffect(() => {
 		// Initialize client ID on mount
@@ -542,6 +552,45 @@ const Vote = () => {
 			(currentOptionalSelection !== null ||
 				answeredRecommendationKeys.has(currentOptionalQuestion.key))
 	);
+	const movieTitleById = useMemo(
+		() => new Map(movies.map((movie) => [movie.id, movie.title])),
+		[movies]
+	);
+	const getMovieTitleById = useCallback(
+		(movieId: string | null): string => {
+			if (!movieId) {
+				return "Not selected";
+			}
+
+			return movieTitleById.get(movieId) ?? "Unknown title";
+		},
+		[movieTitleById]
+	);
+	const ballotSnapshotComparisonText = useMemo(() => {
+		if (!ballotSnapshot) {
+			return null;
+		}
+
+		const difference = ballotSnapshot.seenCount - SEAN_NEW_MOVIES_SEEN_COUNT;
+		if (difference === 0) {
+			return "That's exactly the same as Sean.";
+		}
+
+		return `That's ${Math.abs(difference)} ${
+			difference > 0 ? "more" : "less"
+		} than Sean.`;
+	}, [ballotSnapshot]);
+	const ballotSnapshotLeastFavoriteTitle = useMemo(() => {
+		if (!ballotSnapshot) {
+			return null;
+		}
+
+		if (recommendations.leastFavorite) {
+			return getMovieTitleById(recommendations.leastFavorite);
+		}
+
+		return ballotSnapshot.leastFavoriteTitle;
+	}, [ballotSnapshot, getMovieTitleById, recommendations.leastFavorite]);
 
 	const handleMarkSeen = (movieId: string) => {
 		setMarkSeenCommitError(null);
@@ -798,6 +847,15 @@ const Vote = () => {
 				throw new Error("Ballot was submitted but no ID was returned.");
 			}
 
+			const seenCount = ballotMovies.filter((movie) => movie.seen).length;
+			const topFavoriteMovieId = bestPictureRanksForSubmit[0] ?? null;
+			const leastFavoriteMovieId =
+				bestPictureRanksForSubmit[bestPictureRanksForSubmit.length - 1] ?? null;
+			setBallotSnapshot({
+				seenCount,
+				topFavoriteTitle: getMovieTitleById(topFavoriteMovieId),
+				leastFavoriteTitle: getMovieTitleById(leastFavoriteMovieId),
+			});
 			setSubmittedBallotId(submitResult.id);
 			setRecommendations(EMPTY_RECOMMENDATIONS);
 			setAnsweredRecommendationKeys(new Set());
@@ -989,6 +1047,19 @@ const Vote = () => {
 						Anything below is optional. You can finish now, or answer a few
 						quick recommendation questions.
 					</p>
+					{ballotSnapshot && ballotSnapshotComparisonText && (
+						<div className="ballot-snapshot-card">
+							<h2>Your Ballot Snapshot</h2>
+							<ul>
+								<li>You saw {ballotSnapshot.seenCount} new movies in 2025.</li>
+								<li>{ballotSnapshotComparisonText}</li>
+								<li>Your number one favorite was {ballotSnapshot.topFavoriteTitle}.</li>
+								{ballotSnapshotLeastFavoriteTitle && (
+									<li>Your least favorite was {ballotSnapshotLeastFavoriteTitle}.</li>
+								)}
+							</ul>
+						</div>
+					)}
 					<div className="post-submit-actions">
 						<button
 							type="button"
@@ -1036,6 +1107,19 @@ const Vote = () => {
 				<div className="vote-success">
 					<h1>Thank you!</h1>
 					<p>Your ballot has been submitted.</p>
+					{ballotSnapshot && ballotSnapshotComparisonText && (
+						<div className="ballot-snapshot-card">
+							<h2>Your Ballot Snapshot</h2>
+							<ul>
+								<li>You saw {ballotSnapshot.seenCount} new movies in 2025.</li>
+								<li>{ballotSnapshotComparisonText}</li>
+								<li>Your number one favorite was {ballotSnapshot.topFavoriteTitle}.</li>
+								{ballotSnapshotLeastFavoriteTitle && (
+									<li>Your least favorite was {ballotSnapshotLeastFavoriteTitle}.</li>
+								)}
+							</ul>
+						</div>
+					)}
 					<button onClick={() => navigate("/")} className="btn btn-primary">
 						Return to Home
 					</button>
