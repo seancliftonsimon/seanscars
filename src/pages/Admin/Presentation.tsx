@@ -536,6 +536,30 @@ const Presentation = () => {
         return left.title.localeCompare(right.title);
       });
   }, [activeStep]);
+  const boardCandidates = useMemo(() => {
+    if (visibleCandidates.length <= 1) {
+      return visibleCandidates;
+    }
+
+    const splitIndex = Math.ceil(visibleCandidates.length / 2);
+    const leftColumn = visibleCandidates.slice(0, splitIndex);
+    const rightColumn = visibleCandidates.slice(splitIndex);
+    const interleaved: typeof visibleCandidates = [];
+
+    for (let index = 0; index < splitIndex; index += 1) {
+      const left = leftColumn[index];
+      if (left) {
+        interleaved.push(left);
+      }
+
+      const right = rightColumn[index];
+      if (right) {
+        interleaved.push(right);
+      }
+    }
+
+    return interleaved;
+  }, [visibleCandidates]);
 
   const redistributionPanels = useMemo(() => {
     if (
@@ -857,7 +881,7 @@ const Presentation = () => {
               }}
             >
               <div className="presentation-cards-list">
-                {visibleCandidates.map((candidate) => (
+                {boardCandidates.map((candidate) => (
                   <article
                     key={candidate.candidateId}
                     className={`presentation-movie-card ${candidate.status} ${

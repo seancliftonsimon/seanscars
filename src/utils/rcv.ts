@@ -702,28 +702,6 @@ export function calculateRankedChoiceRounds(
         ),
         voteMovements,
       });
-
-      if (phaseIndex < phaseEliminated.length - 1) {
-        steps.push({
-          id: `round-${roundNumber}-standings-${phaseIndex + 1}`,
-          roundNumber,
-          type: 'standings',
-          title: `Round ${roundNumber} — Standings`,
-          explanation: `Current standings after ${eliminatedTitle} elimination.`,
-          activeBallots: stepActiveBallots,
-          threshold: stepThreshold,
-          exhaustedBallots: rankedBallots.length - stepActiveBallots,
-          newlyEliminated: [],
-          candidates: buildCandidateStepState(
-            candidateOrder,
-            progressiveAssignments,
-            titlesByMovieId,
-            eliminatedCandidateIds,
-            null
-          ),
-          voteMovements: [],
-        });
-      }
     });
 
     const nextActiveBallots = countActiveAssignments(nextAssignments);
