@@ -42,6 +42,7 @@ export interface Ballot {
 	}>;
 	bestPictureRanks?: string[];
 	flagged?: boolean;
+	excluded?: boolean;
 	recommendations?: {
 		toParents: string | null;
 		toKid: string | null;
@@ -59,8 +60,10 @@ export interface Overview {
 	mostRecentSubmission: string | null;
 }
 
-export function isIncludedInAnalysis(ballot: Pick<Ballot, "flagged">): boolean {
-	return ballot.flagged !== true;
+export function isIncludedInAnalysis(
+	ballot: Pick<Ballot, "flagged" | "excluded">
+): boolean {
+	return ballot.flagged !== true && ballot.excluded !== true;
 }
 
 export async function updateBallotFlagged(

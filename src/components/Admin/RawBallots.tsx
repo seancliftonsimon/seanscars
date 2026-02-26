@@ -128,7 +128,7 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 			setActionSuccess(
 				`Generated ${safeBallotCount} random ballot${
 					safeBallotCount === 1 ? "" : "s"
-				}.`
+				}. Global seen counts were not changed.`
 			);
 			window.dispatchEvent(new Event("refresh-data"));
 		} catch (err) {
@@ -142,14 +142,14 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 
 	const handleClearAllBallots = async () => {
 		const firstConfirmation = window.confirm(
-			"Are you sure you want to delete ALL voter data?"
+			"Are you sure you want to delete ALL voter data and reset ALL seen counts?"
 		);
 		if (!firstConfirmation) {
 			return;
 		}
 
 		const secondConfirmation = window.confirm(
-			"Really sure? This permanently deletes every ballot."
+			"Really sure? This permanently deletes every ballot and clears movie popularity counts."
 		);
 		if (!secondConfirmation) {
 			return;
@@ -160,11 +160,20 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		setIsClearingBallots(true);
 
 		try {
-			const ballotsSnapshot = await getDocs(collection(db, "ballots"));
-			await Promise.all(ballotsSnapshot.docs.map((docSnapshot) => deleteDoc(docSnapshot.ref)));
+			const [ballotsSnapshot, popularitySnapshot] = await Promise.all([
+				getDocs(collection(db, "ballots")),
+				getDocs(collection(db, "moviePopularity")),
+			]);
+
+			await Promise.all([
+				...ballotsSnapshot.docs.map((docSnapshot) => deleteDoc(docSnapshot.ref)),
+				...popularitySnapshot.docs.map((docSnapshot) => deleteDoc(docSnapshot.ref)),
+			]);
 			setActionSuccess(
 				`Deleted ${ballotsSnapshot.size} ballot${
 					ballotsSnapshot.size === 1 ? "" : "s"
+				} and reset seen counts for ${popularitySnapshot.size} movie${
+					popularitySnapshot.size === 1 ? "" : "s"
 				}.`
 			);
 			window.dispatchEvent(new Event("refresh-data"));
@@ -384,7 +393,9 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 						className="btn btn-danger"
 						disabled={isClearingBallots || isBulkActionRunning}
 					>
-						{isClearingBallots ? "Clearing..." : "Clear All Voter Data"}
+						{isClearingBallots
+							? "Clearing..."
+							: "Clear All Voter Data + Seen Counts"}
 					</button>
 				</div>
 				<div className="ballots-actions-right">

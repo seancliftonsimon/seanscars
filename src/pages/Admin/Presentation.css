@@ -52,6 +52,104 @@
   gap: 1rem;
 }
 
+.presentation-overview-block,
+.presentation-recommendation-block {
+  background: rgba(10, 7, 5, 0.72);
+  border: 1px solid rgba(255, 229, 168, 0.42);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+}
+
+.presentation-overview-block h1,
+.presentation-recommendation-block h1 {
+  margin: 0;
+  color: #ffefc5;
+  font-family: var(--font-heading);
+  font-size: clamp(2.3rem, 4.4vw, 3.6rem);
+  line-height: 1.12;
+}
+
+.presentation-overview-stats {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.presentation-overview-chip {
+  background: rgba(8, 8, 8, 0.58);
+  border: 1px solid rgba(255, 229, 168, 0.35);
+  border-radius: 10px;
+  padding: 0.7rem 0.82rem;
+}
+
+.presentation-overview-chip h3 {
+  margin: 0;
+  color: rgba(255, 232, 184, 0.87);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.88rem;
+}
+
+.presentation-overview-chip p {
+  margin: 0.46rem 0 0;
+  color: #fff9ea;
+  font-size: clamp(1.55rem, 2.3vw, 2.1rem);
+  font-weight: 700;
+}
+
+.presentation-recommendation-cloud {
+  margin-top: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.62rem;
+}
+
+.presentation-cloud-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.42rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 229, 168, 0.35);
+  background: rgba(9, 9, 9, 0.62);
+  color: #fff9eb;
+  line-height: 1.05;
+}
+
+.presentation-cloud-title {
+  font-weight: 700;
+}
+
+.presentation-cloud-count {
+  color: rgba(255, 232, 184, 0.9);
+  font-weight: 600;
+}
+
+.presentation-cloud-item.size-xl {
+  font-size: clamp(2rem, 3.4vw, 3.2rem);
+  padding: 0.68rem 1.15rem;
+}
+
+.presentation-cloud-item.size-l {
+  font-size: clamp(1.68rem, 2.8vw, 2.35rem);
+  padding: 0.58rem 1rem;
+}
+
+.presentation-cloud-item.size-m {
+  font-size: clamp(1.38rem, 2.2vw, 1.85rem);
+  padding: 0.5rem 0.84rem;
+}
+
+.presentation-cloud-item.size-s {
+  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+  padding: 0.42rem 0.72rem;
+}
+
+.presentation-cloud-item.size-xs {
+  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  padding: 0.34rem 0.58rem;
+}
+
 .presentation-step-copy {
   background: rgba(10, 7, 5, 0.72);
   border: 1px solid rgba(255, 229, 168, 0.42);
@@ -360,6 +458,10 @@
 }
 
 @media (max-width: 900px) {
+  .presentation-overview-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .presentation-transfer-panels {
     gap: 0.74rem;
   }
