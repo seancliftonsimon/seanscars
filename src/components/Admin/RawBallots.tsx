@@ -72,6 +72,9 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 		const seenCount = getRandomInt(MIN_SEEN_COUNT, maxSeenCount);
 		const seenMovies = shuffledMovies.slice(0, seenCount);
 		const seenMovieIds = new Set(seenMovies.map((movie) => movie.id));
+		const shuffledSeenMovieIds = shuffleArray(seenMovies.map((movie) => movie.id));
+		const pickSeenRecommendation = (position: number) =>
+			shuffledSeenMovieIds[position % shuffledSeenMovieIds.length] || null;
 		const bestPictureRanks = shuffleArray(seenMovies)
 			.slice(0, REQUIRED_RANK_COUNT)
 			.map((movie) => movie.id);
@@ -89,16 +92,26 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 				rank: rankByMovieId.get(movie.id) ?? null,
 			};
 		});
+		const submittedAt = new Date().toISOString();
 
 		return {
 			schemaVersion: BALLOT_SCHEMA_VERSION,
 			clientId: `sim-${uuidv4()}`,
 			ipHash: `sim-ip-${uuidv4()}`,
 			voterName: `Simulated Voter ${index + 1}`,
-			timestamp: new Date().toISOString(),
+			timestamp: submittedAt,
+			topFiveSubmittedAt: submittedAt,
 			movies,
 			bestPictureRanks,
 			flagged: false,
+			recommendations: {
+				toParents: pickSeenRecommendation(0),
+				toKid: pickSeenRecommendation(1),
+				underseenGem: pickSeenRecommendation(2),
+				toFreakiestFriend: pickSeenRecommendation(3),
+				leastFavorite: pickSeenRecommendation(4),
+			},
+			recommendationsCompletedAt: submittedAt,
 		};
 	};
 
