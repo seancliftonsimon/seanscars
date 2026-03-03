@@ -851,27 +851,6 @@ const Presentation = () => {
     };
   }, [activeStep]);
 
-  // On standings slides, shrink the board via zoom if it overflows the viewport.
-  // Only applied to standings (not redistribution) so flight token positions stay correct.
-  useEffect(() => {
-    const el = boardRef.current;
-    if (!el) return;
-    if (!activeStep || activeStep.type !== 'standings') {
-      el.style.zoom = '1';
-      return;
-    }
-    el.style.zoom = '1';
-    const id = window.requestAnimationFrame(() => {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const available = window.innerHeight - rect.top - 12;
-      if (available > 0 && rect.height > available) {
-        el.style.zoom = String(Math.max(0.4, available / rect.height));
-      }
-    });
-    return () => window.cancelAnimationFrame(id);
-  }, [activeStep, boardCandidates]);
-
   if (loading) {
     return <div className="presentation-loading">Loading presentation...</div>;
   }
@@ -896,6 +875,8 @@ const Presentation = () => {
           activeSlide.kind === 'recommendation-intro' ||
           activeSlide.kind === 'rcv-addendum-intro'
             ? ' presentation-slide--centered'
+            : activeStep?.type === 'standings'
+            ? ' presentation-slide--filling'
             : ''
         }`}
       >
@@ -955,7 +936,7 @@ const Presentation = () => {
         )}
 
         {(activeSlide.kind === 'rcv' || activeSlide.kind === 'rcv-addendum') && activeStep && (
-          <div className="presentation-block presentation-rcv-block">
+          <div className={`presentation-block presentation-rcv-block${activeStep.type === 'standings' ? ' presentation-rcv-block--standings' : ''}`}>
             {activeSlide.kind === 'rcv-addendum' && (
               <p className="presentation-rcv-addendum-label">Excluding 2026 Oscar nominees</p>
             )}
@@ -1041,40 +1022,61 @@ const Presentation = () => {
               )}
             </div>
             <div
-              className="presentation-board"
+              className={`presentation-board${activeStep.type === 'standings' ? ' presentation-board--standings' : ''}`}
               ref={(element) => {
                 boardRef.current = element;
               }}
             >
-              <div className="presentation-cards-list">
-                {boardCandidates.map((candidate) => (
-                  <article
-                    key={candidate.candidateId}
-                    className={`presentation-movie-card ${candidate.status} ${
-                      activeStep.newlyEliminated.includes(candidate.candidateId)
-                        ? 'newly-eliminated'
-                        : ''
-                    }`}
-                    ref={(element) => {
-                      cardRefs.current[candidate.candidateId] = element;
-                    }}
-                  >
-                    {candidateRanks.size > 0 && (
-                      <div className="presentation-rank-badge">
+              {activeStep.type === 'standings' ? (
+                <div className="presentation-leaderboard">
+                  {visibleCandidates.map((candidate) => (
+                    <div
+                      key={candidate.candidateId}
+                      className={`presentation-leaderboard-row ${candidate.status}`}
+                      ref={(element) => {
+                        cardRefs.current[candidate.candidateId] = element;
+                      }}
+                    >
+                      <span className="presentation-leaderboard-rank">
                         {getOrdinal(candidateRanks.get(candidate.candidateId) ?? 0)}
+                      </span>
+                      <h2 className="presentation-leaderboard-title">{candidate.title}</h2>
+                      <div className="presentation-leaderboard-emojis">
+                        {candidate.tokens.map((token) => (
+                          <span key={`${candidate.candidateId}-${token.tokenId}`}>
+                            {token.emoji}
+                          </span>
+                        ))}
                       </div>
-                    )}
-                    <h2>{candidate.title}</h2>
-                    <div className="presentation-emoji-stack">
-                      {candidate.tokens.map((token) => (
-                        <span key={`${candidate.candidateId}-${token.tokenId}`}>
-                          {token.emoji}
-                        </span>
-                      ))}
                     </div>
-                  </article>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="presentation-cards-list">
+                  {boardCandidates.map((candidate) => (
+                    <article
+                      key={candidate.candidateId}
+                      className={`presentation-movie-card ${candidate.status} ${
+                        activeStep.newlyEliminated.includes(candidate.candidateId)
+                          ? 'newly-eliminated'
+                          : ''
+                      }`}
+                      ref={(element) => {
+                        cardRefs.current[candidate.candidateId] = element;
+                      }}
+                    >
+                      <h2>{candidate.title}</h2>
+                      <div className="presentation-emoji-stack">
+                        {candidate.tokens.map((token) => (
+                          <span key={`${candidate.candidateId}-${token.tokenId}`}>
+                            {token.emoji}
+                          </span>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
               <aside
                 className="presentation-exhausted"
                 ref={(element) => {
@@ -1085,23 +1087,25 @@ const Presentation = () => {
                 <p>{activeStep.exhaustedBallots}</p>
               </aside>
 
-              <div className="presentation-flight-layer">
-                {flightTokens.map((token) => (
-                  <span
-                    key={token.id}
-                    className={`presentation-flight-token ${token.active ? 'active' : ''}`}
-                    style={{
-                      left: `${token.startX}px`,
-                      top: `${token.startY}px`,
-                      transform: token.active
-                        ? `translate(${token.deltaX}px, ${token.deltaY}px)`
-                        : 'translate(0, 0)',
-                    }}
-                  >
-                    {token.emoji}
-                  </span>
-                ))}
-              </div>
+              {activeStep.type !== 'standings' && (
+                <div className="presentation-flight-layer">
+                  {flightTokens.map((token) => (
+                    <span
+                      key={token.id}
+                      className={`presentation-flight-token ${token.active ? 'active' : ''}`}
+                      style={{
+                        left: `${token.startX}px`,
+                        top: `${token.startY}px`,
+                        transform: token.active
+                          ? `translate(${token.deltaX}px, ${token.deltaY}px)`
+                          : 'translate(0, 0)',
+                      }}
+                    >
+                      {token.emoji}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
