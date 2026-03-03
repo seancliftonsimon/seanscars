@@ -459,6 +459,7 @@ const Presentation = () => {
         .filter(
           ({ step, rcvStepIndex }) =>
             step.type === 'winner' ||
+            step.type === 'standings' ||
             (step.type === 'redistribution' &&
               lastRedistributionByRound.get(step.roundNumber) === rcvStepIndex)
         );
@@ -821,7 +822,14 @@ const Presentation = () => {
 
   return (
     <div className="presentation-page">
-      <section className="presentation-slide">
+      <section
+        className={`presentation-slide${
+          activeSlide.kind === 'recommendation-intro' ||
+          activeSlide.kind === 'rcv-addendum-intro'
+            ? ' presentation-slide--centered'
+            : ''
+        }`}
+      >
         {activeSlide.kind === 'overview' && (
           <div className="presentation-block presentation-overview-block">
             <div className="presentation-overview-hero">
@@ -900,9 +908,10 @@ const Presentation = () => {
                 </p>
               )}
               {redistributionPanels.length > 0 && (
-                <>
-                  <div className="presentation-transfer-panels">
-                    {redistributionPanels.map((panel) => (
+                <div className="presentation-transfer-panels">
+                  {redistributionPanels
+                    .filter((panel) => panel.to.length > 0)
+                    .map((panel) => (
                       <div className="presentation-transfer-phase" key={panel.stepId}>
                         <div className="presentation-transfer-visual">
                           <section className="presentation-transfer-origin-panel">
@@ -948,26 +957,25 @@ const Presentation = () => {
                                 </span>
                               </div>
                             ))}
-                            {panel.exhaustedCount > 0 && (
-                              <div className="presentation-transfer-destination-item exhausted">
-                                <span className="presentation-transfer-destination-title">
-                                  Exhausted
-                                </span>
-                                <span className="presentation-transfer-exhausted-emojis">
-                                  {expandEmojiTokens(
-                                    panel.exhaustedCount,
-                                    EXHAUSTED_EMOJI,
-                                    `${panel.stepId}-exhausted`
-                                  )}
-                                </span>
-                              </div>
-                            )}
                           </section>
                         </div>
                       </div>
                     ))}
-                  </div>
-                </>
+                  {redistributionPanels.reduce((sum, p) => sum + p.exhaustedCount, 0) > 0 && (
+                    <div className="presentation-transfer-exhausted-summary">
+                      <span className="presentation-transfer-destination-title">
+                        Exhausted
+                      </span>
+                      <span className="presentation-transfer-exhausted-emojis">
+                        {expandEmojiTokens(
+                          redistributionPanels.reduce((sum, p) => sum + p.exhaustedCount, 0),
+                          EXHAUSTED_EMOJI,
+                          'exhausted-summary'
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <div
