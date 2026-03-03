@@ -94,7 +94,7 @@
 .presentation-recommendation-cloud-rows {
   margin-top: 0.95rem;
   display: grid;
-  gap: 0.95rem;
+  gap: 1.6rem;
 }
 
 .presentation-cloud-row {
@@ -131,28 +131,28 @@
 }
 
 .presentation-cloud-item.size-xl {
-  font-size: clamp(2rem, 3.4vw, 3.2rem);
-  padding: 0.68rem 1.15rem;
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+  padding: 0.75rem 1.3rem;
 }
 
 .presentation-cloud-item.size-l {
-  font-size: clamp(1.68rem, 2.8vw, 2.35rem);
-  padding: 0.58rem 1rem;
+  font-size: clamp(2rem, 3.3vw, 2.75rem);
+  padding: 0.64rem 1.1rem;
 }
 
 .presentation-cloud-item.size-m {
-  font-size: clamp(1.38rem, 2.2vw, 1.85rem);
-  padding: 0.5rem 0.84rem;
+  font-size: clamp(1.65rem, 2.6vw, 2.2rem);
+  padding: 0.55rem 0.95rem;
 }
 
 .presentation-cloud-item.size-s {
-  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
-  padding: 0.42rem 0.72rem;
+  font-size: clamp(1.35rem, 2.1vw, 1.75rem);
+  padding: 0.46rem 0.8rem;
 }
 
 .presentation-cloud-item.size-xs {
-  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
-  padding: 0.34rem 0.58rem;
+  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+  padding: 0.38rem 0.65rem;
 }
 
 .presentation-step-copy {
@@ -317,15 +317,6 @@
   line-height: 1;
 }
 
-.presentation-transfer-exhausted-summary {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.62rem 0.82rem;
-  border-radius: 10px;
-  background: rgba(7, 7, 7, 0.58);
-  border: 1px solid rgba(255, 229, 168, 0.4);
-}
 
 .presentation-board {
   position: relative;

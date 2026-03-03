@@ -681,6 +681,30 @@ const Presentation = () => {
     });
   }, [activeSlide, activeStep, data]);
 
+  // Aggregate all per-panel transfer data into a single from/to view.
+  const aggregatedTransfers = useMemo(() => {
+    if (redistributionPanels.length === 0) return null;
+
+    const allFrom = redistributionPanels.flatMap((p) => p.from);
+
+    const toMap = new Map<string, { title: string; count: number }>();
+    redistributionPanels.forEach((panel) => {
+      panel.to.forEach((dest) => {
+        const existing = toMap.get(dest.candidateId);
+        if (existing) {
+          existing.count += dest.count;
+        } else {
+          toMap.set(dest.candidateId, { title: dest.title, count: dest.count });
+        }
+      });
+    });
+
+    const allTo = Array.from(toMap.values()).sort((a, b) => b.count - a.count);
+    const totalExhausted = redistributionPanels.reduce((sum, p) => sum + p.exhaustedCount, 0);
+
+    return { from: allFrom, to: allTo, exhaustedCount: totalExhausted };
+  }, [redistributionPanels]);
+
   // For redistribution slides, build a title that names all eliminated candidates
   // for the round (gathered from the panels), rather than just the last one.
   const rcvSlideTitle = useMemo(() => {
@@ -852,10 +876,6 @@ const Presentation = () => {
         {activeSlide.kind === 'recommendation-cloud' && (
           <div className="presentation-block presentation-recommendation-block">
             <h1>{activeSlide.recommendation.prompt}</h1>
-            <p className="presentation-threshold-line">
-              {activeSlide.recommendation.responsesCount} response
-              {activeSlide.recommendation.responsesCount === 1 ? '' : 's'}
-            </p>
             {activeSlide.recommendation.rows.length === 0 ? (
               <p className="presentation-muted">No responses yet.</p>
             ) : (
@@ -871,7 +891,9 @@ const Presentation = () => {
                         className={`presentation-cloud-item size-${item.size}`}
                       >
                         <span className="presentation-cloud-title">{item.title}</span>
-                        <span className="presentation-cloud-count">x{item.count}</span>
+                        {item.count > 1 && (
+                          <span className="presentation-cloud-count">x{item.count}</span>
+                        )}
                       </article>
                     ))}
                   </div>
@@ -907,74 +929,69 @@ const Presentation = () => {
                   {rcvSlideTitle.subtitle}
                 </p>
               )}
-              {redistributionPanels.length > 0 && (
-                <div className="presentation-transfer-panels">
-                  {redistributionPanels
-                    .filter((panel) => panel.to.length > 0)
-                    .map((panel) => (
-                      <div className="presentation-transfer-phase" key={panel.stepId}>
-                        <div className="presentation-transfer-visual">
-                          <section className="presentation-transfer-origin-panel">
-                            {panel.from.map((source) => (
-                              <article
-                                className="presentation-transfer-origin-item"
-                                key={source.candidateId}
-                              >
-                                <div className="presentation-transfer-origin-title">
-                                  {source.title}
-                                </div>
-                                <div className="presentation-transfer-origin-emojis">
-                                  {expandEmojiTokens(
-                                    source.count,
-                                    BALLOT_EMOJI,
-                                    `${panel.stepId}-${source.candidateId}-from`
-                                  )}
-                                </div>
-                              </article>
-                            ))}
-                          </section>
-                          <div className="presentation-transfer-arrow" aria-hidden="true">
-                            →
-                          </div>
-                          <section className="presentation-transfer-destination-panel">
-                            {panel.to.map((destination) => (
-                              <div
-                                className="presentation-transfer-destination-item"
-                                key={destination.candidateId}
-                              >
-                                <span className="presentation-transfer-destination-title">
-                                  {destination.title}
-                                </span>
-                                <span className="presentation-transfer-delta-value">
-                                  +
-                                  <span className="presentation-transfer-delta-emojis">
-                                    {expandEmojiTokens(
-                                      destination.count,
-                                      BALLOT_EMOJI,
-                                      `${panel.stepId}-${destination.candidateId}-to`
-                                    )}
-                                  </span>
-                                </span>
-                              </div>
-                            ))}
-                          </section>
+              {aggregatedTransfers && (
+                <div className="presentation-transfer-visual">
+                  <section className="presentation-transfer-origin-panel">
+                    {aggregatedTransfers.from.map((source) => (
+                      <article
+                        className="presentation-transfer-origin-item"
+                        key={source.candidateId}
+                      >
+                        <div className="presentation-transfer-origin-title">
+                          {source.title}
                         </div>
+                        <div className="presentation-transfer-origin-emojis">
+                          {expandEmojiTokens(
+                            source.count,
+                            BALLOT_EMOJI,
+                            `agg-${source.candidateId}-from`
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </section>
+                  <div className="presentation-transfer-arrow" aria-hidden="true">
+                    →
+                  </div>
+                  <section className="presentation-transfer-destination-panel">
+                    {aggregatedTransfers.to.map((destination) => (
+                      <div
+                        className="presentation-transfer-destination-item"
+                        key={destination.title}
+                      >
+                        <span className="presentation-transfer-destination-title">
+                          {destination.title}
+                        </span>
+                        <span className="presentation-transfer-delta-value">
+                          +
+                          <span className="presentation-transfer-delta-emojis">
+                            {expandEmojiTokens(
+                              destination.count,
+                              BALLOT_EMOJI,
+                              `agg-${destination.title}-to`
+                            )}
+                          </span>
+                        </span>
                       </div>
                     ))}
-                  {redistributionPanels.reduce((sum, p) => sum + p.exhaustedCount, 0) > 0 && (
-                    <div className="presentation-transfer-exhausted-summary">
-                      <span className="presentation-transfer-destination-title">
-                        Exhausted
-                      </span>
-                      <span className="presentation-transfer-exhausted-emojis">
-                        {expandEmojiTokens(
-                          redistributionPanels.reduce((sum, p) => sum + p.exhaustedCount, 0),
-                          EXHAUSTED_EMOJI,
-                          'exhausted-summary'
-                        )}
-                      </span>
-                    </div>
-                  )}
+                    {aggregatedTransfers.exhaustedCount > 0 && (
+                      <div className="presentation-transfer-destination-item exhausted">
+                        <span className="presentation-transfer-destination-title">
+                          Exhausted
+                        </span>
+                        <span className="presentation-transfer-delta-value">
+                          +
+                          <span className="presentation-transfer-delta-emojis">
+                            {expandEmojiTokens(
+                              aggregatedTransfers.exhaustedCount,
+                              EXHAUSTED_EMOJI,
+                              'agg-exhausted'
+                            )}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </section>
                 </div>
               )}
             </div>
