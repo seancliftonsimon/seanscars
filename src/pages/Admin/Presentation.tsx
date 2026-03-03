@@ -140,6 +140,12 @@ const clamp = (value: number, min: number, max: number) =>
 const BALLOT_EMOJI = '🏆';
 const EXHAUSTED_EMOJI = '💨';
 
+const getOrdinal = (n: number): string => {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
+};
+
 const expandEmojiTokens = (
   count: number,
   emoji: string,
@@ -612,6 +618,24 @@ const Presentation = () => {
     return interleaved;
   }, [visibleCandidates]);
 
+  // For standings slides, compute ordinal rank per candidate (ties share the same rank).
+  const candidateRanks = useMemo(() => {
+    if (!activeStep || activeStep.type !== 'standings') {
+      return new Map<string, number>();
+    }
+    const ranks = new Map<string, number>();
+    let rankStart = 1;
+    let lastVotes = -1;
+    visibleCandidates.forEach((c, i) => {
+      if (c.votes !== lastVotes) {
+        rankStart = i + 1;
+        lastVotes = c.votes;
+      }
+      ranks.set(c.candidateId, rankStart);
+    });
+    return ranks;
+  }, [activeStep, visibleCandidates]);
+
   const redistributionPanels = useMemo(() => {
     if (
       !activeStep ||
@@ -827,6 +851,27 @@ const Presentation = () => {
     };
   }, [activeStep]);
 
+  // On standings slides, shrink the board via zoom if it overflows the viewport.
+  // Only applied to standings (not redistribution) so flight token positions stay correct.
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    if (!activeStep || activeStep.type !== 'standings') {
+      el.style.zoom = '1';
+      return;
+    }
+    el.style.zoom = '1';
+    const id = window.requestAnimationFrame(() => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const available = window.innerHeight - rect.top - 12;
+      if (available > 0 && rect.height > available) {
+        el.style.zoom = String(Math.max(0.4, available / rect.height));
+      }
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [activeStep, boardCandidates]);
+
   if (loading) {
     return <div className="presentation-loading">Loading presentation...</div>;
   }
@@ -1014,6 +1059,11 @@ const Presentation = () => {
                       cardRefs.current[candidate.candidateId] = element;
                     }}
                   >
+                    {candidateRanks.size > 0 && (
+                      <div className="presentation-rank-badge">
+                        {getOrdinal(candidateRanks.get(candidate.candidateId) ?? 0)}
+                      </div>
+                    )}
                     <h2>{candidate.title}</h2>
                     <div className="presentation-emoji-stack">
                       {candidate.tokens.map((token) => (
