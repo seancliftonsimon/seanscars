@@ -388,13 +388,16 @@ export function calculateParticipationStats(
 }
 
 export function calculateRankedChoiceRounds(
-  includedBallots: RcvBallot[]
+  includedBallots: RcvBallot[],
+  excludedCandidateIds?: Set<string>
 ): RcvComputationResult {
   const titlesByMovieId = buildMovieTitleMap(includedBallots);
 
   const rankedBallots: RankedBallotContext[] = includedBallots.map((ballot) => ({
     ballotId: ballot.id,
-    ranks: getCanonicalBestPictureRanks(ballot),
+    ranks: excludedCandidateIds
+      ? getCanonicalBestPictureRanks(ballot).filter((id) => !excludedCandidateIds.has(id))
+      : getCanonicalBestPictureRanks(ballot),
   }));
 
   const initialCandidates = new Set<string>();

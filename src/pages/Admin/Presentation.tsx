@@ -50,6 +50,20 @@ interface RecommendationSlideData {
   rows: RecommendationCloudRow[];
 }
 
+// 2026 Oscar Best Picture nominees (98th Academy Awards)
+const OSCAR_2026_NOMINEE_IDS = new Set([
+  'movie-9',  // Marty Supreme
+  'movie-16', // Bugonia
+  'movie-24', // F1: The Movie
+  'movie-27', // One Battle After Another
+  'movie-41', // Sinners
+  'movie-48', // The Secret Agent
+  'movie-49', // Hamnet
+  'movie-52', // Frankenstein
+  'movie-56', // Sentimental Value
+  'movie-70', // Train Dreams
+]);
+
 interface PresentationData {
   overview: {
     ballotsReceived: number;
@@ -57,6 +71,7 @@ interface PresentationData {
   };
   stats: ParticipationStats;
   rcv: RcvComputationResult;
+  rcvExOscars: RcvComputationResult;
   recommendationSlides: RecommendationSlideData[];
 }
 
@@ -84,6 +99,14 @@ type PresentationSlide =
     }
   | {
       kind: 'rcv';
+      step: RcvPresentationStep;
+      rcvStepIndex: number;
+    }
+  | {
+      kind: 'rcv-addendum-intro';
+    }
+  | {
+      kind: 'rcv-addendum';
       step: RcvPresentationStep;
       rcvStepIndex: number;
     };
@@ -264,6 +287,7 @@ const buildPresentationData = (allBallots: AdminBallot[]): PresentationData => {
   const includedBallots = allBallots.filter(isIncludedInAnalysis);
   const stats = calculateParticipationStats(includedBallots, allBallots.length);
   const rcv = calculateRankedChoiceRounds(includedBallots);
+  const rcvExOscars = calculateRankedChoiceRounds(includedBallots, OSCAR_2026_NOMINEE_IDS);
   const recommendationSlides = buildRecommendationSlides(includedBallots);
   const uniqueSeenMovieIds = new Set<string>();
   includedBallots.forEach((ballot) => {
@@ -278,7 +302,7 @@ const buildPresentationData = (allBallots: AdminBallot[]): PresentationData => {
     moviesSeen: uniqueSeenMovieIds.size,
   };
 
-  return { overview, stats, rcv, recommendationSlides };
+  return { overview, stats, rcv, rcvExOscars, recommendationSlides };
 };
 
 const getRcvDisplayCopy = (step: RcvPresentationStep) => {
@@ -421,18 +445,38 @@ const Presentation = () => {
       return [];
     }
 
-    const rcvSlides = data.rcv.steps
-      .map((step, rcvStepIndex) => ({
-        kind: 'rcv' as const,
+    // For redistribution steps, show only the last one per round so all
+    // transfer panels for that round are visible together on one slide.
+    const makeRoundSlides = (steps: RcvPresentationStep[]) => {
+      const lastRedistributionByRound = new Map<number, number>();
+      steps.forEach((step, index) => {
+        if (step.type === 'redistribution') {
+          lastRedistributionByRound.set(step.roundNumber, index);
+        }
+      });
+      return steps
+        .map((step, rcvStepIndex) => ({ step, rcvStepIndex }))
+        .filter(
+          ({ step, rcvStepIndex }) =>
+            step.type === 'winner' ||
+            (step.type === 'redistribution' &&
+              lastRedistributionByRound.get(step.roundNumber) === rcvStepIndex)
+        );
+    };
+
+    const rcvSlides = makeRoundSlides(data.rcv.steps).map(({ step, rcvStepIndex }) => ({
+      kind: 'rcv' as const,
+      step,
+      rcvStepIndex,
+    }));
+
+    const rcvAddendumSlides = makeRoundSlides(data.rcvExOscars.steps).map(
+      ({ step, rcvStepIndex }) => ({
+        kind: 'rcv-addendum' as const,
         step,
         rcvStepIndex,
-      }))
-      .filter(
-        (slide) =>
-          slide.step.type === 'standings' ||
-          slide.step.type === 'redistribution' ||
-          slide.step.type === 'winner'
-      );
+      })
+    );
 
     return [
       { kind: 'overview' },
@@ -447,6 +491,9 @@ const Presentation = () => {
         },
       ]),
       ...rcvSlides,
+      ...(rcvAddendumSlides.length > 0
+        ? [{ kind: 'rcv-addendum-intro' as const }, ...rcvAddendumSlides]
+        : []),
     ];
   }, [data]);
 
@@ -516,7 +563,10 @@ const Presentation = () => {
   ]);
 
   const activeSlide = slides[activeSlideIndex] ?? null;
-  const activeStep = activeSlide?.kind === 'rcv' ? activeSlide.step : null;
+  const activeStep =
+    activeSlide?.kind === 'rcv' || activeSlide?.kind === 'rcv-addendum'
+      ? activeSlide.step
+      : null;
   const activeStepCopy = useMemo(
     () => (activeStep ? getRcvDisplayCopy(activeStep) : null),
     [activeStep]
@@ -568,13 +618,15 @@ const Presentation = () => {
       activeStep.voteMovements.length === 0 ||
       !data ||
       !activeSlide ||
-      activeSlide.kind !== 'rcv'
+      (activeSlide.kind !== 'rcv' && activeSlide.kind !== 'rcv-addendum')
     ) {
       return [];
     }
 
-    const titlesByCandidateId = data.rcv.titlesByCandidateId || {};
-    const phaseSteps = data.rcv.steps
+    const isAddendum = activeSlide.kind === 'rcv-addendum';
+    const rcvResult = isAddendum ? data.rcvExOscars : data.rcv;
+    const titlesByCandidateId = rcvResult.titlesByCandidateId || {};
+    const phaseSteps = rcvResult.steps
       .slice(0, activeSlide.rcvStepIndex + 1)
       .filter(
         (step) =>
@@ -582,7 +634,7 @@ const Presentation = () => {
           step.roundNumber === activeStep.roundNumber
       );
 
-    return [...phaseSteps].reverse().map((step) => {
+    return phaseSteps.map((step) => {
       const fromCountsByCandidate = new Map<string, number>();
       const toCountsByCandidate = new Map<string, number>();
       let exhaustedCount = 0;
@@ -627,6 +679,41 @@ const Presentation = () => {
       };
     });
   }, [activeSlide, activeStep, data]);
+
+  // For redistribution slides, build a title that names all eliminated candidates
+  // for the round (gathered from the panels), rather than just the last one.
+  const rcvSlideTitle = useMemo(() => {
+    if (!activeStep) return null;
+
+    if (activeStep.type === 'redistribution' && redistributionPanels.length > 0) {
+      const eliminatedTitles = redistributionPanels
+        .map((panel) => panel.from[0]?.title)
+        .filter((title): title is string => Boolean(title));
+
+      const leadingCandidate = [...activeStep.candidates]
+        .filter((c) => c.status !== 'eliminated' && c.votes > 0)
+        .sort((l, r) =>
+          r.votes !== l.votes ? r.votes - l.votes : l.title.localeCompare(r.title)
+        )[0];
+
+      let title: string;
+      if (eliminatedTitles.length === 0) {
+        title = 'Votes redistributed.';
+      } else if (eliminatedTitles.length === 1) {
+        title = `${eliminatedTitles[0]} eliminated.`;
+      } else {
+        const allButLast = eliminatedTitles.slice(0, -1).join(', ');
+        title = `${allButLast} and ${eliminatedTitles[eliminatedTitles.length - 1]} eliminated.`;
+      }
+
+      return {
+        title,
+        subtitle: leadingCandidate ? `${leadingCandidate.title} is in the lead.` : '',
+      };
+    }
+
+    return activeStepCopy;
+  }, [activeStep, activeStepCopy, redistributionPanels]);
 
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
   const boardRef = useRef<HTMLElement | null>(null);
@@ -786,8 +873,17 @@ const Presentation = () => {
           </div>
         )}
 
-        {activeSlide.kind === 'rcv' && activeStep && (
+        {activeSlide.kind === 'rcv-addendum-intro' && (
+          <div className="presentation-block presentation-recommendation-intro-block">
+            <h1>What if the Oscar nominees weren't eligible?</h1>
+          </div>
+        )}
+
+        {(activeSlide.kind === 'rcv' || activeSlide.kind === 'rcv-addendum') && activeStep && (
           <div className="presentation-block presentation-rcv-block">
+            {activeSlide.kind === 'rcv-addendum' && (
+              <p className="presentation-rcv-addendum-label">Excluding 2026 Oscar nominees</p>
+            )}
             <div className="presentation-step-copy">
               <h1
                 className={
@@ -796,11 +892,11 @@ const Presentation = () => {
                     : undefined
                 }
               >
-                {activeStepCopy?.title}
+                {rcvSlideTitle?.title}
               </h1>
-              {activeStepCopy?.subtitle && (
+              {rcvSlideTitle?.subtitle && (
                 <p className="presentation-step-explanation">
-                  {activeStepCopy.subtitle}
+                  {rcvSlideTitle.subtitle}
                 </p>
               )}
               {redistributionPanels.length > 0 && (

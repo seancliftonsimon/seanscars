@@ -479,6 +479,15 @@
   font-size: 1.05rem;
 }
 
+.presentation-rcv-addendum-label {
+  margin: 0 0 0.6rem;
+  color: rgba(255, 220, 140, 0.85);
+  font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 @media (min-width: 1300px) {
   .presentation-page {
     padding: 1.8rem 2.6rem;
