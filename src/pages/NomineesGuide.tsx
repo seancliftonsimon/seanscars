@@ -77,9 +77,9 @@ const NomineesGuide = () => {
     <div className="nominees-guide-page">
       <div className="nominees-guide-hero">
         <div className="container">
-          <h1 className="fade-in">2026 Nominees Guide</h1>
+          <h1 className="fade-in">2026 Adam Awards Nominees Guide</h1>
           <p className="nominees-guide-subtitle fade-in">
-            A complete reference for every film, recommendation, platform, and nomination from the spreadsheet.
+            A complete Adam Awards reference for every film, recommendation, platform, and nomination from the spreadsheet.
           </p>
         </div>
       </div>
