@@ -9,6 +9,7 @@ import Media from './pages/Media';
 import Vote from './pages/Vote/Vote';
 import AdminDashboard from './pages/Admin/Dashboard';
 import Presentation from './pages/Admin/Presentation';
+import BackstageTimer from './pages/BackstageTimer';
 import './index.css';
 
 const DEFAULT_ADMIN_SLUG = 'results-HOST2026';
@@ -19,10 +20,11 @@ const adminRoutePath = `/${adminSlug.replace(/^\/+/, '')}`;
 function AppContent() {
   const location = useLocation();
   const isVotePath = location.pathname === '/vote' || location.pathname === '/voting';
+  const isBackstagePath = location.pathname === '/backstage' || location.pathname === '/timer';
   const isAdminPath =
     location.pathname === adminRoutePath ||
     location.pathname.startsWith(`${adminRoutePath}/`);
-  const hideNavbar = isVotePath || isAdminPath;
+  const hideNavbar = isVotePath || isAdminPath || isBackstagePath;
 
   return (
     <div className="app">
@@ -37,6 +39,8 @@ function AppContent() {
           <Route path="/media" element={<Media />} />
           <Route path="/vote" element={<Vote />} />
           <Route path="/voting" element={<Vote />} />
+          <Route path="/backstage" element={<BackstageTimer />} />
+          <Route path="/timer" element={<BackstageTimer />} />
           <Route path={adminRoutePath} element={<AdminDashboard />} />
           <Route path={`${adminRoutePath}/present`} element={<Presentation />} />
         </Routes>
