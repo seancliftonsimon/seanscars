@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 type Mode = 'setup' | 'presentation';
@@ -240,8 +240,25 @@ const toCloudSetupPayload = (state: PersistedSetupState) => ({
   showStartTime: state.showStartTime,
   segments: state.segments,
   updatedAtMs: state.updatedAtMs,
-  updatedAt: serverTimestamp(),
 });
+
+const getCloudSyncErrorMessage = (error: unknown) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+  ) {
+    if (error.code === 'permission-denied') {
+      return 'permission denied (update Firestore rules)';
+    }
+    if (error.code === 'unauthenticated') {
+      return 'authentication required (check Firestore rules)';
+    }
+    return `error ${error.code}`;
+  }
+  return 'unavailable (local save still active)';
+};
 
 const readSetupState = (): PersistedSetupState => {
   const fallback = makeDefaultSetupState();
@@ -1399,6 +1416,7 @@ const BackstageTimer = () => {
   const [cloudSyncState, setCloudSyncState] = useState<'idle' | 'syncing' | 'synced' | 'error'>(
     'idle'
   );
+  const [cloudSyncErrorMessage, setCloudSyncErrorMessage] = useState<string | null>(null);
 
   const [showStartedAtMs, setShowStartedAtMs] = useState<number | null>(null);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -1446,13 +1464,16 @@ const BackstageTimer = () => {
       return 'Cloud sync: syncing...';
     }
     if (cloudSyncState === 'error') {
+      if (cloudSyncErrorMessage) {
+        return `Cloud sync: ${cloudSyncErrorMessage}`;
+      }
       return 'Cloud sync: unavailable (local save still active)';
     }
     if (cloudSyncState === 'synced') {
       return 'Cloud sync: up to date';
     }
     return 'Cloud sync: connecting...';
-  }, [cloudSyncState]);
+  }, [cloudSyncErrorMessage, cloudSyncState]);
 
   const scheduleOffsetsSec = useMemo(() => buildScheduleOffsetsSec(segments), [segments]);
   const totalPlannedSec = useMemo(
@@ -1887,6 +1908,7 @@ const BackstageTimer = () => {
 
     const bootstrapCloudSync = async () => {
       setCloudSyncState('syncing');
+      setCloudSyncErrorMessage(null);
       try {
         const localState = currentSetupState;
         const localSignature = createSetupSignature(localState);
@@ -1903,6 +1925,7 @@ const BackstageTimer = () => {
           lastSyncedCloudSignatureRef.current = localSignature;
           cloudBootstrapCompleteRef.current = true;
           setCloudSyncState('synced');
+          setCloudSyncErrorMessage(null);
           return;
         }
 
@@ -1920,6 +1943,7 @@ const BackstageTimer = () => {
           setSetupUpdatedAtMs(remoteState.updatedAtMs);
           cloudBootstrapCompleteRef.current = true;
           setCloudSyncState('synced');
+          setCloudSyncErrorMessage(null);
           return;
         }
 
@@ -1933,10 +1957,12 @@ const BackstageTimer = () => {
         lastSyncedCloudSignatureRef.current = localSignature;
         cloudBootstrapCompleteRef.current = true;
         setCloudSyncState('synced');
+        setCloudSyncErrorMessage(null);
       } catch (error) {
         console.error('Failed to sync run of show from cloud:', error);
         cloudBootstrapCompleteRef.current = true;
         setCloudSyncState('error');
+        setCloudSyncErrorMessage(getCloudSyncErrorMessage(error));
       }
     };
 
@@ -1961,6 +1987,7 @@ const BackstageTimer = () => {
     }
 
     setCloudSyncState('syncing');
+    setCloudSyncErrorMessage(null);
     const pendingState = currentSetupState;
     const pendingSignature = currentSetupSignature;
     const timeoutId = window.setTimeout(() => {
@@ -1968,10 +1995,12 @@ const BackstageTimer = () => {
         .then(() => {
           lastSyncedCloudSignatureRef.current = pendingSignature;
           setCloudSyncState('synced');
+          setCloudSyncErrorMessage(null);
         })
         .catch((error) => {
           console.error('Failed to save run of show to cloud:', error);
           setCloudSyncState('error');
+          setCloudSyncErrorMessage(getCloudSyncErrorMessage(error));
         });
     }, 300);
 
