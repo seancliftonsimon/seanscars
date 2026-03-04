@@ -353,13 +353,13 @@ const getCountdownDisplay = (remainingSec: number) => {
   }
 
   // Above 2:00, show half-minute language:
-  // 4:30..4:01 => "4 1/2 minutes", 4:00..3:31 => "4 min", etc.
+  // 4:30..4:01 => "4 1/2 min", 4:00..3:31 => "4 min", etc.
   const snapped30 = Math.ceil(safeRemaining / 30) * 30;
   const wholeMinutes = Math.floor(snapped30 / 60);
   const isHalfMinute = snapped30 % 60 === 30;
 
   if (isHalfMinute) {
-    return `${wholeMinutes} 1/2 minutes`;
+    return `${wholeMinutes} 1/2 min`;
   }
 
   return `${wholeMinutes} min`;
@@ -889,7 +889,7 @@ const BACKSTAGE_STYLES = String.raw`
 .backstage-micro-timer {
   position: absolute;
   top: calc(0.45rem + env(safe-area-inset-top));
-  right: 0.75rem;
+  right: 2.9rem;
   z-index: 40;
   margin: 0;
   font-size: 0.5rem;
@@ -1239,8 +1239,8 @@ const BACKSTAGE_STYLES = String.raw`
 .backstage-timing-handle {
   position: absolute;
   right: 0;
-  top: 48%;
-  transform: translateY(-50%);
+  top: calc(0.45rem + env(safe-area-inset-top));
+  transform: none;
   z-index: 30;
   border: 1px solid #353535;
   border-right: 0;
@@ -1248,7 +1248,7 @@ const BACKSTAGE_STYLES = String.raw`
   background: rgba(18, 18, 18, 0.9);
   color: #e8e8e8;
   width: 34px;
-  height: 92px;
+  height: 46px;
   cursor: pointer;
   font-size: 1.1rem;
 }
