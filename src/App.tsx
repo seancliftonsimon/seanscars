@@ -6,6 +6,7 @@ import Info from './pages/Info';
 import History from './pages/History';
 import HallOfFame from './pages/HallOfFame';
 import Media from './pages/Media';
+import NomineesGuide from './pages/NomineesGuide';
 import Vote from './pages/Vote/Vote';
 import AdminDashboard from './pages/Admin/Dashboard';
 import Presentation from './pages/Admin/Presentation';
@@ -37,6 +38,7 @@ function AppContent() {
           <Route path="/history" element={<History />} />
           <Route path="/hall-of-fame" element={<HallOfFame />} />
           <Route path="/media" element={<Media />} />
+          <Route path="/nominees" element={<NomineesGuide />} />
           <Route path="/vote" element={<Vote />} />
           <Route path="/voting" element={<Vote />} />
           <Route path="/backstage" element={<BackstageTimer />} />
