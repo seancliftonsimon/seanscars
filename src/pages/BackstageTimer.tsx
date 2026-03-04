@@ -219,12 +219,6 @@ const formatDuration = (totalSeconds: number) => {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 };
 
-const formatSignedDuration = (totalSeconds: number) => {
-  const safeSeconds = Math.floor(totalSeconds);
-  const direction = safeSeconds < 0 ? '-' : '+';
-  return `${direction}${formatDuration(Math.abs(safeSeconds))}`;
-};
-
 const getCountdownDisplay = (remainingSec: number) => {
   if (remainingSec > 180) {
     return String(Math.max(0, Math.floor(remainingSec / 60)));
@@ -245,6 +239,20 @@ const getDurationLabel = (durationSec: number) => {
 
 const pluralize = (value: number, singular: string, plural: string) =>
   value === 1 ? singular : plural;
+
+const formatAheadBehindDistance = (minutes: number) => {
+  if (minutes < 60) {
+    return `${minutes} ${pluralize(minutes, 'min', 'mins')}`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const leftoverMinutes = minutes % 60;
+  if (leftoverMinutes === 0) {
+    return `${hours} ${pluralize(hours, 'hr', 'hrs')}`;
+  }
+
+  return `${hours} ${pluralize(hours, 'hr', 'hrs')} ${leftoverMinutes}m`;
+};
 
 const upsertMetaTag = (name: string, content: string) => {
   const selector = `meta[name="${name}"]`;
@@ -1114,31 +1122,36 @@ const BACKSTAGE_STYLES = String.raw`
   padding: 0.8rem 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
 }
 
-.backstage-timing-stat {
-  border: 1px solid #2f2f2f;
-  border-radius: 10px;
-  background: rgba(21, 21, 21, 0.95);
-  padding: 0.48rem 0.58rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
+.backstage-timing-main {
+  margin: 0;
+  border: 1px solid #3b3b3b;
+  border-radius: 12px;
+  padding: 1rem 0.9rem;
+  text-align: center;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
-.backstage-timing-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9c9c9c;
-  font-weight: 700;
+.backstage-timing-main.ahead {
+  border-color: #1f8747;
+  background: rgba(24, 169, 87, 0.18);
+  color: #64e79a;
 }
 
-.backstage-timing-value {
-  font-size: 0.9rem;
-  color: #f1f1f1;
-  font-weight: 700;
+.backstage-timing-main.behind {
+  border-color: #9d3232;
+  background: rgba(211, 71, 71, 0.2);
+  color: #ff8d8d;
+}
+
+.backstage-timing-main.neutral {
+  border-color: #666;
+  background: rgba(160, 160, 160, 0.16);
+  color: #dadada;
 }
 
 .backstage-drawer-list {
@@ -1316,15 +1329,16 @@ const BackstageTimer = () => {
     }
 
     const wholeMinutes = Math.max(1, Math.round(absMs / 60_000));
+    const formattedDistance = formatAheadBehindDistance(wholeMinutes);
     if (driftMs < 0) {
       return {
         tone: 'ahead' as const,
-        text: `▲ ${wholeMinutes} ${pluralize(wholeMinutes, 'min', 'mins')} ahead`,
+        text: `▲ ${formattedDistance} ahead`,
       };
     }
     return {
       tone: 'behind' as const,
-      text: `▼ ${wholeMinutes} ${pluralize(wholeMinutes, 'min', 'mins')} behind`,
+      text: `▼ ${formattedDistance} behind`,
     };
   }, [driftMs]);
 
@@ -1336,10 +1350,6 @@ const BackstageTimer = () => {
       }),
     [driftMs, scheduleAnchorMs, scheduleOffsetsSec]
   );
-  const nextSegment = segments[currentSegmentIndex + 1] ?? null;
-  const nextProjectedStartMs = nextSegment
-    ? projectedScheduleMs[currentSegmentIndex + 1] ?? null
-    : null;
 
   const countdownState = useMemo(() => {
     if (!currentSegment || currentSegment.type === 'pretape') {
@@ -1960,31 +1970,7 @@ const BackstageTimer = () => {
           <p className="backstage-timing-title">Timing Check</p>
         </div>
         <div className="backstage-timing-body">
-          <div className={`backstage-drift-pill ${driftBadge.tone}`}>{driftBadge.text}</div>
-          <article className="backstage-timing-stat">
-            <span className="backstage-timing-label">Drift (signed)</span>
-            <span className="backstage-timing-value">
-              {formatSignedDuration(Math.round(driftMs / 1000))}
-            </span>
-          </article>
-          <article className="backstage-timing-stat">
-            <span className="backstage-timing-label">Current Wall Clock</span>
-            <span className="backstage-timing-value">{formatClockTimestamp(nowMs, true)}</span>
-          </article>
-          <article className="backstage-timing-stat">
-            <span className="backstage-timing-label">Scheduled Start (Current)</span>
-            <span className="backstage-timing-value">
-              {formatClockTimestamp(currentScheduledStartMs, true)}
-            </span>
-          </article>
-          {nextSegment && nextProjectedStartMs !== null && (
-            <article className="backstage-timing-stat">
-              <span className="backstage-timing-label">Projected Next Start</span>
-              <span className="backstage-timing-value">
-                {formatClockTimestamp(nextProjectedStartMs, true)}
-              </span>
-            </article>
-          )}
+          <p className={`backstage-timing-main ${driftBadge.tone}`}>{driftBadge.text}</p>
         </div>
       </aside>
 
