@@ -179,10 +179,10 @@ const NomineesGuide = () => {
     <div className="nominees-guide-page">
       <div className="nominees-guide-hero">
         <div className="container">
-          <h1 className="fade-in">2026 Adam Awards Nominees Guide</h1>
-          <p className="nominees-guide-subtitle fade-in">
-            A complete Adam Awards reference for every film, recommendation, platform, and nomination from the spreadsheet.
-          </p>
+          <h1 className="fade-in nominees-guide-title">
+            <span className="nominees-guide-title-line">2026 Adam Awards</span>
+            <span className="nominees-guide-title-line">Nominees Guide</span>
+          </h1>
         </div>
       </div>
 
@@ -203,11 +203,6 @@ const NomineesGuide = () => {
             </div>
           </div>
 
-          <p className="nominees-guide-intro card slide-in-left">
-            Browse every nominee below in alphabetical order. Each card preserves the original spreadsheet details:
-            rating, genre, viewing options, recommendation notes, and nominations.
-          </p>
-
           <p className="nominees-guide-results-count">
             Showing all <strong>{orderedEntries.length}</strong> movies
           </p>
@@ -226,7 +221,6 @@ const NomineesGuide = () => {
                   <header className="nominees-guide-card-header">
                     <h2>{entry.film}</h2>
                     <div className="nominees-guide-rating-chip" aria-label={`Rating ${entry.myRating}`}>
-                      <Star size={14} />
                       <span>{starsFromRating(entry.myRating)}</span>
                     </div>
                   </header>

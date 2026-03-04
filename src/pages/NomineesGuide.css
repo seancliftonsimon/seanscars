@@ -11,10 +11,16 @@
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
-.nominees-guide-subtitle {
-  max-width: 780px;
-  opacity: 0.92;
+.nominees-guide-hero .container {
+  text-align: center;
+}
+
+.nominees-guide-title {
   margin-bottom: 0;
+}
+
+.nominees-guide-title-line {
+  display: block;
 }
 
 .nominees-guide-stats {
@@ -38,11 +44,6 @@
 
 .nominees-guide-stat-card svg {
   color: var(--color-gold-light);
-}
-
-.nominees-guide-intro {
-  margin: 0 0 var(--spacing-sm);
-  line-height: 1.65;
 }
 
 .nominees-guide-results-count {
