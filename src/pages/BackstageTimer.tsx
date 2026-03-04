@@ -14,6 +14,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 type Mode = 'setup' | 'presentation';
 type SegmentType = 'live' | 'pretape' | 'intermission';
@@ -29,6 +31,7 @@ interface Segment {
 interface PersistedSetupState {
   showStartTime: string;
   segments: Segment[];
+  updatedAtMs: number;
 }
 
 interface CompletedRun {
@@ -53,6 +56,10 @@ const STORAGE_KEY = 'seanscars-stage-timer-v1';
 const DEFAULT_SHOW_START_TIME = '19:00';
 const MAX_BONUS_PER_SEGMENT_SEC = 4 * 60;
 const SEGMENT_TYPES: SegmentType[] = ['live', 'pretape', 'intermission'];
+const RUN_OF_SHOW_COLLECTION = 'showConfigs';
+const DEFAULT_RUN_OF_SHOW_DOC_ID = 'seanscars-2026-rundown';
+const configuredRunOfShowDocId = import.meta.env.VITE_RUN_OF_SHOW_DOC_ID?.trim();
+const RUN_OF_SHOW_DOC_ID = configuredRunOfShowDocId || DEFAULT_RUN_OF_SHOW_DOC_ID;
 
 const DEFAULT_SEGMENTS: Segment[] = [
   { id: 'seg-01', title: 'Opening Countdown', presenter: 'Sharemony', type: 'pretape', durationSec: 4 * 60 },
@@ -125,6 +132,13 @@ const normalizeDuration = (value: unknown) => {
   return Math.max(0, Math.round(value));
 };
 
+const normalizeUpdatedAtMs = (value: unknown) => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.round(value));
+};
+
 const isSegmentType = (value: unknown): value is SegmentType =>
   value === 'live' || value === 'pretape' || value === 'intermission';
 
@@ -146,6 +160,7 @@ const normalizeTimeInput = (value: unknown) => {
 const makeDefaultSetupState = (): PersistedSetupState => ({
   showStartTime: DEFAULT_SHOW_START_TIME,
   segments: DEFAULT_SEGMENTS.map((segment) => ({ ...segment })),
+  updatedAtMs: 0,
 });
 
 const sanitizeSegments = (raw: unknown): Segment[] => {
@@ -180,6 +195,54 @@ const sanitizeSegments = (raw: unknown): Segment[] => {
     .filter((segment): segment is Segment => segment !== null);
 };
 
+const sanitizeSetupState = (
+  raw: Partial<PersistedSetupState> | Record<string, unknown>,
+  fallback: PersistedSetupState
+): PersistedSetupState => {
+  const showStartTime = normalizeTimeInput(raw.showStartTime);
+  const segments = sanitizeSegments(raw.segments);
+  const updatedAtMs = normalizeUpdatedAtMs(raw.updatedAtMs);
+  return {
+    showStartTime,
+    segments: segments.length > 0 ? segments : fallback.segments,
+    updatedAtMs,
+  };
+};
+
+const readCloudSetupState = (
+  raw: Record<string, unknown>,
+  fallback: PersistedSetupState
+): PersistedSetupState => {
+  const localShape = sanitizeSetupState(raw, fallback);
+  if (localShape.updatedAtMs > 0) {
+    return localShape;
+  }
+
+  const timestampCandidate = raw.updatedAt;
+  if (
+    typeof timestampCandidate === 'object' &&
+    timestampCandidate !== null &&
+    'toMillis' in timestampCandidate &&
+    typeof timestampCandidate.toMillis === 'function'
+  ) {
+    return {
+      ...localShape,
+      updatedAtMs: normalizeUpdatedAtMs(timestampCandidate.toMillis()),
+    };
+  }
+
+  return localShape;
+};
+
+const createSetupSignature = (state: PersistedSetupState) => JSON.stringify(state);
+
+const toCloudSetupPayload = (state: PersistedSetupState) => ({
+  showStartTime: state.showStartTime,
+  segments: state.segments,
+  updatedAtMs: state.updatedAtMs,
+  updatedAt: serverTimestamp(),
+});
+
 const readSetupState = (): PersistedSetupState => {
   const fallback = makeDefaultSetupState();
   if (typeof window === 'undefined') {
@@ -194,12 +257,7 @@ const readSetupState = (): PersistedSetupState => {
 
   try {
     const parsed = JSON.parse(raw) as Partial<PersistedSetupState>;
-    const showStartTime = normalizeTimeInput(parsed.showStartTime);
-    const segments = sanitizeSegments(parsed.segments);
-    const hydrated: PersistedSetupState = {
-      showStartTime,
-      segments: segments.length > 0 ? segments : fallback.segments,
-    };
+    const hydrated = sanitizeSetupState(parsed, fallback);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(hydrated));
     return hydrated;
   } catch {
@@ -577,6 +635,24 @@ const BACKSTAGE_STYLES = String.raw`
 .backstage-total-runtime {
   color: var(--text-dim);
   font-size: 0.92rem;
+}
+
+.backstage-cloud-sync {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: #a6a6a6;
+}
+
+.backstage-cloud-sync.syncing {
+  color: #d8b229;
+}
+
+.backstage-cloud-sync.synced {
+  color: #79d29f;
+}
+
+.backstage-cloud-sync.error {
+  color: #e18484;
 }
 
 .backstage-settings-actions {
@@ -1318,7 +1394,11 @@ const BackstageTimer = () => {
   const [mode, setMode] = useState<Mode>('setup');
   const [showStartTime, setShowStartTime] = useState(DEFAULT_SHOW_START_TIME);
   const [segments, setSegments] = useState<Segment[]>(DEFAULT_SEGMENTS);
+  const [setupUpdatedAtMs, setSetupUpdatedAtMs] = useState(0);
   const [storageHydrated, setStorageHydrated] = useState(false);
+  const [cloudSyncState, setCloudSyncState] = useState<'idle' | 'syncing' | 'synced' | 'error'>(
+    'idle'
+  );
 
   const [showStartedAtMs, setShowStartedAtMs] = useState<number | null>(null);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -1333,6 +1413,14 @@ const BackstageTimer = () => {
   const [timingDrawerOpen, setTimingDrawerOpen] = useState(false);
 
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const cloudBootstrapStartedRef = useRef(false);
+  const cloudBootstrapCompleteRef = useRef(false);
+  const skipNextCloudWriteRef = useRef(false);
+  const lastSyncedCloudSignatureRef = useRef('');
+  const cloudDocRef = useMemo(
+    () => doc(db, RUN_OF_SHOW_COLLECTION, RUN_OF_SHOW_DOC_ID),
+    []
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1341,6 +1429,30 @@ const BackstageTimer = () => {
       },
     })
   );
+  const currentSetupState = useMemo<PersistedSetupState>(
+    () => ({
+      showStartTime,
+      segments,
+      updatedAtMs: setupUpdatedAtMs,
+    }),
+    [segments, setupUpdatedAtMs, showStartTime]
+  );
+  const currentSetupSignature = useMemo(
+    () => createSetupSignature(currentSetupState),
+    [currentSetupState]
+  );
+  const cloudSyncLabel = useMemo(() => {
+    if (cloudSyncState === 'syncing') {
+      return 'Cloud sync: syncing...';
+    }
+    if (cloudSyncState === 'error') {
+      return 'Cloud sync: unavailable (local save still active)';
+    }
+    if (cloudSyncState === 'synced') {
+      return 'Cloud sync: up to date';
+    }
+    return 'Cloud sync: connecting...';
+  }, [cloudSyncState]);
 
   const scheduleOffsetsSec = useMemo(() => buildScheduleOffsetsSec(segments), [segments]);
   const totalPlannedSec = useMemo(
@@ -1497,15 +1609,29 @@ const BackstageTimer = () => {
     }
   }, []);
 
+  const markSetupChanged = useCallback(() => {
+    setSetupUpdatedAtMs(Date.now());
+  }, []);
+
+  const handleShowStartTimeChange = useCallback(
+    (nextValue: string) => {
+      setShowStartTime(normalizeTimeInput(nextValue));
+      markSetupChanged();
+    },
+    [markSetupChanged]
+  );
+
   const patchSegment = useCallback((segmentId: string, patch: Partial<Segment>) => {
     setSegments((previous) =>
       previous.map((segment) => (segment.id === segmentId ? { ...segment, ...patch } : segment))
     );
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const deleteSegment = useCallback((segmentId: string) => {
     setSegments((previous) => previous.filter((segment) => segment.id !== segmentId));
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const setDurationMinutes = useCallback((segmentId: string, minutes: number) => {
     const safeMinutes = Number.isFinite(minutes) ? Math.max(0, Math.floor(minutes)) : 0;
@@ -1521,7 +1647,8 @@ const BackstageTimer = () => {
         };
       })
     );
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const setDurationSeconds = useCallback((segmentId: string, seconds: number) => {
     const safeSeconds = Number.isFinite(seconds)
@@ -1539,7 +1666,8 @@ const BackstageTimer = () => {
         };
       })
     );
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const nudgeDuration = useCallback((segmentId: string, deltaSec: number) => {
     setSegments((previous) =>
@@ -1553,7 +1681,8 @@ const BackstageTimer = () => {
         };
       })
     );
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const addSegment = useCallback(() => {
     setSegments((previous) => [
@@ -1566,13 +1695,15 @@ const BackstageTimer = () => {
         durationSec: 5 * 60,
       },
     ]);
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const resetToDefaults = useCallback(() => {
     const defaults = makeDefaultSetupState();
     setShowStartTime(defaults.showStartTime);
     setSegments(defaults.segments);
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   const startShow = useCallback(() => {
     if (segments.length === 0) {
@@ -1728,12 +1859,14 @@ const BackstageTimer = () => {
       }
       return arrayMove(previous, oldIndex, newIndex);
     });
-  }, []);
+    markSetupChanged();
+  }, [markSetupChanged]);
 
   useEffect(() => {
     const persistedState = readSetupState();
     setShowStartTime(persistedState.showStartTime);
     setSegments(persistedState.segments);
+    setSetupUpdatedAtMs(persistedState.updatedAtMs);
     setStorageHydrated(true);
   }, []);
 
@@ -1741,8 +1874,111 @@ const BackstageTimer = () => {
     if (!storageHydrated) {
       return;
     }
-    writeSetupState({ showStartTime, segments });
-  }, [segments, showStartTime, storageHydrated]);
+    writeSetupState(currentSetupState);
+  }, [currentSetupState, storageHydrated]);
+
+  useEffect(() => {
+    if (!storageHydrated || cloudBootstrapStartedRef.current) {
+      return;
+    }
+
+    cloudBootstrapStartedRef.current = true;
+    let cancelled = false;
+
+    const bootstrapCloudSync = async () => {
+      setCloudSyncState('syncing');
+      try {
+        const localState = currentSetupState;
+        const localSignature = createSetupSignature(localState);
+        const snapshot = await getDoc(cloudDocRef);
+        if (cancelled) {
+          return;
+        }
+
+        if (!snapshot.exists()) {
+          await setDoc(cloudDocRef, toCloudSetupPayload(localState), { merge: true });
+          if (cancelled) {
+            return;
+          }
+          lastSyncedCloudSignatureRef.current = localSignature;
+          cloudBootstrapCompleteRef.current = true;
+          setCloudSyncState('synced');
+          return;
+        }
+
+        const remoteData = snapshot.data();
+        const remoteState = readCloudSetupState(remoteData, makeDefaultSetupState());
+        const remoteSignature = createSetupSignature(remoteState);
+        const remoteIsNewer = remoteState.updatedAtMs > localState.updatedAtMs;
+        const localIsNewer = localState.updatedAtMs > remoteState.updatedAtMs;
+
+        if (remoteIsNewer || (!localIsNewer && remoteSignature !== localSignature)) {
+          skipNextCloudWriteRef.current = true;
+          lastSyncedCloudSignatureRef.current = remoteSignature;
+          setShowStartTime(remoteState.showStartTime);
+          setSegments(remoteState.segments);
+          setSetupUpdatedAtMs(remoteState.updatedAtMs);
+          cloudBootstrapCompleteRef.current = true;
+          setCloudSyncState('synced');
+          return;
+        }
+
+        if (localSignature !== remoteSignature) {
+          await setDoc(cloudDocRef, toCloudSetupPayload(localState), { merge: true });
+          if (cancelled) {
+            return;
+          }
+        }
+
+        lastSyncedCloudSignatureRef.current = localSignature;
+        cloudBootstrapCompleteRef.current = true;
+        setCloudSyncState('synced');
+      } catch (error) {
+        console.error('Failed to sync run of show from cloud:', error);
+        cloudBootstrapCompleteRef.current = true;
+        setCloudSyncState('error');
+      }
+    };
+
+    void bootstrapCloudSync();
+    return () => {
+      cancelled = true;
+    };
+  }, [cloudDocRef, currentSetupState, storageHydrated]);
+
+  useEffect(() => {
+    if (!storageHydrated || !cloudBootstrapCompleteRef.current) {
+      return;
+    }
+
+    if (skipNextCloudWriteRef.current) {
+      skipNextCloudWriteRef.current = false;
+      return;
+    }
+
+    if (currentSetupSignature === lastSyncedCloudSignatureRef.current) {
+      return;
+    }
+
+    setCloudSyncState('syncing');
+    const pendingState = currentSetupState;
+    const pendingSignature = currentSetupSignature;
+    const timeoutId = window.setTimeout(() => {
+      void setDoc(cloudDocRef, toCloudSetupPayload(pendingState), { merge: true })
+        .then(() => {
+          lastSyncedCloudSignatureRef.current = pendingSignature;
+          setCloudSyncState('synced');
+        })
+        .catch((error) => {
+          console.error('Failed to save run of show to cloud:', error);
+          setCloudSyncState('error');
+        });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [cloudDocRef, currentSetupSignature, currentSetupState, storageHydrated]);
 
   useEffect(() => {
     const cleanups = [
@@ -1879,12 +2115,13 @@ const BackstageTimer = () => {
                 type="time"
                 value={showStartTime}
                 step={60}
-                onChange={(event) => setShowStartTime(normalizeTimeInput(event.target.value))}
+                onChange={(event) => handleShowStartTimeChange(event.target.value)}
               />
               <p className="backstage-total-runtime">
                 Planned runtime: {formatDuration(totalPlannedSec)} ({segments.length}{' '}
                 {pluralize(segments.length, 'segment', 'segments')})
               </p>
+              <p className={`backstage-cloud-sync ${cloudSyncState}`}>{cloudSyncLabel}</p>
             </div>
 
             <div className="backstage-settings-actions">
