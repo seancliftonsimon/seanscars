@@ -346,15 +346,23 @@ const formatDuration = (totalSeconds: number) => {
 const getCountdownDisplay = (remainingSec: number) => {
   const safeRemaining = Math.max(0, remainingSec);
 
-  // Keep a simple whole-minute readout until 5:30.
-  if (safeRemaining > 5 * 60 + 30) {
-    return String(Math.ceil(safeRemaining / 60));
+  // At 2:00 and below, show M:SS in 10-second visual updates.
+  if (safeRemaining <= 2 * 60) {
+    const snapped10 = Math.ceil(safeRemaining / 10) * 10;
+    return formatDuration(snapped10);
   }
 
-  // Then show half-minute jumps using ceiling buckets:
-  // 5:30..5:01 => 5:30, 5:00..4:31 => 5:00, etc.
-  const snapped = Math.ceil(safeRemaining / 30) * 30;
-  return formatDuration(snapped);
+  // Above 2:00, show half-minute language:
+  // 4:30..4:01 => "4 1/2 minutes", 4:00..3:31 => "4 min", etc.
+  const snapped30 = Math.ceil(safeRemaining / 30) * 30;
+  const wholeMinutes = Math.floor(snapped30 / 60);
+  const isHalfMinute = snapped30 % 60 === 30;
+
+  if (isHalfMinute) {
+    return `${wholeMinutes} 1/2 minutes`;
+  }
+
+  return `${wholeMinutes} min`;
 };
 
 const getDurationLabel = (durationSec: number) => {
