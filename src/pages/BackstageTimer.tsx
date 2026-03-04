@@ -55,26 +55,10 @@ const MAX_BONUS_PER_SEGMENT_SEC = 4 * 60;
 const SEGMENT_TYPES: SegmentType[] = ['live', 'pretape', 'intermission'];
 
 const DEFAULT_SEGMENTS: Segment[] = [
-  { id: 'seg-01', title: 'House Opens / Seating', presenter: '', type: 'intermission', durationSec: 10 * 60 },
-  { id: 'seg-02', title: 'Cold Open', presenter: 'Sean', type: 'live', durationSec: 4 * 60 },
-  { id: 'seg-03', title: 'Welcome + Rules', presenter: 'Sean', type: 'live', durationSec: 6 * 60 },
-  { id: 'seg-04', title: 'Best Animated Feature', presenter: 'Carly', type: 'live', durationSec: 5 * 60 },
-  { id: 'seg-05', title: '🎵 For Good Duet', presenter: '', type: 'pretape', durationSec: 4 * 60 + 30 },
-  { id: 'seg-06', title: 'Best Supporting Actress', presenter: 'Pat', type: 'live', durationSec: 5 * 60 },
-  { id: 'seg-07', title: 'Best Supporting Actor', presenter: 'Nora', type: 'live', durationSec: 5 * 60 },
-  { id: 'seg-08', title: 'Tribute Montage', presenter: '', type: 'pretape', durationSec: 3 * 60 + 30 },
-  { id: 'seg-09', title: 'Best Original Song', presenter: 'Eli', type: 'live', durationSec: 6 * 60 },
-  { id: 'seg-10', title: 'Short Intermission', presenter: '', type: 'intermission', durationSec: 10 * 60 },
-  { id: 'seg-11', title: 'Best Cinematography', presenter: 'Maya', type: 'live', durationSec: 5 * 60 },
-  { id: 'seg-12', title: 'Best Visual Effects', presenter: 'Jon', type: 'live', durationSec: 5 * 60 },
-  { id: 'seg-13', title: 'Performance Break', presenter: '', type: 'pretape', durationSec: 4 * 60 },
-  { id: 'seg-14', title: 'Best Director', presenter: 'Sean', type: 'live', durationSec: 6 * 60 },
-  { id: 'seg-15', title: 'Audience Choice Award', presenter: 'Taylor', type: 'live', durationSec: 5 * 60 + 30 },
-  { id: 'seg-16', title: 'Sponsor Reel', presenter: '', type: 'pretape', durationSec: 2 * 60 + 30 },
-  { id: 'seg-17', title: 'Best Actress', presenter: 'Avery', type: 'live', durationSec: 6 * 60 },
-  { id: 'seg-18', title: 'Best Actor', presenter: 'Dev', type: 'live', durationSec: 6 * 60 },
-  { id: 'seg-19', title: 'Best Picture Countdown', presenter: 'Sean', type: 'live', durationSec: 5 * 60 },
-  { id: 'seg-20', title: 'Best Picture Winner + Closing', presenter: 'Sean', type: 'live', durationSec: 8 * 60 },
+  { id: 'seg-01', title: 'Welcome + House Rules', presenter: 'Sean', type: 'live', durationSec: 6 * 60 },
+  { id: 'seg-02', title: '🎵 Opening Number', presenter: '', type: 'pretape', durationSec: 4 * 60 + 30 },
+  { id: 'seg-03', title: 'Intermission', presenter: '', type: 'intermission', durationSec: 10 * 60 },
+  { id: 'seg-04', title: 'Best Picture + Closing', presenter: 'Sean', type: 'live', durationSec: 8 * 60 },
 ];
 
 const clampNumber = (value: number, min: number, max: number) =>
@@ -233,6 +217,12 @@ const formatDuration = (totalSeconds: number) => {
   const minutes = Math.floor(safeSeconds / 60);
   const seconds = safeSeconds % 60;
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
+};
+
+const formatSignedDuration = (totalSeconds: number) => {
+  const safeSeconds = Math.floor(totalSeconds);
+  const direction = safeSeconds < 0 ? '-' : '+';
+  return `${direction}${formatDuration(Math.abs(safeSeconds))}`;
 };
 
 const getCountdownDisplay = (remainingSec: number) => {
@@ -981,7 +971,7 @@ const BACKSTAGE_STYLES = String.raw`
   cursor: not-allowed;
 }
 
-.backstage-drawer-handle {
+.backstage-rundown-handle {
   position: absolute;
   left: 0;
   top: 48%;
@@ -1026,6 +1016,15 @@ const BACKSTAGE_STYLES = String.raw`
   gap: 0.55rem;
 }
 
+.backstage-drawer-title {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d2d2d2;
+  font-weight: 700;
+}
+
 .backstage-drift-pill,
 .backstage-bank-pill {
   border-radius: 10px;
@@ -1057,6 +1056,89 @@ const BACKSTAGE_STYLES = String.raw`
   color: #f4e5b0;
   border-color: #806d36;
   background: rgba(153, 126, 51, 0.16);
+}
+
+.backstage-timing-handle {
+  position: absolute;
+  right: 0;
+  top: 48%;
+  transform: translateY(-50%);
+  z-index: 30;
+  border: 1px solid #353535;
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: rgba(18, 18, 18, 0.9);
+  color: #e8e8e8;
+  width: 34px;
+  height: 92px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.backstage-timing-drawer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 25;
+  width: min(270px, calc(100% - 40px));
+  border-left: 1px solid #2f2f2f;
+  border-bottom: 1px solid #2f2f2f;
+  border-radius: 0 0 0 14px;
+  background: rgba(9, 9, 9, 0.95);
+  backdrop-filter: blur(14px);
+  transform: translateX(100%);
+  transition: transform 220ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.backstage-timing-drawer.open {
+  transform: translateX(0);
+}
+
+.backstage-timing-header {
+  padding: 0.9rem 0.9rem 0.7rem;
+  border-bottom: 1px solid #292929;
+}
+
+.backstage-timing-title {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c8c8c8;
+  font-weight: 700;
+}
+
+.backstage-timing-body {
+  padding: 0.8rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.backstage-timing-stat {
+  border: 1px solid #2f2f2f;
+  border-radius: 10px;
+  background: rgba(21, 21, 21, 0.95);
+  padding: 0.48rem 0.58rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.backstage-timing-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9c9c9c;
+  font-weight: 700;
+}
+
+.backstage-timing-value {
+  font-size: 0.9rem;
+  color: #f1f1f1;
+  font-weight: 700;
 }
 
 .backstage-drawer-list {
@@ -1185,7 +1267,8 @@ const BackstageTimer = () => {
   const [segmentElapsedBaseMs, setSegmentElapsedBaseMs] = useState(0);
   const [segmentRunStartMs, setSegmentRunStartMs] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [rundownDrawerOpen, setRundownDrawerOpen] = useState(false);
+  const [timingDrawerOpen, setTimingDrawerOpen] = useState(false);
 
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
@@ -1253,6 +1336,10 @@ const BackstageTimer = () => {
       }),
     [driftMs, scheduleAnchorMs, scheduleOffsetsSec]
   );
+  const nextSegment = segments[currentSegmentIndex + 1] ?? null;
+  const nextProjectedStartMs = nextSegment
+    ? projectedScheduleMs[currentSegmentIndex + 1] ?? null
+    : null;
 
   const countdownState = useMemo(() => {
     if (!currentSegment || currentSegment.type === 'pretape') {
@@ -1445,17 +1532,39 @@ const BackstageTimer = () => {
     setSegmentElapsedBaseMs(0);
     setSegmentRunStartMs(startMs);
     setNowMs(startMs);
-    setDrawerOpen(false);
+    setRundownDrawerOpen(false);
+    setTimingDrawerOpen(false);
   }, [requestFullscreen, segments.length]);
 
   const backToSetup = useCallback(() => {
     setMode('setup');
-    setDrawerOpen(false);
+    setRundownDrawerOpen(false);
+    setTimingDrawerOpen(false);
     setIsPaused(true);
     setSegmentRunStartMs(null);
     if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
       void document.exitFullscreen();
     }
+  }, []);
+
+  const toggleRundownDrawer = useCallback(() => {
+    setRundownDrawerOpen((wasOpen) => {
+      const willOpen = !wasOpen;
+      if (willOpen) {
+        setTimingDrawerOpen(false);
+      }
+      return willOpen;
+    });
+  }, []);
+
+  const toggleTimingDrawer = useCallback(() => {
+    setTimingDrawerOpen((wasOpen) => {
+      const willOpen = !wasOpen;
+      if (willOpen) {
+        setRundownDrawerOpen(false);
+      }
+      return willOpen;
+    });
   }, []);
 
   const togglePause = useCallback(() => {
@@ -1698,7 +1807,8 @@ const BackstageTimer = () => {
             <h1>Seanscars Stage Timer</h1>
             <p>
               Edit title, presenter, duration, and type inline. Drag segments to reorder.
-              Scheduled starts auto-cascade from the show start time.
+              Scheduled starts auto-cascade from the show start time. Defaults now start with
+              just 4 sample segments.
             </p>
           </header>
 
@@ -1781,16 +1891,16 @@ const BackstageTimer = () => {
 
       <button
         type="button"
-        className="backstage-drawer-handle"
-        onClick={() => setDrawerOpen((open) => !open)}
-        aria-label={drawerOpen ? 'Hide schedule drawer' : 'Show schedule drawer'}
+        className="backstage-rundown-handle"
+        onClick={toggleRundownDrawer}
+        aria-label={rundownDrawerOpen ? 'Hide run of show' : 'Show run of show'}
       >
-        {drawerOpen ? '◀' : '▶'}
+        {rundownDrawerOpen ? '◀' : '▶'}
       </button>
 
-      <aside className={`backstage-drawer ${drawerOpen ? 'open' : ''}`}>
+      <aside className={`backstage-drawer ${rundownDrawerOpen ? 'open' : ''}`}>
         <div className="backstage-drawer-header">
-          <div className={`backstage-drift-pill ${driftBadge.tone}`}>{driftBadge.text}</div>
+          <p className="backstage-drawer-title">Run of Show</p>
           <div className="backstage-bank-pill">Time Bank: +{formatDuration(timeBankSec)}</div>
         </div>
 
@@ -1833,6 +1943,48 @@ const BackstageTimer = () => {
           <button type="button" className="backstage-back-to-setup" onClick={backToSetup}>
             Back to Setup
           </button>
+        </div>
+      </aside>
+
+      <button
+        type="button"
+        className="backstage-timing-handle"
+        onClick={toggleTimingDrawer}
+        aria-label={timingDrawerOpen ? 'Hide timing check' : 'Show timing check'}
+      >
+        {timingDrawerOpen ? '▶' : '◀'}
+      </button>
+
+      <aside className={`backstage-timing-drawer ${timingDrawerOpen ? 'open' : ''}`}>
+        <div className="backstage-timing-header">
+          <p className="backstage-timing-title">Timing Check</p>
+        </div>
+        <div className="backstage-timing-body">
+          <div className={`backstage-drift-pill ${driftBadge.tone}`}>{driftBadge.text}</div>
+          <article className="backstage-timing-stat">
+            <span className="backstage-timing-label">Drift (signed)</span>
+            <span className="backstage-timing-value">
+              {formatSignedDuration(Math.round(driftMs / 1000))}
+            </span>
+          </article>
+          <article className="backstage-timing-stat">
+            <span className="backstage-timing-label">Current Wall Clock</span>
+            <span className="backstage-timing-value">{formatClockTimestamp(nowMs, true)}</span>
+          </article>
+          <article className="backstage-timing-stat">
+            <span className="backstage-timing-label">Scheduled Start (Current)</span>
+            <span className="backstage-timing-value">
+              {formatClockTimestamp(currentScheduledStartMs, true)}
+            </span>
+          </article>
+          {nextSegment && nextProjectedStartMs !== null && (
+            <article className="backstage-timing-stat">
+              <span className="backstage-timing-label">Projected Next Start</span>
+              <span className="backstage-timing-value">
+                {formatClockTimestamp(nextProjectedStartMs, true)}
+              </span>
+            </article>
+          )}
         </div>
       </aside>
 
