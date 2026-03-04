@@ -344,11 +344,16 @@ const formatDuration = (totalSeconds: number) => {
 };
 
 const getCountdownDisplay = (remainingSec: number) => {
-  if (remainingSec > 180) {
-    return String(Math.max(0, Math.floor(remainingSec / 60)));
+  const safeRemaining = Math.max(0, remainingSec);
+
+  // Keep a simple whole-minute readout until 5:30.
+  if (safeRemaining > 5 * 60 + 30) {
+    return String(Math.ceil(safeRemaining / 60));
   }
 
-  const snapped = Math.max(0, Math.floor(remainingSec / 15) * 15);
+  // Then show half-minute jumps using ceiling buckets:
+  // 5:30..5:01 => 5:30, 5:00..4:31 => 5:00, etc.
+  const snapped = Math.ceil(safeRemaining / 30) * 30;
   return formatDuration(snapped);
 };
 
@@ -871,6 +876,21 @@ const BACKSTAGE_STYLES = String.raw`
   overflow: hidden;
   touch-action: manipulation;
   animation: backstageFadeIn 220ms ease;
+}
+
+.backstage-micro-timer {
+  position: absolute;
+  top: calc(0.45rem + env(safe-area-inset-top));
+  right: 0.75rem;
+  z-index: 40;
+  margin: 0;
+  font-size: 0.5rem;
+  line-height: 1;
+  color: #767676;
+  letter-spacing: 0.03em;
+  opacity: 0.78;
+  pointer-events: none;
+  user-select: none;
 }
 
 .backstage-stage {
@@ -1542,7 +1562,8 @@ const BackstageTimer = () => {
     if (remainingSec > 0) {
       return {
         primary: getCountdownDisplay(remainingSec),
-        secondary: `${formatDuration(Math.ceil(remainingSec))} remaining`,
+        secondary: null,
+        microLabel: formatDuration(Math.ceil(remainingSec)),
         tone: 'normal' as const,
       };
     }
@@ -1557,6 +1578,7 @@ const BackstageTimer = () => {
         secondary: `BONUS +${formatDuration(Math.floor(overtimeSec))} / ${formatDuration(
           bonusCapSec
         )} available`,
+        microLabel: null,
         tone: 'bonus' as const,
       };
     }
@@ -1564,6 +1586,7 @@ const BackstageTimer = () => {
     return {
       primary: `+${formatDuration(Math.floor(overtimeSec))}`,
       secondary: 'OVER',
+      microLabel: null,
       tone: 'over' as const,
     };
   }, [currentElapsedSec, currentSegment, segmentBankAtStartSec]);
@@ -2289,6 +2312,10 @@ const BackstageTimer = () => {
         </div>
       </aside>
 
+      {currentSegment && currentSegment.type !== 'pretape' && countdownState?.microLabel && (
+        <p className="backstage-micro-timer">{countdownState.microLabel}</p>
+      )}
+
       <main className="backstage-stage">
         {!currentSegment ? (
           <section className="backstage-stage-card backstage-empty-presentation">
@@ -2344,7 +2371,9 @@ const BackstageTimer = () => {
                   >
                     {countdownState?.primary}
                   </p>
-                  {countdownState && <p className="backstage-countdown-sub">{countdownState.secondary}</p>}
+                  {countdownState?.secondary && (
+                    <p className="backstage-countdown-sub">{countdownState.secondary}</p>
+                  )}
                 </div>
 
                 <div className="backstage-progress-shell">
