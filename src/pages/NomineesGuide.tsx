@@ -20,22 +20,6 @@ type WatchTag = {
   brandClass: string;
 };
 
-const serviceLinks: Record<string, string> = {
-  netflix: 'https://www.netflix.com',
-  hulu: 'https://www.hulu.com',
-  kanopy: 'https://www.kanopy.com',
-  'hbo max': 'https://play.max.com',
-  max: 'https://play.max.com',
-  'apple tv+': 'https://tv.apple.com',
-  'apple tv plus': 'https://tv.apple.com',
-  'amazon prime': 'https://www.primevideo.com',
-  'prime video': 'https://www.primevideo.com',
-  'paramount plus': 'https://www.paramountplus.com',
-  'paramount+': 'https://www.paramountplus.com',
-  theatres: 'https://www.google.com/search?q=movies+in+theaters+near+me',
-  theaters: 'https://www.google.com/search?q=movies+in+theaters+near+me',
-};
-
 const splitMultiline = (value: string) =>
   value
     .split('\n')
@@ -86,11 +70,19 @@ const starsFromRating = (rating: string) => {
   return hasHalfStar ? `${fullText}½` : fullText;
 };
 
-const buildWatchTags = (filmTitle: string, tokens: string[]): WatchTag[] => {
+const extractRawUrls = (value: string) => value.match(/https?:\/\/[^\s,]+/g) ?? [];
+
+const buildWatchTags = (
+  filmTitle: string,
+  streamingTokens: string[],
+  otherOptionTokens: string[],
+  rawStreamingUrls: string[]
+): WatchTag[] => {
   const seen = new Set<string>();
   const tags: WatchTag[] = [];
+  let urlIndex = 0;
 
-  for (const token of tokens) {
+  const addTag = (token: string, canConsumeStreamingUrl: boolean) => {
     const embeddedUrlMatch = token.match(embeddedUrlRegex);
     const embeddedUrl = embeddedUrlMatch?.[1] ?? null;
     const labelWithoutUrl = embeddedUrl ? token.replace(embeddedUrl, '').trim() : token;
@@ -102,15 +94,16 @@ const buildWatchTags = (filmTitle: string, tokens: string[]): WatchTag[] => {
       url = token;
     } else if (embeddedUrl) {
       url = embeddedUrl;
+    } else if (canConsumeStreamingUrl && normalized !== 'n a' && urlIndex < rawStreamingUrls.length) {
+      // Match raw URLs from the CSV to streaming providers in order.
+      url = rawStreamingUrls[urlIndex++];
     } else if (normalized === 'rent buy' || normalized === 'rent/buy') {
       url = `https://www.google.com/search?q=${encodeURIComponent(`where to rent ${filmTitle}`)}`;
-    } else if (serviceLinks[normalized]) {
-      url = serviceLinks[normalized];
     }
 
     const key = `${baseLabel.toLowerCase()}|${url ?? 'no-url'}`;
     if (seen.has(key)) {
-      continue;
+      return;
     }
     seen.add(key);
 
@@ -120,7 +113,10 @@ const buildWatchTags = (filmTitle: string, tokens: string[]): WatchTag[] => {
       url,
       brandClass: brandClassForService(normalized),
     });
-  }
+  };
+
+  streamingTokens.forEach((token) => addTag(token, true));
+  otherOptionTokens.forEach((token) => addTag(token, false));
 
   return tags;
 };
@@ -211,10 +207,12 @@ const NomineesGuide = () => {
             {orderedEntries.map((entry) => {
               const recommendationLines = splitMultiline(entry.recommendTo);
               const nominationLines = splitMultiline(entry.nominations);
-              const watchTags = buildWatchTags(entry.film, [
-                ...splitWatchTokens(entry.streaming),
-                ...splitWatchTokens(entry.otherOptions),
-              ]);
+              const watchTags = buildWatchTags(
+                entry.film,
+                splitWatchTokens(entry.streaming),
+                splitWatchTokens(entry.otherOptions),
+                extractRawUrls(entry.streamingLinks)
+              );
 
               return (
                 <article key={entry.film} className="nominees-guide-card card fade-in">
