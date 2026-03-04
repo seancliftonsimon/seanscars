@@ -11,6 +11,30 @@ import './NomineesGuide.css';
 
 const urlSplitRegex = /(https?:\/\/[^\s<]+)/g;
 const urlMatchRegex = /^https?:\/\/[^\s<]+$/;
+const embeddedUrlRegex = /(https?:\/\/[^\s<]+)/;
+
+type WatchTag = {
+  key: string;
+  label: string;
+  url: string | null;
+  brandClass: string;
+};
+
+const serviceLinks: Record<string, string> = {
+  netflix: 'https://www.netflix.com',
+  hulu: 'https://www.hulu.com',
+  kanopy: 'https://www.kanopy.com',
+  'hbo max': 'https://play.max.com',
+  max: 'https://play.max.com',
+  'apple tv+': 'https://tv.apple.com',
+  'apple tv plus': 'https://tv.apple.com',
+  'amazon prime': 'https://www.primevideo.com',
+  'prime video': 'https://www.primevideo.com',
+  'paramount plus': 'https://www.paramountplus.com',
+  'paramount+': 'https://www.paramountplus.com',
+  theatres: 'https://www.google.com/search?q=movies+in+theaters+near+me',
+  theaters: 'https://www.google.com/search?q=movies+in+theaters+near+me',
+};
 
 const splitMultiline = (value: string) =>
   value
@@ -18,9 +42,87 @@ const splitMultiline = (value: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+const splitWatchTokens = (value: string) =>
+  value
+    .split(/\n|,/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+
 const parseNumericRating = (value: string) => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeServiceName = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9+]+/g, ' ')
+    .trim();
+
+const brandClassForService = (normalizedLabel: string) => {
+  if (normalizedLabel === 'netflix') return 'brand-netflix';
+  if (normalizedLabel === 'hulu') return 'brand-hulu';
+  if (normalizedLabel === 'kanopy') return 'brand-kanopy';
+  if (normalizedLabel === 'hbo max' || normalizedLabel === 'max') return 'brand-max';
+  if (normalizedLabel === 'apple tv+' || normalizedLabel === 'apple tv plus') return 'brand-apple';
+  if (normalizedLabel === 'amazon prime' || normalizedLabel === 'prime video') return 'brand-prime';
+  if (normalizedLabel === 'paramount plus' || normalizedLabel === 'paramount+') return 'brand-paramount';
+  if (normalizedLabel === 'theatres' || normalizedLabel === 'theaters') return 'brand-theaters';
+  if (normalizedLabel === 'rent buy' || normalizedLabel === 'rent/buy') return 'brand-rent';
+  if (normalizedLabel === 'n a') return 'brand-na';
+  return 'brand-generic';
+};
+
+const starsFromRating = (rating: string) => {
+  const numericRating = parseNumericRating(rating);
+  if (numericRating === null) {
+    return rating;
+  }
+
+  const rounded = Math.round(numericRating * 2) / 2;
+  const fullStars = Math.floor(rounded);
+  const hasHalfStar = rounded - fullStars >= 0.5;
+  const fullText = '★'.repeat(fullStars);
+  return hasHalfStar ? `${fullText}½` : fullText;
+};
+
+const buildWatchTags = (filmTitle: string, tokens: string[]): WatchTag[] => {
+  const seen = new Set<string>();
+  const tags: WatchTag[] = [];
+
+  for (const token of tokens) {
+    const embeddedUrlMatch = token.match(embeddedUrlRegex);
+    const embeddedUrl = embeddedUrlMatch?.[1] ?? null;
+    const labelWithoutUrl = embeddedUrl ? token.replace(embeddedUrl, '').trim() : token;
+    const baseLabel = labelWithoutUrl || token;
+    const normalized = normalizeServiceName(baseLabel);
+
+    let url: string | null = null;
+    if (urlMatchRegex.test(token)) {
+      url = token;
+    } else if (embeddedUrl) {
+      url = embeddedUrl;
+    } else if (normalized === 'rent buy' || normalized === 'rent/buy') {
+      url = `https://www.google.com/search?q=${encodeURIComponent(`where to rent ${filmTitle}`)}`;
+    } else if (serviceLinks[normalized]) {
+      url = serviceLinks[normalized];
+    }
+
+    const key = `${baseLabel.toLowerCase()}|${url ?? 'no-url'}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+
+    tags.push({
+      key,
+      label: baseLabel,
+      url,
+      brandClass: brandClassForService(normalized),
+    });
+  }
+
+  return tags;
 };
 
 const NomineesGuide = () => {
@@ -112,9 +214,12 @@ const NomineesGuide = () => {
 
           <div className="nominees-guide-grid">
             {orderedEntries.map((entry) => {
-              const streamingLines = splitMultiline(entry.streaming);
               const recommendationLines = splitMultiline(entry.recommendTo);
               const nominationLines = splitMultiline(entry.nominations);
+              const watchTags = buildWatchTags(entry.film, [
+                ...splitWatchTokens(entry.streaming),
+                ...splitWatchTokens(entry.otherOptions),
+              ]);
 
               return (
                 <article key={entry.film} className="nominees-guide-card card fade-in">
@@ -122,7 +227,7 @@ const NomineesGuide = () => {
                     <h2>{entry.film}</h2>
                     <div className="nominees-guide-rating-chip" aria-label={`Rating ${entry.myRating}`}>
                       <Star size={14} />
-                      <span>{entry.myRating}</span>
+                      <span>{starsFromRating(entry.myRating)}</span>
                     </div>
                   </header>
 
@@ -136,16 +241,32 @@ const NomineesGuide = () => {
                       <Tv size={16} />
                       Where to watch
                     </h3>
-                    <ul>
-                      {streamingLines.length > 0 ? (
-                        streamingLines.map((line, index) => <li key={`${entry.film}-streaming-${index}`}>{renderLinkifiedLine(line)}</li>)
+                    <div className="nominees-guide-service-tags">
+                      {watchTags.length > 0 ? (
+                        watchTags.map((tag) =>
+                          tag.url ? (
+                            <a
+                              key={`${entry.film}-${tag.key}`}
+                              href={tag.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`nominees-guide-service-tag ${tag.brandClass}`}
+                            >
+                              {tag.label}
+                            </a>
+                          ) : (
+                            <span
+                              key={`${entry.film}-${tag.key}`}
+                              className={`nominees-guide-service-tag ${tag.brandClass}`}
+                            >
+                              {tag.label}
+                            </span>
+                          )
+                        )
                       ) : (
-                        <li>N/A</li>
+                        <span className="nominees-guide-service-tag brand-na">N/A</span>
                       )}
-                    </ul>
-                    <p className="nominees-guide-other-options">
-                      <strong>Other options:</strong> {renderLinkifiedLine(entry.otherOptions || 'N/A')}
-                    </p>
+                    </div>
                   </div>
 
                   <div className="nominees-guide-section">
@@ -155,7 +276,9 @@ const NomineesGuide = () => {
                     </h3>
                     {recommendationLines.length > 0 ? (
                       recommendationLines.map((line, index) => (
-                        <p key={`${entry.film}-recommend-${index}`}>{renderLinkifiedLine(line)}</p>
+                        <p key={`${entry.film}-recommend-${index}`} className="nominees-guide-line">
+                          {renderLinkifiedLine(line)}
+                        </p>
                       ))
                     ) : (
                       <p>N/A</p>
@@ -167,16 +290,18 @@ const NomineesGuide = () => {
                       <Award size={16} />
                       Nominations
                     </h3>
-                    <ul>
-                      {nominationLines.map((line, index) => (
-                        <li
+                    {nominationLines.length > 0 ? (
+                      nominationLines.map((line, index) => (
+                        <p
                           key={`${entry.film}-nomination-${index}`}
-                          className={line.includes('*') ? 'winner' : ''}
+                          className={`nominees-guide-line ${line.includes('*') ? 'winner' : ''}`}
                         >
                           {renderLinkifiedLine(line)}
-                        </li>
-                      ))}
-                    </ul>
+                        </p>
+                      ))
+                    ) : (
+                      <p>N/A</p>
+                    )}
                   </div>
                 </article>
               );
