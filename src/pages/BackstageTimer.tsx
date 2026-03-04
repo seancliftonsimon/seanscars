@@ -55,10 +55,59 @@ const MAX_BONUS_PER_SEGMENT_SEC = 4 * 60;
 const SEGMENT_TYPES: SegmentType[] = ['live', 'pretape', 'intermission'];
 
 const DEFAULT_SEGMENTS: Segment[] = [
-  { id: 'seg-01', title: 'Welcome + House Rules', presenter: 'Sean', type: 'live', durationSec: 6 * 60 },
-  { id: 'seg-02', title: '🎵 Opening Number', presenter: '', type: 'pretape', durationSec: 4 * 60 + 30 },
-  { id: 'seg-03', title: 'Intermission', presenter: '', type: 'intermission', durationSec: 10 * 60 },
-  { id: 'seg-04', title: 'Best Picture + Closing', presenter: 'Sean', type: 'live', durationSec: 8 * 60 },
+  { id: 'seg-01', title: 'Opening Countdown', presenter: 'Sharemony', type: 'pretape', durationSec: 4 * 60 },
+  { id: 'seg-02', title: 'Opening Medley', presenter: 'Sean Simon', type: 'pretape', durationSec: 6 * 60 },
+  { id: 'seg-03', title: 'Welcome & Initial Awards', presenter: 'Sean Simon', type: 'live', durationSec: 5 * 60 },
+  { id: 'seg-04', title: 'Drive - AcADAMy edit', presenter: 'Adam Taylor', type: 'pretape', durationSec: 1 * 60 },
+  { id: 'seg-05', title: 'The NANAs', presenter: 'Ana Deros & Nathan Smith', type: 'live', durationSec: 6 * 60 },
+  { id: 'seg-06', title: 'The Carrie Awards', presenter: 'Cara Salfino', type: 'live', durationSec: 10 * 60 },
+  { id: 'seg-07', title: 'The SAMMYs', presenter: 'Sam Gallen', type: 'live', durationSec: 6 * 60 },
+  { id: 'seg-08', title: 'SAMMYs Song', presenter: 'Sam Gallen', type: 'pretape', durationSec: 3 * 60 },
+  {
+    id: 'seg-09',
+    title: 'The Bucatinis',
+    presenter: 'Anneliese Mahoney & Travis Ratner',
+    type: 'live',
+    durationSec: 9 * 60,
+  },
+  {
+    id: 'seg-10',
+    title: 'The MAG Awards',
+    presenter: 'Maggie Koons & Foster Garrett',
+    type: 'live',
+    durationSec: 10 * 60,
+  },
+  {
+    id: 'seg-11',
+    title: 'Maggie and Foster Song',
+    presenter: 'Maggie Koons & Foster Garrett',
+    type: 'pretape',
+    durationSec: 4 * 60,
+  },
+  {
+    id: 'seg-12',
+    title: 'The Madame Web Medical Accuracy Awards',
+    presenter: 'Tyler Schwab',
+    type: 'live',
+    durationSec: 7 * 60,
+  },
+  {
+    id: 'seg-13',
+    title: "I'm Good Duet",
+    presenter: 'Cassie Collentine & Hannah Litman',
+    type: 'pretape',
+    durationSec: 4 * 60,
+  },
+  { id: 'seg-14', title: 'IntermisSEAN', presenter: 'Sharemony', type: 'intermission', durationSec: 15 * 60 },
+  { id: 'seg-15', title: 'House - AcADAMy edit', presenter: 'Adam Taylor', type: 'pretape', durationSec: 1 * 60 },
+  { id: 'seg-16', title: 'The Thomonto Film Festival', presenter: 'Thom Fusco', type: 'live', durationSec: 15 * 60 },
+  { id: 'seg-17', title: 'The Hangoria Awards', presenter: 'Hannah Litman', type: 'live', durationSec: 15 * 60 },
+  { id: 'seg-18', title: 'No Hot Take Song', presenter: 'Hannah Litman', type: 'pretape', durationSec: 4 * 60 },
+  { id: 'seg-19', title: 'Movie Poster Showcase', presenter: 'Katelyn Greller', type: 'live', durationSec: 7 * 60 },
+  { id: 'seg-20', title: 'The Adam Awards', presenter: 'Adam Taylor', type: 'live', durationSec: 15 * 60 },
+  { id: 'seg-21', title: 'Opalite - AcADAMy edit', presenter: 'Adam Taylor', type: 'pretape', durationSec: 2 * 60 },
+  { id: 'seg-22', title: 'Seanscars', presenter: 'Sean Simon', type: 'live', durationSec: 20 * 60 },
+  { id: 'seg-23', title: 'Finale and Goodnights', presenter: 'Sharemony', type: 'live', durationSec: 2 * 60 },
 ];
 
 const clampNumber = (value: number, min: number, max: number) =>
@@ -1817,8 +1866,8 @@ const BackstageTimer = () => {
             <h1>Seanscars Stage Timer</h1>
             <p>
               Edit title, presenter, duration, and type inline. Drag segments to reorder.
-              Scheduled starts auto-cascade from the show start time. Defaults now start with
-              just 4 sample segments.
+              Scheduled starts auto-cascade from the show start time. Defaults now load from
+              your current run of show.
             </p>
           </header>
 
