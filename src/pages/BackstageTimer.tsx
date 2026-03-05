@@ -919,8 +919,8 @@ const BACKSTAGE_STYLES = String.raw`
   border: 1px solid #141414;
   background: linear-gradient(180deg, #080808 0%, #040404 70%, #030303 100%);
   animation: backstageSegmentIn 220ms ease;
-  padding: 1.4rem;
-  gap: 1rem;
+  padding: 1.15rem;
+  gap: 0.7rem;
 }
 
 .backstage-segment-counter {
@@ -935,12 +935,14 @@ const BACKSTAGE_STYLES = String.raw`
 .backstage-live-header {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
 }
 
 .backstage-type-pill {
   display: inline-flex;
-  align-self: flex-start;
+  align-self: center;
   border-radius: 999px;
   padding: 0.22rem 0.62rem;
   border: 1px solid #303030;
@@ -961,10 +963,12 @@ const BACKSTAGE_STYLES = String.raw`
 .backstage-live-title {
   margin: 0;
   color: #f7f7f7;
-  font-size: clamp(1.5rem, 5vw, 3.8rem);
+  font-size: clamp(1.35rem, 4.2vw, 3.2rem);
   line-height: 1.1;
   letter-spacing: 0.01em;
   font-weight: 700;
+  text-align: center;
+  max-width: min(92vw, 1250px);
 }
 
 .backstage-countdown-wrap {
@@ -974,17 +978,21 @@ const BACKSTAGE_STYLES = String.raw`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .backstage-countdown {
   margin: 0;
-  font-size: clamp(7.4rem, 27vw, 21rem);
+  font-size: clamp(4.2rem, 24vw, 21rem);
   line-height: 0.92;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-align: center;
   color: #fff;
   text-shadow: 0 4px 28px rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .backstage-countdown.bonus {
@@ -1459,6 +1467,8 @@ const BackstageTimer = () => {
   const [timingDrawerOpen, setTimingDrawerOpen] = useState(false);
 
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const countdownWrapRef = useRef<HTMLDivElement | null>(null);
+  const countdownTextRef = useRef<HTMLParagraphElement | null>(null);
   const cloudBootstrapStartedRef = useRef(false);
   const cloudBootstrapCompleteRef = useRef(false);
   const skipNextCloudWriteRef = useRef(false);
@@ -1608,6 +1618,43 @@ const BackstageTimer = () => {
     }
     return clampNumber(currentElapsedSec / currentSegment.durationSec, 0, 1);
   }, [currentElapsedSec, currentSegment]);
+
+  const fitCountdownToWidth = useCallback(() => {
+    const wrap = countdownWrapRef.current;
+    const text = countdownTextRef.current;
+    if (!wrap || !text) {
+      return;
+    }
+
+    const availableWidth = wrap.clientWidth - 8;
+    if (availableWidth <= 0) {
+      return;
+    }
+
+    const minSizePx = 64;
+    const maxSizePx = Math.max(
+      minSizePx,
+      Math.floor(Math.min(window.innerWidth * 0.27, window.innerHeight * 0.4))
+    );
+
+    let low = minSizePx;
+    let high = maxSizePx;
+    let best = minSizePx;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      text.style.fontSize = `${mid}px`;
+
+      if (text.scrollWidth <= availableWidth) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    text.style.fontSize = `${best}px`;
+  }, []);
 
   const requestFullscreen = useCallback(async () => {
     const root = document.documentElement as HTMLElement & {
@@ -2064,6 +2111,25 @@ const BackstageTimer = () => {
   }, [mode]);
 
   useEffect(() => {
+    if (mode !== 'presentation' || !countdownState?.primary || !currentSegment) {
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      fitCountdownToWidth();
+    });
+    const handleResize = () => {
+      fitCountdownToWidth();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [countdownState?.primary, currentSegment, fitCountdownToWidth, mode]);
+
+  useEffect(() => {
     if (mode !== 'presentation') {
       return undefined;
     }
@@ -2352,13 +2418,8 @@ const BackstageTimer = () => {
             ) : (
               <>
                 <header className="backstage-live-header">
-                  <span className="backstage-type-pill">
-                    {currentSegment.type === 'intermission' ? 'INTERMISSION' : 'LIVE'}
-                  </span>
-                  {currentSegment.type === 'live' && (
-                    <p className="backstage-presenter">
-                      {currentSegment.presenter || 'Presenter TBD'}
-                    </p>
+                  {currentSegment.type === 'intermission' && (
+                    <span className="backstage-type-pill">INTERMISSION</span>
                   )}
                   <h1 className="backstage-live-title">
                     {currentSegment.type === 'intermission'
@@ -2367,8 +2428,9 @@ const BackstageTimer = () => {
                   </h1>
                 </header>
 
-                <div className="backstage-countdown-wrap">
+                <div className="backstage-countdown-wrap" ref={countdownWrapRef}>
                   <p
+                    ref={countdownTextRef}
                     className={`backstage-countdown${
                       countdownState?.tone === 'bonus'
                         ? ' bonus'
