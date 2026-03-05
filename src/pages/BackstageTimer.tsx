@@ -353,13 +353,13 @@ const getCountdownDisplay = (remainingSec: number) => {
   }
 
   // Above 2:00, show half-minute language:
-  // 4:30..4:01 => "4 1/2 min", 4:00..3:31 => "4 min", etc.
+  // 4:30..4:01 => "4½ min", 4:00..3:31 => "4 min", etc.
   const snapped30 = Math.ceil(safeRemaining / 30) * 30;
   const wholeMinutes = Math.floor(snapped30 / 60);
   const isHalfMinute = snapped30 % 60 === 30;
 
   if (isHalfMinute) {
-    return `${wholeMinutes} 1/2 min`;
+    return `${wholeMinutes}½ min`;
   }
 
   return `${wholeMinutes} min`;
