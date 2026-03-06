@@ -47,15 +47,24 @@ interface ReportCardExportRow {
 	taste_twin_shared_top5_count: number;
 	taste_twin_recommendation: string;
 	taste_twin_recommendation_source: string;
+	taste_twin_recommendation_source_rank: number;
 	taste_twin_recommendation_similarity_percent: number;
-	most_unique_top_pick: string;
-	most_unique_top_pick_other_voters_ranked_top_2_count: number;
+	unique_top_five_count: number;
+	unique_top_five_titles: string;
 	least_favorite: string;
 	least_favorite_same_vote_other_voters_count: number;
 	least_favorite_ranked_top_5_by_voters_count: number;
 	least_favorite_context_summary: string;
 	independent_taste_score: number;
 	independent_taste_label: string;
+	story_top5_recap: string;
+	story_recommendation_profile: string;
+	story_seen_count_context: string;
+	story_taste_twin: string;
+	story_taste_twin_recommendation: string;
+	story_unique_top_five: string;
+	story_least_favorite_context: string;
+	story_independent_taste: string;
 	group_total_ballots_submitted: number;
 	group_ballots_in_analysis: number;
 	group_unique_voters_in_analysis: number;
@@ -102,15 +111,24 @@ const CSV_HEADERS: Array<keyof ReportCardExportRow> = [
 	"taste_twin_shared_top5_count",
 	"taste_twin_recommendation",
 	"taste_twin_recommendation_source",
+	"taste_twin_recommendation_source_rank",
 	"taste_twin_recommendation_similarity_percent",
-	"most_unique_top_pick",
-	"most_unique_top_pick_other_voters_ranked_top_2_count",
+	"unique_top_five_count",
+	"unique_top_five_titles",
 	"least_favorite",
 	"least_favorite_same_vote_other_voters_count",
 	"least_favorite_ranked_top_5_by_voters_count",
 	"least_favorite_context_summary",
 	"independent_taste_score",
 	"independent_taste_label",
+	"story_top5_recap",
+	"story_recommendation_profile",
+	"story_seen_count_context",
+	"story_taste_twin",
+	"story_taste_twin_recommendation",
+	"story_unique_top_five",
+	"story_least_favorite_context",
+	"story_independent_taste",
 	"group_total_ballots_submitted",
 	"group_ballots_in_analysis",
 	"group_unique_voters_in_analysis",
@@ -128,8 +146,26 @@ const incrementCount = (target: Map<string, number>, key: string) => {
 
 const clampUnitInterval = (value: number) => Math.min(1, Math.max(0, value));
 
-const formatCountNoun = (count: number, singular: string, plural: string) =>
-	`${count} ${count === 1 ? singular : plural}`;
+const formatVoterCount = (count: number, includeOther = false): string => {
+	const prefix = includeOther ? "other " : "";
+	if (count === 1) {
+		return `one ${prefix}voter`;
+	}
+	return `${count} ${prefix}voters`;
+};
+
+const formatMovieTitleList = (titles: string[]): string => {
+	if (titles.length === 0) {
+		return "";
+	}
+	if (titles.length === 1) {
+		return titles[0];
+	}
+	if (titles.length === 2) {
+		return `${titles[0]} and ${titles[1]}`;
+	}
+	return `${titles.slice(0, -1).join(", ")}, and ${titles[titles.length - 1]}`;
+};
 
 const escapeCsvField = (value: string | number) =>
 	`"${String(value).replace(/"/g, '""')}"`;
@@ -312,22 +348,117 @@ const buildSeenPlacementSummary = (
 	moreThanCount: number,
 	tiedCount: number
 ) => {
-	let summary = `You marked ${seenCount} movies as seen, which is more than ${formatCountNoun(
+	let summary = `You marked ${seenCount} movies as seen—more than ${formatVoterCount(
 		moreThanCount,
-		"other voter",
-		"other voters"
+		true
 	)}.`;
 
 	if (tiedCount > 0) {
-		summary += ` You tied with ${formatCountNoun(
-			tiedCount,
-			"other voter",
-			"other voters"
-		)}.`;
+		summary += ` You tied with ${formatVoterCount(tiedCount, true)}.`;
 	}
 
 	return summary;
 };
+
+const buildTopFiveStory = (topFiveTitles: string[]): string => {
+	if (topFiveTitles.length === 0) {
+		return "No complete top-five ranking was recorded.";
+	}
+
+	const rankedSegments = topFiveTitles.map(
+		(title, index) => `#${index + 1} ${title}`
+	);
+	return `Your top five were ${rankedSegments.join(", ")}.`;
+};
+
+const buildRecommendationProfileStory = (
+	recommendationToParents: string,
+	recommendationToKid: string,
+	recommendationToFreakiestFriend: string,
+	recommendationUnderseenGem: string
+): string =>
+	`For recommendations, you picked ${recommendationToParents} for parents, ${recommendationToKid} for a kid, ${recommendationToFreakiestFriend} for your freakiest friend, and ${recommendationUnderseenGem} as your underseen gem.`;
+
+const buildTasteTwinStory = (
+	tasteTwin: BallotMatch | null,
+	sharedTopFiveCount: number
+): string => {
+	if (!tasteTwin) {
+		return "There were not enough included ballots to identify a close ballot match.";
+	}
+
+	return `Your ballot was most similar to ${tasteTwin.ballot.voterName}'s—you had ${sharedTopFiveCount} ${
+		sharedTopFiveCount === 1 ? "movie" : "movies"
+	} in common between your top fives.`;
+};
+
+const buildTasteTwinRecommendationStory = (
+	tasteTwin: BallotMatch | null,
+	recommendationFromTwinTitle: string,
+	recommendationFromTwinSource: string,
+	recommendationFromTwinSourceRank: number
+): string => {
+	if (!tasteTwin) {
+		return "No taste-twin recommendation was available because no close ballot match was found.";
+	}
+
+	if (!recommendationFromTwinTitle) {
+		return `Your three closest matches only ranked movies you had already seen, so there was no clear unseen recommendation this time.`;
+	}
+
+	if (recommendationFromTwinSource === tasteTwin.ballot.voterName) {
+		return `Based on that match, ${recommendationFromTwinTitle} stood out as an unseen recommendation—${recommendationFromTwinSource} ranked it #${recommendationFromTwinSourceRank}.`;
+	}
+
+	return `You've seen every movie in ${tasteTwin.ballot.voterName}'s top five, so the next-closest match with an unseen pick was ${recommendationFromTwinSource}, who ranked ${recommendationFromTwinTitle} as their #${recommendationFromTwinSourceRank} film.`;
+};
+
+const buildUniqueTopFiveStory = (uniqueTopFiveTitles: string[]): string => {
+	if (uniqueTopFiveTitles.length === 0) {
+		return "None of your top five picks were uniquely yours—each one also appeared in someone else's top five.";
+	}
+
+	if (uniqueTopFiveTitles.length === 1) {
+		return `You were the only voter to rank ${uniqueTopFiveTitles[0]} in your top five.`;
+	}
+
+	return `You were the only voter to rank ${formatMovieTitleList(
+		uniqueTopFiveTitles
+	)} in your top five.`;
+};
+
+const buildLeastFavoriteStory = (
+	leastFavoriteTitle: string,
+	leastFavoriteSameVoteOtherVotersCount: number,
+	leastFavoriteRankedTopFiveByCount: number,
+	leastFavoriteMovieId: string | null
+): string => {
+	if (!leastFavoriteMovieId) {
+		return "No least-favorite movie was selected.";
+	}
+
+	const leastFavoritePart =
+		leastFavoriteSameVoteOtherVotersCount === 0
+			? `You were the only person to pick ${leastFavoriteTitle} as your least favorite`
+			: `Your least favorite was ${leastFavoriteTitle}, and ${formatVoterCount(
+					leastFavoriteSameVoteOtherVotersCount,
+					true
+			  )} also picked it as least favorite`;
+	const topFivePart =
+		leastFavoriteRankedTopFiveByCount === 0
+			? "no voters ranked it in their top five"
+			: `${formatVoterCount(
+					leastFavoriteRankedTopFiveByCount
+			  )} ranked it in their top five`;
+
+	return `${leastFavoritePart}, and ${topFivePart}.`;
+};
+
+const buildIndependentTasteStory = (
+	independentTasteScore: number,
+	independentTasteLabel: string
+): string =>
+	`Your independent taste score was ${independentTasteScore}/100, which places you in the "${independentTasteLabel}" range for this group.`;
 
 export const buildReportCardsCsv = (
 	ballots: AdminBallot[]
@@ -343,16 +474,12 @@ export const buildReportCardsCsv = (
 	).size;
 
 	const topFiveCountByMovieId = new Map<string, number>();
-	const highRankCountByMovieId = new Map<string, number>();
 	const leastFavoriteCountByMovieId = new Map<string, number>();
 	const seenCountByMovieId = new Map<string, number>();
 
 	analysisBallots.forEach((preparedBallot) => {
-		preparedBallot.topFiveMovieIds.forEach((movieId, index) => {
+		preparedBallot.topFiveMovieIds.forEach((movieId) => {
 			incrementCount(topFiveCountByMovieId, movieId);
-			if (index <= 1) {
-				incrementCount(highRankCountByMovieId, movieId);
-			}
 		});
 
 		if (preparedBallot.leastFavoriteMovieId) {
@@ -446,6 +573,7 @@ export const buildReportCardsCsv = (
 
 		let recommendationFromTwinTitle = "";
 		let recommendationFromTwinSource = "";
+		let recommendationFromTwinSourceRank = 0;
 		let recommendationFromTwinSimilarityPercent = 0;
 		rankedMatches.slice(0, 3).some((match) => {
 			const unseenRecommendationMovieId = match.ballot.topFiveMovieIds.find(
@@ -461,30 +589,23 @@ export const buildReportCardsCsv = (
 				movieTitleById
 			);
 			recommendationFromTwinSource = match.ballot.voterName;
+			recommendationFromTwinSourceRank =
+				match.ballot.topFiveMovieIds.indexOf(unseenRecommendationMovieId) + 1;
 			recommendationFromTwinSimilarityPercent = Math.round(match.score * 100);
 			return true;
 		});
 
-		let mostUniqueTopPickTitle = "";
-		let mostUniqueTopPickOtherHighRankCount = 0;
-		preparedBallot.topFiveMovieIds.forEach((movieId, rankIndex) => {
-			const selfContributedHighRank =
-				isInAnalysisPool && rankIndex <= 1 ? 1 : 0;
-			const otherHighRankCount = Math.max(
-				(highRankCountByMovieId.get(movieId) || 0) - selfContributedHighRank,
+		const uniqueTopFiveMovieIds = preparedBallot.topFiveMovieIds.filter((movieId) => {
+			const selfCount = isInAnalysisPool ? 1 : 0;
+			const otherTopFiveCount = Math.max(
+				(topFiveCountByMovieId.get(movieId) || 0) - selfCount,
 				0
 			);
-
-			const shouldReplaceCurrentPick =
-				mostUniqueTopPickTitle.length === 0 ||
-				otherHighRankCount < mostUniqueTopPickOtherHighRankCount;
-			if (!shouldReplaceCurrentPick) {
-				return;
-			}
-
-			mostUniqueTopPickTitle = getMovieTitle(movieId, movieTitleById);
-			mostUniqueTopPickOtherHighRankCount = otherHighRankCount;
+			return otherTopFiveCount === 0;
 		});
+		const uniqueTopFiveTitles = uniqueTopFiveMovieIds.map((movieId) =>
+			getMovieTitle(movieId, movieTitleById)
+		);
 
 		const leastFavoriteTitle = getMovieTitle(
 			preparedBallot.leastFavoriteMovieId,
@@ -509,17 +630,12 @@ export const buildReportCardsCsv = (
 			0
 		);
 
-		const leastFavoriteSummary = preparedBallot.leastFavoriteMovieId
-			? `Your least favorite was ${leastFavoriteTitle}; ${formatCountNoun(
-					leastFavoriteSameVoteOtherVotersCount,
-					"other voter",
-					"other voters"
-			  )} also picked it as least favorite, and ${formatCountNoun(
-					leastFavoriteRankedTopFiveByCount,
-					"voter",
-					"voters"
-			  )} ranked it in their top 5.`
-			: "No least favorite was selected.";
+		const leastFavoriteSummary = buildLeastFavoriteStory(
+			leastFavoriteTitle,
+			leastFavoriteSameVoteOtherVotersCount,
+			leastFavoriteRankedTopFiveByCount,
+			preparedBallot.leastFavoriteMovieId
+		);
 
 		const consensusCount = Math.max(consensusRankByMovieId.size, 1);
 		const independentTasteScore = preparedBallot.topFiveMovieIds.length
@@ -564,6 +680,34 @@ export const buildReportCardsCsv = (
 			`Freakiest friend: ${recommendationToFreakiestFriend}`,
 			`Underseen gem: ${recommendationUnderseenGem}`,
 		].join(" | ");
+		const independentTasteLabel = getIndependentTasteLabel(independentTasteScore);
+		const storyTop5Recap = buildTopFiveStory(topFiveTitles);
+		const storyRecommendationProfile = buildRecommendationProfileStory(
+			recommendationToParents,
+			recommendationToKid,
+			recommendationToFreakiestFriend,
+			recommendationUnderseenGem
+		);
+		const storySeenCountContext = buildSeenPlacementSummary(
+			preparedBallot.seenCount,
+			seenMoreThanCount,
+			seenTiedCount
+		);
+		const storyTasteTwin = buildTasteTwinStory(
+			tasteTwin,
+			tasteTwin?.sharedTopFiveCount || 0
+		);
+		const storyTasteTwinRecommendation = buildTasteTwinRecommendationStory(
+			tasteTwin,
+			recommendationFromTwinTitle,
+			recommendationFromTwinSource,
+			recommendationFromTwinSourceRank
+		);
+		const storyUniqueTopFive = buildUniqueTopFiveStory(uniqueTopFiveTitles);
+		const storyIndependentTaste = buildIndependentTasteStory(
+			independentTasteScore,
+			independentTasteLabel
+		);
 
 		return {
 			ballot_id: preparedBallot.ballot.id,
@@ -586,21 +730,17 @@ export const buildReportCardsCsv = (
 			seen_more_than_other_voters: seenMoreThanCount,
 			seen_tied_with_other_voters: seenTiedCount,
 			seen_count_percentile: seenPercentile,
-			seen_count_placement_summary: buildSeenPlacementSummary(
-				preparedBallot.seenCount,
-				seenMoreThanCount,
-				seenTiedCount
-			),
+			seen_count_placement_summary: storySeenCountContext,
 			taste_twin_name: tasteTwin ? tasteTwin.ballot.voterName : "",
 			taste_twin_similarity_percent: tasteTwin ? Math.round(tasteTwin.score * 100) : 0,
 			taste_twin_shared_top5_count: tasteTwin ? tasteTwin.sharedTopFiveCount : 0,
 			taste_twin_recommendation: recommendationFromTwinTitle,
 			taste_twin_recommendation_source: recommendationFromTwinSource,
+			taste_twin_recommendation_source_rank: recommendationFromTwinSourceRank,
 			taste_twin_recommendation_similarity_percent:
 				recommendationFromTwinSimilarityPercent,
-			most_unique_top_pick: mostUniqueTopPickTitle,
-			most_unique_top_pick_other_voters_ranked_top_2_count:
-				mostUniqueTopPickOtherHighRankCount,
+			unique_top_five_count: uniqueTopFiveTitles.length,
+			unique_top_five_titles: uniqueTopFiveTitles.join(" | "),
 			least_favorite: leastFavoriteTitle,
 			least_favorite_same_vote_other_voters_count:
 				leastFavoriteSameVoteOtherVotersCount,
@@ -608,7 +748,15 @@ export const buildReportCardsCsv = (
 				leastFavoriteRankedTopFiveByCount,
 			least_favorite_context_summary: leastFavoriteSummary,
 			independent_taste_score: independentTasteScore,
-			independent_taste_label: getIndependentTasteLabel(independentTasteScore),
+			independent_taste_label: independentTasteLabel,
+			story_top5_recap: storyTop5Recap,
+			story_recommendation_profile: storyRecommendationProfile,
+			story_seen_count_context: storySeenCountContext,
+			story_taste_twin: storyTasteTwin,
+			story_taste_twin_recommendation: storyTasteTwinRecommendation,
+			story_unique_top_five: storyUniqueTopFive,
+			story_least_favorite_context: leastFavoriteSummary,
+			story_independent_taste: storyIndependentTaste,
 			group_total_ballots_submitted: preparedBallots.length,
 			group_ballots_in_analysis: analysisBallots.length,
 			group_unique_voters_in_analysis: uniqueVotersInAnalysis,
