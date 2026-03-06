@@ -41,6 +41,9 @@ interface ReportCardExportRow {
 	seen_more_than_other_voters: number;
 	seen_tied_with_other_voters: number;
 	seen_count_percentile: number;
+	seen_count_rank_among_voters: number;
+	seen_count_top_5_callout: string;
+	is_top_5_seen_voter: string;
 	seen_count_placement_summary: string;
 	taste_twin_name: string;
 	taste_twin_similarity_percent: number;
@@ -105,6 +108,9 @@ const CSV_HEADERS: Array<keyof ReportCardExportRow> = [
 	"seen_more_than_other_voters",
 	"seen_tied_with_other_voters",
 	"seen_count_percentile",
+	"seen_count_rank_among_voters",
+	"seen_count_top_5_callout",
+	"is_top_5_seen_voter",
 	"seen_count_placement_summary",
 	"taste_twin_name",
 	"taste_twin_similarity_percent",
@@ -346,7 +352,8 @@ const getPolarizingMoviesSummary = (
 const buildSeenPlacementSummary = (
 	seenCount: number,
 	moreThanCount: number,
-	tiedCount: number
+	tiedCount: number,
+	topFiveSeenCallout: string
 ) => {
 	let summary = `You marked ${seenCount} movies as seen—more than ${formatVoterCount(
 		moreThanCount,
@@ -356,8 +363,50 @@ const buildSeenPlacementSummary = (
 	if (tiedCount > 0) {
 		summary += ` You tied with ${formatVoterCount(tiedCount, true)}.`;
 	}
+	if (topFiveSeenCallout) {
+		summary += ` ${topFiveSeenCallout}`;
+	}
 
 	return summary;
+};
+
+const getTimestampSortValue = (timestamp: string | undefined): number => {
+	if (!timestamp) {
+		return Number.POSITIVE_INFINITY;
+	}
+
+	const parsed = Date.parse(timestamp);
+	return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+};
+
+const getSeenCountRanksByBallotId = (
+	analysisBallots: PreparedBallot[]
+): Map<string, number> => {
+	const sortedBallots = [...analysisBallots].sort((left, right) => {
+		if (right.seenCount !== left.seenCount) {
+			return right.seenCount - left.seenCount;
+		}
+
+		const leftTimestamp = getTimestampSortValue(left.ballot.timestamp);
+		const rightTimestamp = getTimestampSortValue(right.ballot.timestamp);
+		if (leftTimestamp !== rightTimestamp) {
+			return leftTimestamp - rightTimestamp;
+		}
+
+		const nameComparison = left.voterName.localeCompare(right.voterName);
+		if (nameComparison !== 0) {
+			return nameComparison;
+		}
+
+		return left.ballot.id.localeCompare(right.ballot.id);
+	});
+
+	return new Map(
+		sortedBallots.map((preparedBallot, index) => [
+			preparedBallot.ballot.id,
+			index + 1,
+		])
+	);
 };
 
 const buildTopFiveStory = (topFiveTitles: string[]): string => {
@@ -474,6 +523,7 @@ export const buildReportCardsCsv = (
 	const uniqueVotersInAnalysis = new Set(
 		analysisBallots.map((preparedBallot) => preparedBallot.ballot.clientId)
 	).size;
+	const seenCountRankByBallotId = getSeenCountRanksByBallotId(analysisBallots);
 
 	const topFiveCountByMovieId = new Map<string, number>();
 	const leastFavoriteCountByMovieId = new Map<string, number>();
@@ -555,6 +605,14 @@ export const buildReportCardsCsv = (
 			analysisPeers.length > 0
 				? Math.round((seenMoreThanCount / analysisPeers.length) * 100)
 				: 0;
+		const seenCountRankAmongVoters = isInAnalysisPool
+			? seenCountRankByBallotId.get(preparedBallot.ballot.id) || 0
+			: 0;
+		const isTopFiveSeenVoter =
+			seenCountRankAmongVoters > 0 && seenCountRankAmongVoters <= 5;
+		const topFiveSeenCallout = isTopFiveSeenVoter
+			? `You were in the top 5 for total movies seen (#${seenCountRankAmongVoters} of ${analysisBallots.length}).`
+			: "";
 
 		const rankedMatches: BallotMatch[] = analysisPeers
 			.map((peer) => ({
@@ -704,7 +762,8 @@ export const buildReportCardsCsv = (
 		const storySeenCountContext = buildSeenPlacementSummary(
 			preparedBallot.seenCount,
 			seenMoreThanCount,
-			seenTiedCount
+			seenTiedCount,
+			topFiveSeenCallout
 		);
 		const storyTasteTwin = buildTasteTwinStory(
 			tasteTwin,
@@ -745,6 +804,9 @@ export const buildReportCardsCsv = (
 			seen_more_than_other_voters: seenMoreThanCount,
 			seen_tied_with_other_voters: seenTiedCount,
 			seen_count_percentile: seenPercentile,
+			seen_count_rank_among_voters: seenCountRankAmongVoters,
+			seen_count_top_5_callout: topFiveSeenCallout,
+			is_top_5_seen_voter: isTopFiveSeenVoter ? "Yes" : "No",
 			seen_count_placement_summary: storySeenCountContext,
 			taste_twin_name: tasteTwin ? tasteTwin.ballot.voterName : "",
 			taste_twin_similarity_percent: tasteTwin ? Math.round(tasteTwin.score * 100) : 0,
