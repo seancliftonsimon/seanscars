@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -13,13 +14,34 @@ import Presentation from './pages/Admin/Presentation';
 import BackstageTimer from './pages/BackstageTimer';
 import './index.css';
 
+const BASE_TITLE = 'The 2026 Award Sharemony';
+
 const DEFAULT_ADMIN_SLUG = 'results-HOST2026';
 const configuredAdminSlug = import.meta.env.VITE_ADMIN_SLUG?.trim();
 const adminSlug = configuredAdminSlug || DEFAULT_ADMIN_SLUG;
 const adminRoutePath = `/${adminSlug.replace(/^\/+/, '')}`;
 
+function getPageTitle(pathname: string): string {
+  if (pathname === '/') return `Home | ${BASE_TITLE}`;
+  if (pathname === '/rsvp') return `RSVP | ${BASE_TITLE}`;
+  if (pathname === '/info') return `Event Info | ${BASE_TITLE}`;
+  if (pathname === '/history') return `History | ${BASE_TITLE}`;
+  if (pathname === '/hall-of-fame') return `Hall of Fame | ${BASE_TITLE}`;
+  if (pathname === '/media') return `Past Songs | ${BASE_TITLE}`;
+  if (pathname === '/nominees') return `Adam Awards | ${BASE_TITLE}`;
+  if (pathname === '/vote' || pathname === '/voting') return `Vote | ${BASE_TITLE}`;
+  if (pathname === '/backstage' || pathname === '/timer') return `Backstage Timer | ${BASE_TITLE}`;
+  if (pathname === `${adminRoutePath}/present`) return `Presentation | ${BASE_TITLE}`;
+  if (pathname === adminRoutePath || pathname.startsWith(`${adminRoutePath}/`)) return `Admin Dashboard | ${BASE_TITLE}`;
+  return BASE_TITLE;
+}
+
 function AppContent() {
   const location = useLocation();
+
+  useEffect(() => {
+    document.title = getPageTitle(location.pathname);
+  }, [location.pathname]);
   const isVotePath = location.pathname === '/vote' || location.pathname === '/voting';
   const isBackstagePath = location.pathname === '/backstage' || location.pathname === '/timer';
   const isAdminPath =
