@@ -456,9 +456,11 @@ const buildLeastFavoriteStory = (
 
 const buildIndependentTasteStory = (
 	independentTasteScore: number,
-	independentTasteLabel: string
+	independentTasteLabel: string,
+	uniqueTopFiveCount: number,
+	topFiveCount: number
 ): string =>
-	`Your independent taste score was ${independentTasteScore}/100, which places you in the "${independentTasteLabel}" range for this group.`;
+	`Your independent taste score was ${independentTasteScore}/100, with ${uniqueTopFiveCount} of your ${topFiveCount} top-five picks being unique to your ballot. That places you in the "${independentTasteLabel}" range for this group.`;
 
 export const buildReportCardsCsv = (
 	ballots: AdminBallot[]
@@ -638,22 +640,33 @@ export const buildReportCardsCsv = (
 		);
 
 		const consensusCount = Math.max(consensusRankByMovieId.size, 1);
-		const independentTasteScore = preparedBallot.topFiveMovieIds.length
-			? Math.round(
-					(preparedBallot.topFiveMovieIds.reduce((weightedTotal, movieId, index) => {
-						const weight = Math.max(1, 5 - index);
-						const consensusRank =
-							consensusRankByMovieId.get(movieId) || consensusCount + 1;
-						const normalizedDistance = (consensusRank - 1) / consensusCount;
-						return weightedTotal + normalizedDistance * weight;
-					}, 0) /
-						preparedBallot.topFiveMovieIds.reduce(
-							(totalWeight, _, index) => totalWeight + Math.max(1, 5 - index),
-							0
-						)) *
-						100
-			  )
+		const consensusDivergence = preparedBallot.topFiveMovieIds.length
+			? preparedBallot.topFiveMovieIds.reduce((weightedTotal, movieId, index) => {
+					const weight = Math.max(1, 5 - index);
+					const consensusRank =
+						consensusRankByMovieId.get(movieId) || consensusCount + 1;
+					const normalizedDistance = (consensusRank - 1) / consensusCount;
+					return weightedTotal + normalizedDistance * weight;
+			  }, 0) /
+				preparedBallot.topFiveMovieIds.reduce(
+					(totalWeight, _, index) => totalWeight + Math.max(1, 5 - index),
+					0
+				)
 			: 0;
+		const uniqueTopFiveRatio =
+			preparedBallot.topFiveMovieIds.length > 0
+				? uniqueTopFiveTitles.length / preparedBallot.topFiveMovieIds.length
+				: 0;
+		// Make uniqueness the dominant factor in independent taste.
+		const independentTasteScore = Math.round(
+			Math.min(
+				100,
+				Math.max(
+					0,
+					Math.pow(uniqueTopFiveRatio, 0.7) * 90 + consensusDivergence * 10
+				)
+			)
+		);
 
 		const topFiveTitles = preparedBallot.topFiveMovieIds.map((movieId) =>
 			getMovieTitle(movieId, movieTitleById)
@@ -706,7 +719,9 @@ export const buildReportCardsCsv = (
 		const storyUniqueTopFive = buildUniqueTopFiveStory(uniqueTopFiveTitles);
 		const storyIndependentTaste = buildIndependentTasteStory(
 			independentTasteScore,
-			independentTasteLabel
+			independentTasteLabel,
+			uniqueTopFiveTitles.length,
+			preparedBallot.topFiveMovieIds.length
 		);
 
 		return {
