@@ -539,10 +539,10 @@ const Presentation = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowLeft') {
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
         event.preventDefault();
         goToPreviousSlide();
-      } else if (event.key === 'ArrowRight') {
+      } else if (event.key === 'ArrowRight' || event.key === ' ') {
         event.preventDefault();
         goToNextSlide();
       } else if (event.key === 'r' || event.key === 'R') {
