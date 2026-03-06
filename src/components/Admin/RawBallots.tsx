@@ -9,6 +9,7 @@ import { BALLOT_SCHEMA_VERSION, type Ballot } from "../../services/api";
 import { db } from "../../services/firebase";
 import moviesData from "../../data/movies.json";
 import { getCanonicalBestPictureRanks } from "../../utils/bestPictureRanks";
+import { buildReportCardsCsv } from "../../utils/reportCards";
 import { v4 as uuidv4 } from "uuid";
 import "./Admin.css";
 
@@ -48,6 +49,7 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [numGeneratedBallots, setNumGeneratedBallots] = useState(50);
 	const [isGeneratingBallots, setIsGeneratingBallots] = useState(false);
+	const [isGeneratingReportCards, setIsGeneratingReportCards] = useState(false);
 	const [isClearingBallots, setIsClearingBallots] = useState(false);
 	const [selectedBallotIds, setSelectedBallotIds] = useState<Set<string>>(
 		new Set()
@@ -192,6 +194,44 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 			);
 		} finally {
 			setIsGeneratingBallots(false);
+		}
+	};
+
+	const handleGenerateReportCards = async () => {
+		setActionError(null);
+		setActionSuccess(null);
+		setIsGeneratingReportCards(true);
+
+		try {
+			const latestBallots = await getAllBallots();
+			const reportCardExport = buildReportCardsCsv(latestBallots);
+			const csvBlob = new Blob([reportCardExport.csvContent], {
+				type: "text/csv;charset=utf-8;",
+			});
+			const csvUrl = URL.createObjectURL(csvBlob);
+			const downloadLink = document.createElement("a");
+			downloadLink.href = csvUrl;
+			downloadLink.download = `awards-voter-report-cards-${
+				new Date().toISOString().split("T")[0]
+			}.csv`;
+			document.body.appendChild(downloadLink);
+			downloadLink.click();
+			document.body.removeChild(downloadLink);
+			URL.revokeObjectURL(csvUrl);
+
+			setActionSuccess(
+				`Report cards CSV exported for ${reportCardExport.exportedBallotCount} ballot${
+					reportCardExport.exportedBallotCount === 1 ? "" : "s"
+				}. Analysis metrics were calculated from ${reportCardExport.analysisBallotCount} included ballot${
+					reportCardExport.analysisBallotCount === 1 ? "" : "s"
+				}.`
+			);
+		} catch (err) {
+			setActionError(
+				err instanceof Error ? err.message : "Failed to generate report cards CSV"
+			);
+		} finally {
+			setIsGeneratingReportCards(false);
 		}
 	};
 
@@ -414,6 +454,15 @@ const RawBallots = ({ onAnalyzePresentation }: RawBallotsProps) => {
 				<div className="ballots-actions-left">
 					<button onClick={fetchData} className="btn btn-secondary">
 						Refresh
+					</button>
+					<button
+						onClick={handleGenerateReportCards}
+						className="btn btn-primary"
+						disabled={loading || isGeneratingReportCards}
+					>
+						{isGeneratingReportCards
+							? "Generating report cards..."
+							: "Generate Report Cards"}
 					</button>
 					<button
 						onClick={handleSelectAllBallots}
