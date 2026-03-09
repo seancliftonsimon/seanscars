@@ -11,6 +11,7 @@ const Navbar = () => {
 		{ path: "/", label: "Home" },
 		{ path: "/info", label: "Event Info" },
 		{ path: "/media", label: "Past Songs" },
+		{ path: "/watched-log", label: "Watched Log" },
 		{ path: "/hall-of-fame", label: "Hall of Fame" },
 		{ path: "/rsvp", label: "RSVP" },
 		{ path: "/vote", label: "Vote" },

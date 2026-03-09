@@ -1,0 +1,126 @@
+.watched-log-page {
+  padding-top: 80px;
+  min-height: 100vh;
+}
+
+.watched-log-hero {
+  background: var(--gradient-red);
+  padding: var(--spacing-lg) 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.watched-log-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(212, 175, 55, 0.1) 0%,
+    transparent 70%
+  );
+}
+
+.watched-log-hero h1 {
+  color: var(--color-white);
+  margin-bottom: var(--spacing-sm);
+}
+
+.watched-log-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-cream);
+  font-style: italic;
+}
+
+.watched-log-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.watched-log-date-group {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+}
+
+.watched-log-date-badge {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background: rgba(212, 175, 55, 0.2);
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  border-radius: var(--radius-md);
+  color: var(--color-gold);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  min-width: 120px;
+  text-align: center;
+}
+
+.watched-log-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.watched-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-charcoal);
+  border-left: 3px solid rgba(212, 175, 55, 0.5);
+  border-radius: var(--radius-sm);
+  color: var(--color-cream);
+  transition: all var(--transition-fast);
+}
+
+.watched-log-entry:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-left-color: var(--color-gold);
+}
+
+.watched-log-title {
+  font-weight: 500;
+}
+
+.watched-log-owner {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  text-transform: lowercase;
+  font-weight: 600;
+}
+
+.watched-log-owner.owner-adam {
+  background: rgba(100, 149, 237, 0.3);
+  color: #87ceeb;
+}
+
+.watched-log-owner.owner-sean {
+  background: rgba(147, 112, 219, 0.3);
+  color: #dda0dd;
+}
+
+.watched-log-owner.owner-shared {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--color-gold);
+}
+
+@media (max-width: 768px) {
+  .watched-log-date-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .watched-log-date-badge {
+    min-width: auto;
+  }
+}

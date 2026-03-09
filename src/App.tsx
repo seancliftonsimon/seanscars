@@ -6,6 +6,7 @@ import RSVP from './pages/RSVP';
 import Info from './pages/Info';
 import History from './pages/History';
 import HallOfFame from './pages/HallOfFame';
+import WatchedLog from './pages/WatchedLog';
 import Media from './pages/Media';
 import NomineesGuide from './pages/NomineesGuide';
 import Vote from './pages/Vote/Vote';
@@ -26,6 +27,7 @@ function getPageTitle(pathname: string): string {
   if (pathname === '/rsvp') return `RSVP | ${BASE_TITLE}`;
   if (pathname === '/info') return `Event Info | ${BASE_TITLE}`;
   if (pathname === '/history') return `History | ${BASE_TITLE}`;
+  if (pathname === '/watched-log') return `Watched Log | ${BASE_TITLE}`;
   if (pathname === '/hall-of-fame') return `Hall of Fame | ${BASE_TITLE}`;
   if (pathname === '/media') return `Past Songs | ${BASE_TITLE}`;
   if (pathname === '/nominees') return `Adam Awards | ${BASE_TITLE}`;
@@ -58,6 +60,7 @@ function AppContent() {
           <Route path="/rsvp" element={<RSVP />} />
           <Route path="/info" element={<Info />} />
           <Route path="/history" element={<History />} />
+          <Route path="/watched-log" element={<WatchedLog />} />
           <Route path="/hall-of-fame" element={<HallOfFame />} />
           <Route path="/media" element={<Media />} />
           <Route path="/nominees" element={<NomineesGuide />} />
