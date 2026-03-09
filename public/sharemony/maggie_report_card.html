@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maggie — Sharemony Report Card</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0c0c0f;
+      color: #e8e2d9;
+      font-family: 'Lora', Georgia, serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .card {
+      background: #13131a;
+      border: 1px solid #2a2a3a;
+      border-radius: 4px;
+      width: 100%;
+      max-width: 680px;
+      overflow: hidden;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.6);
+    }
+
+    /* ── HEADER ── */
+    .card-header {
+      background: linear-gradient(135deg, #1a1426 0%, #0f0f1e 60%, #1a1200 100%);
+      padding: 48px 40px 40px;
+      border-bottom: 1px solid #2a2a3a;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      font-family: 'Lora', serif;
+      font-size: 11px;
+      font-style: italic;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #c9a84c;
+      margin-bottom: 10px;
+    }
+
+    .voter-name {
+      font-family: 'Playfair Display', 'Times New Roman', serif;
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 700;
+      color: #f5f0e8;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #6a6480;
+      font-style: italic;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── SECTIONS ── */
+    .sections {
+      padding: 8px 0;
+    }
+
+    .section {
+      padding: 22px 40px;
+      border-bottom: 1px solid #1e1e2a;
+      transition: background 0.15s;
+    }
+    .section:last-child { border-bottom: none; }
+    .section:hover { background: rgba(255,255,255,0.015); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .section-icon {
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .section-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #c9a84c;
+    }
+
+    .section-body {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #ccc5b9;
+      padding-left: 26px;
+    }
+
+    /* ── FOOTER ── */
+    .card-footer {
+      background: #0e0e15;
+      border-top: 1px solid #2a2a3a;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      color: #3a3450;
+      letter-spacing: 0.06em;
+    }
+
+    .footer-accent {
+      width: 32px;
+      height: 2px;
+      background: linear-gradient(90deg, #c9a84c, transparent);
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .card { box-shadow: none; border: 1px solid #ccc; max-width: 100%; }
+      .card-header { background: #1a1426 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <p class="eyebrow">Sharemony 2026 &nbsp;·&nbsp; Report Card</p>
+      <h1 class="voter-name">Maggie</h1>
+      <p class="subtitle">Your year in film, by the numbers</p>
+    </div>
+    <div class="sections">
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">🏆</span>
+            <span class="section-label">Your Top Five</span>
+          </div>
+          <p class="section-body">Your top five were #1 Weapons, #2 KPop Demon Hunters, #3 Wicked: For Good, #4 The Running Man, #5 Mission: Impossible - The Final Reckoning.</p>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">👁</span>
+            <span class="section-label">Movies Seen</span>
+          </div>
+          <p class="section-body">You marked 7 movies as seen—more than 3 other voters. You tied with one other voter.</p>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">🤝</span>
+            <span class="section-label">Your Taste Twin</span>
+          </div>
+          <p class="section-body">Your ballot was most similar to Ana&#x27;s—you had 1 movie in common between your top fives. Based on that match, Downton Abbey: The Grand Finale stood out as an unseen recommendation—Ana ranked it #1.</p>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">✨</span>
+            <span class="section-label">What Made You Unique</span>
+          </div>
+          <p class="section-body">You were the only voter to rank The Running Man and Mission: Impossible - The Final Reckoning in your top five.</p>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">🎯</span>
+            <span class="section-label">Your Recommendations</span>
+          </div>
+          <p class="section-body">For recommendations, you picked Weapons for parents, KPop Demon Hunters for a kid, The Running Man for your freakiest friend, and The Running Man as your underseen gem.</p>
+        </div>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">👎</span>
+            <span class="section-label">Least Favorite</span>
+          </div>
+          <p class="section-body">You were the only person to pick Bugonia as your least favorite, and 6 voters ranked it in their top five.</p>
+        </div>
+    </div>
+    <div class="card-footer">
+      <span class="footer-brand">Sharemony</span>
+      <div class="footer-accent"></div>
+    </div>
+  </div>
+</body>
+</html>
