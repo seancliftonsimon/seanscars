@@ -139,8 +139,11 @@
 
 /* ── Responsive iframe wrapper ── */
 /*
-  aspect-ratio lives on the iframe itself so it computes from its own
-  rendered width — reliable at every viewport size, no padding tricks.
+  No aspect-ratio — use a vw-based explicit height so the container
+  always wraps the full YouTube player (video + controls) with room
+  to spare. 60vw is slightly more generous than strict 16:9 (56.25vw),
+  ensuring bottom controls are never clipped. max-height keeps it
+  from ballooning on very wide screens.
 */
 .video-embed-frame {
   display: block;
@@ -148,13 +151,14 @@
   background: #000;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   overflow: hidden;
-  line-height: 0; /* collapse any inline gap below the iframe */
+  padding-bottom: 0.75rem; /* extra breathing room below controls */
 }
 
 .video-embed-frame iframe {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 60vw;
+  max-height: 530px;
   border: none;
 }
 
@@ -162,7 +166,8 @@
 .video-embed-placeholder {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 60vw;
+  max-height: 530px;
   background: linear-gradient(160deg, #0e0e0e 0%, #141414 50%, #0a0a0a 100%);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   overflow: hidden;

@@ -113,7 +113,7 @@ const Videos = () => {
             <span className="divider-line"></span>
           </div>
           <p className="videos-subtitle">
-            Every moment from the night, presented in order
+            These videos are not generally searchable on YouTube and can only be seen through sharing this link.
           </p>
         </div>
       </header>
