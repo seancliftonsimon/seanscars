@@ -99,7 +99,7 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg), 0 0 0 1px rgba(212, 175, 55, 0.04);
   transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
-  /* overflow: hidden intentionally absent — it clips iframes */
+  overflow: visible; /* must override Media.css which also defines .video-card { overflow: hidden } */
 }
 
 .video-card:hover {
