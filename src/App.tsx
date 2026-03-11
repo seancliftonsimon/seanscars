@@ -7,6 +7,7 @@ import Info from './pages/Info';
 import History from './pages/History';
 import HallOfFame from './pages/HallOfFame';
 import Media from './pages/Media';
+import Videos from './pages/Videos';
 import NomineesGuide from './pages/NomineesGuide';
 import Vote from './pages/Vote/Vote';
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -28,6 +29,7 @@ function getPageTitle(pathname: string): string {
   if (pathname === '/history') return `History | ${BASE_TITLE}`;
   if (pathname === '/hall-of-fame') return `Hall of Fame | ${BASE_TITLE}`;
   if (pathname === '/media') return `Past Songs | ${BASE_TITLE}`;
+  if (pathname === '/videos') return `Videos | ${BASE_TITLE}`;
   if (pathname === '/nominees') return `Adam Awards | ${BASE_TITLE}`;
   if (pathname === '/vote' || pathname === '/voting') return `Vote | ${BASE_TITLE}`;
   if (pathname === '/backstage' || pathname === '/timer') return `Backstage Timer | ${BASE_TITLE}`;
@@ -60,6 +62,7 @@ function AppContent() {
           <Route path="/history" element={<History />} />
           <Route path="/hall-of-fame" element={<HallOfFame />} />
           <Route path="/media" element={<Media />} />
+          <Route path="/videos" element={<Videos />} />
           <Route path="/nominees" element={<NomineesGuide />} />
           <Route path="/vote" element={<Vote />} />
           <Route path="/voting" element={<Vote />} />
