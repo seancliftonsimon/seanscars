@@ -4,10 +4,6 @@ interface Segment {
   title: string;
   subtitle?: string;
   embedId?: string;
-  extraEmbed?: {
-    id: string;
-    label: string;
-  };
 }
 
 const segments: Segment[] = [
@@ -37,8 +33,7 @@ const segments: Segment[] = [
     embedId: "tL1qLtkvpOM",
   },
   {
-    title: "Maggie and Foster Song",
-    subtitle: '"I\'m Not Tom Cruise"',
+    title: '2026 MAG Awards — "I\'m Not Tom Cruise" Performance',
     embedId: "Mbsw8pDhZBg",
   },
   {
@@ -76,23 +71,18 @@ const segments: Segment[] = [
   },
 ];
 
-const YOUTUBE_PARAMS =
-  "?rel=0&modestbranding=1&color=white";
+const YOUTUBE_PARAMS = "?rel=0&modestbranding=1&color=white";
 
-function VideoEmbed({ id, label }: { id: string; label?: string }) {
+function VideoEmbed({ id, title }: { id: string; title: string }) {
   return (
-    <div className="video-embed-wrap">
-      {label && <p className="extra-embed-label">{label}</p>}
-      <div className="video-embed-frame">
-        <iframe
-          src={`https://www.youtube.com/embed/${id}${YOUTUBE_PARAMS}`}
-          title={label ?? "Award Sharemony Video"}
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        />
-      </div>
+    <div className="video-embed-frame">
+      <iframe
+        src={`https://www.youtube.com/embed/${id}${YOUTUBE_PARAMS}`}
+        title={title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerPolicy="strict-origin-when-cross-origin"
+        allowFullScreen
+      />
     </div>
   );
 }
@@ -114,12 +104,13 @@ const Videos = () => {
       {/* Page Header */}
       <header className="videos-header">
         <div className="videos-header-inner">
-          <p className="videos-eyebrow">2026 Award Sharemony</p>
           <h1 className="videos-title">
-            The <span className="gold-text">Complete</span> Run of Show
+            <span className="gold-text">2026 Award Sharemony</span> Videos
           </h1>
           <div className="videos-divider">
+            <span className="divider-line"></span>
             <span className="divider-gem">◆</span>
+            <span className="divider-line"></span>
           </div>
           <p className="videos-subtitle">
             Every moment from the night, presented in order
@@ -133,32 +124,17 @@ const Videos = () => {
           {segments.map((segment, index) => (
             <article key={index} className="video-card">
               <div className="video-card-header">
-                <span className="video-number">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div className="video-title-block">
-                  <h2 className="video-title gold-text">{segment.title}</h2>
-                  {segment.subtitle && (
-                    <span className="video-subtitle">{segment.subtitle}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="video-embeds">
-                {segment.embedId ? (
-                  <>
-                    <VideoEmbed id={segment.embedId} />
-                    {segment.extraEmbed && (
-                      <VideoEmbed
-                        id={segment.extraEmbed.id}
-                        label={segment.extraEmbed.label}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <VideoPlaceholder />
+                <h2 className="video-title gold-text">{segment.title}</h2>
+                {segment.subtitle && (
+                  <span className="video-subtitle">{segment.subtitle}</span>
                 )}
               </div>
+
+              {segment.embedId ? (
+                <VideoEmbed id={segment.embedId} title={segment.title} />
+              ) : (
+                <VideoPlaceholder />
+              )}
             </article>
           ))}
         </div>
