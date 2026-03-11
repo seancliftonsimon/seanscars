@@ -1,69 +1,115 @@
 import "./Videos.css";
 
-const segments = [
+interface Segment {
+  title: string;
+  subtitle?: string;
+  embedId?: string;
+  extraEmbed?: {
+    id: string;
+    label: string;
+  };
+}
+
+const segments: Segment[] = [
   {
     title: "Opening Medley",
-    description: "The night begins.",
+    embedId: "nVziX5SFaew",
   },
   {
     title: "The NANAs",
-    description: null,
+    embedId: "WoctmUiXaL4",
   },
   {
     title: "The Carrie Awards",
-    description: null,
+    embedId: "xIchD8iPKtg",
   },
   {
     title: "The SAMMYs",
     subtitle: "with Medley!",
-    description: null,
+    embedId: "aS26gipR44M",
   },
   {
     title: "The Bucatinis",
-    description: null,
+    embedId: "iVsXrkxGvMI",
   },
   {
     title: "The MAG Awards",
-    description: null,
+    embedId: "tL1qLtkvpOM",
+    extraEmbed: {
+      id: "Mbsw8pDhZBg",
+      label: '"I\'m Not Tom Cruise"',
+    },
   },
   {
     title: "Maggie and Foster Song",
-    description: null,
+    // Coming soon
   },
   {
     title: "The Madame Web Medical Accuracy Awards",
-    description: null,
+    embedId: "a6veB32Cop4",
   },
   {
     title: '"I\'m Good" Duet',
-    description: null,
+    embedId: "NhE_e0uhX4k",
   },
   {
     title: "The Golden Kates",
     subtitle: "Critic's Corner",
-    description: null,
+    embedId: "bKkpuYHZr_M",
   },
   {
     title: "The Thomonto Film Festival",
-    description: null,
+    embedId: "Cnk911xiCfQ",
   },
   {
     title: '"No Hot Take" Song',
-    description: null,
+    embedId: "JGgz_-LPJBA",
   },
   {
     title: "The Hangoria Awards",
-    description: null,
+    embedId: "gxNA1-lvEe8",
   },
   {
     title: "The Adam Awards",
-    description: null,
+    embedId: "UkIZVcZnOgk",
   },
   {
     title: "The Seanscars",
-    description: "The grand finale.",
+    // Coming soon
   },
 ];
+
+const YOUTUBE_PARAMS =
+  "?rel=0&modestbranding=1&color=white";
+
+function VideoEmbed({ id, label }: { id: string; label?: string }) {
+  return (
+    <div className="video-embed-wrap">
+      {label && <p className="extra-embed-label">{label}</p>}
+      <div className="video-embed-frame">
+        <iframe
+          src={`https://www.youtube.com/embed/${id}${YOUTUBE_PARAMS}`}
+          title={label ?? "Award Sharemony Video"}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+}
+
+function VideoPlaceholder() {
+  return (
+    <div className="video-embed-placeholder">
+      <div className="embed-inner">
+        <div className="embed-icon">▶</div>
+        <p className="embed-label">Video coming soon</p>
+      </div>
+    </div>
+  );
+}
 
 const Videos = () => {
   return (
@@ -101,11 +147,20 @@ const Videos = () => {
                 </div>
               </div>
 
-              <div className="video-embed-placeholder">
-                <div className="embed-inner">
-                  <div className="embed-icon">▶</div>
-                  <p className="embed-label">Video coming soon</p>
-                </div>
+              <div className="video-embeds">
+                {segment.embedId ? (
+                  <>
+                    <VideoEmbed id={segment.embedId} />
+                    {segment.extraEmbed && (
+                      <VideoEmbed
+                        id={segment.extraEmbed.id}
+                        label={segment.extraEmbed.label}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <VideoPlaceholder />
+                )}
               </div>
             </article>
           ))}
