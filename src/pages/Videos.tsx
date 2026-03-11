@@ -35,14 +35,11 @@ const segments: Segment[] = [
   {
     title: "The MAG Awards",
     embedId: "tL1qLtkvpOM",
-    extraEmbed: {
-      id: "Mbsw8pDhZBg",
-      label: '"I\'m Not Tom Cruise"',
-    },
   },
   {
     title: "Maggie and Foster Song",
-    // Coming soon
+    subtitle: '"I\'m Not Tom Cruise"',
+    embedId: "Mbsw8pDhZBg",
   },
   {
     title: "The Madame Web Medical Accuracy Awards",
