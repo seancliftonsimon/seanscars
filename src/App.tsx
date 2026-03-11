@@ -29,7 +29,7 @@ function getPageTitle(pathname: string): string {
   if (pathname === '/history') return `History | ${BASE_TITLE}`;
   if (pathname === '/hall-of-fame') return `Hall of Fame | ${BASE_TITLE}`;
   if (pathname === '/media') return `Past Songs | ${BASE_TITLE}`;
-  if (pathname === '/videos') return `Videos | ${BASE_TITLE}`;
+  if (pathname === '/videos') return '2026 Award Sharemony Videos';
   if (pathname === '/nominees') return `Adam Awards | ${BASE_TITLE}`;
   if (pathname === '/vote' || pathname === '/voting') return `Vote | ${BASE_TITLE}`;
   if (pathname === '/backstage' || pathname === '/timer') return `Backstage Timer | ${BASE_TITLE}`;
