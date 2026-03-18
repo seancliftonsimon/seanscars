@@ -1,15 +1,22 @@
+import { Link } from "react-router-dom";
 import "./Videos.css";
 
 interface Segment {
   title: string;
   subtitle?: string;
   embedId?: string;
+  note?: string;
+  noteHref?: string;
 }
 
 const segments: Segment[] = [
   {
     title: "Opening Medley",
     embedId: "nVziX5SFaew",
+  },
+  {
+    title: "Drive Fast — AcADAMy Edit",
+    embedId: "mfAhuh_whNE",
   },
   {
     title: "The NANAs",
@@ -50,6 +57,10 @@ const segments: Segment[] = [
     embedId: "bKkpuYHZr_M",
   },
   {
+    title: "House/Tour — AcADAMy Edit",
+    embedId: "tvLW3iu5hFk",
+  },
+  {
     title: "The Thomonto Film Festival",
     embedId: "Cnk911xiCfQ",
   },
@@ -64,10 +75,16 @@ const segments: Segment[] = [
   {
     title: "The Adam Awards",
     embedId: "UkIZVcZnOgk",
+    note: "See the nominees & where to watch →",
+    noteHref: "/nominees",
+  },
+  {
+    title: "Dance in Film 2025",
+    embedId: "nHDI8HYONO8",
   },
   {
     title: "The Seanscars",
-    // Coming soon
+    embedId: "Dv78KELXFJU",
   },
 ];
 
@@ -134,6 +151,11 @@ const Videos = () => {
                 <VideoEmbed id={segment.embedId} title={segment.title} />
               ) : (
                 <VideoPlaceholder />
+              )}
+              {segment.note && segment.noteHref && (
+                <p className="video-card-note">
+                  <Link to={segment.noteHref}>{segment.note}</Link>
+                </p>
               )}
             </article>
           ))}

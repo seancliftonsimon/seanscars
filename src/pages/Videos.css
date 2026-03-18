@@ -265,3 +265,19 @@
     padding: 1.2rem 1.25rem 1rem;
   }
 }
+
+.video-card-note {
+  padding: 0.75rem 1.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--color-gold, #c9a84c);
+}
+
+.video-card-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.video-card-note a:hover {
+  opacity: 0.8;
+}
