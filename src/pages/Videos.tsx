@@ -19,10 +19,6 @@ const segments: Segment[] = [
     embedId: "mfAhuh_whNE",
   },
   {
-    title: "The NANAs",
-    embedId: "WoctmUiXaL4",
-  },
-  {
     title: "The Carrie Awards",
     embedId: "xIchD8iPKtg",
   },
