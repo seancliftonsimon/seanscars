@@ -10,6 +10,7 @@ const Navbar = () => {
 	const navLinks = [
 		{ path: "/", label: "Home" },
 		{ path: "/info", label: "Event Info" },
+		{ path: "/nominees", label: "Adam Awards" },
 		{ path: "/media", label: "Past Songs" },
 		{ path: "/videos", label: "Videos" },
 		{ path: "/hall-of-fame", label: "Hall of Fame" },
