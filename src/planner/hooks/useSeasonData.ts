@@ -7,6 +7,7 @@ import type {
   ChecklistItem,
   Film,
   Idea,
+  Invitation,
   Person,
   Piece,
   Question,
@@ -28,6 +29,8 @@ export interface SeasonData {
   /** Sorted by title. */
   films: WithId<Film>[];
   ideas: WithId<Idea>[];
+  /** Doc id = person id. */
+  invitations: WithId<Invitation>[];
   /** All people (not per season), sorted by name. */
   people: WithId<Person>[];
   peopleById: Map<string, WithId<Person>>;
@@ -47,9 +50,10 @@ export function useSeasonData(seasonId: string | null): SeasonData {
   const checklist = useCollection(seasonId ? seasonCol(seasonId, 'checklist') : null);
   const films = useCollection(seasonId ? seasonCol(seasonId, 'films') : null);
   const ideas = useCollection(seasonId ? seasonCol(seasonId, 'ideas') : null);
+  const invitations = useCollection(seasonId ? seasonCol(seasonId, 'invitations') : null);
   const people = useCollection(peopleCol());
 
-  const states = [awards, pieces, segments, venues, questions, checklist, films, ideas, people];
+  const states = [awards, pieces, segments, venues, questions, checklist, films, ideas, invitations, people];
   const loading = states.some((s) => s.loading);
   const error = states.find((s) => s.error)?.error ?? null;
 
@@ -64,6 +68,7 @@ export function useSeasonData(seasonId: string | null): SeasonData {
       checklist: checklist.data,
       films: [...films.data].sort((a, b) => a.title.localeCompare(b.title)),
       ideas: ideas.data,
+      invitations: invitations.data,
       people: sortedPeople,
       peopleById: new Map(sortedPeople.map((p) => [p.id, p])),
       loading,
@@ -78,6 +83,7 @@ export function useSeasonData(seasonId: string | null): SeasonData {
     checklist.data,
     films.data,
     ideas.data,
+    invitations.data,
     people.data,
     loading,
     error,

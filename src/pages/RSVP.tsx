@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import './RSVP.css';
+
+/** Season the RSVP form currently collects for; the planner files replies under it. */
+const RSVP_SEASON = '2027';
 
 const RSVP = () => {
     const [formData, setFormData] = useState({
@@ -34,6 +39,26 @@ const RSVP = () => {
         setLoading(true);
         setError(null);
 
+        const fields = {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            rsvp: formData.rsvp,
+            guestsComment: formData.guestsComment,
+            attendanceType: formData.attendanceType,
+            awardName: formData.awardName,
+        };
+
+        // Also file the reply in the planner's RSVP inbox. A failure here is
+        // logged only; the Formspree email below stays the source of truth.
+        const saved = addDoc(collection(db, 'rsvps'), {
+            ...fields,
+            brunch: formData.brunch,
+            createdAt: serverTimestamp(),
+            source: 'site',
+            seasonHint: RSVP_SEASON,
+        }).catch((err) => console.error('Saving RSVP to the planner failed', err));
+
         try {
             const response = await fetch('https://formspree.io/f/meoykkzy', {
                 method: 'POST',
@@ -41,16 +66,11 @@ const RSVP = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    rsvp: formData.rsvp,
-                    guestsComment: formData.guestsComment,
-                    attendanceType: formData.attendanceType,
-                    awardName: formData.awardName,
+                    ...fields,
                     brunch: formData.brunch ? 'Yes' : 'No'
                 }),
             });
+            await saved;
 
             if (response.ok) {
                 setSubmitted(true);
