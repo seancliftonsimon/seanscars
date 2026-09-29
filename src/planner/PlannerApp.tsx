@@ -8,6 +8,8 @@ import SeasonSettings from './screens/season/SeasonSettings';
 import ImportScreen from './screens/import/ImportScreen';
 import ShowScreen from './screens/show/ShowScreen';
 import PrintScreen from './screens/show/PrintScreen';
+import AwardsScreen from './screens/awards/AwardsScreen';
+import FilmsScreen from './screens/films/FilmsScreen';
 import { PLANNER_SECTIONS } from './routes';
 import './planner.css';
 
@@ -23,7 +25,7 @@ export default function PlannerApp() {
     <SeasonProvider>
       <PlannerLayout email="Planner" onSignOut={lock}>
         <Routes>
-          {PLANNER_SECTIONS.filter((s) => !['season', 'import', 'show', 'show/print'].includes(s.path)).map((section) =>
+          {PLANNER_SECTIONS.filter((s) => !['season', 'import', 'show', 'show/print', 'awards', 'films'].includes(s.path)).map((section) =>
             section.path === '' ? (
               <Route key="index" index element={<PlaceholderScreen section={section} />} />
             ) : (
@@ -34,6 +36,8 @@ export default function PlannerApp() {
           <Route path="import" element={<ImportScreen />} />
           <Route path="show" element={<ShowScreen />} />
           <Route path="show/print" element={<PrintScreen />} />
+          <Route path="awards" element={<AwardsScreen />} />
+          <Route path="films" element={<FilmsScreen />} />
           <Route path="*" element={<Navigate to="/plan" replace />} />
         </Routes>
       </PlannerLayout>

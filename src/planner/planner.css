@@ -559,6 +559,54 @@
 .pl-publish-changes { margin: 0.25rem 0 0; padding-left: 1.2rem; max-height: 14rem; overflow-y: auto; }
 .pl-publish-last { margin: var(--spacing-xs) 0 0; font-size: 0.8125rem; }
 
+/* Tabs */
+.pl-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--pl-border); }
+.pl-tab {
+  padding: 0.4rem 0.8rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--pl-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.pl-tab:hover { color: var(--pl-text); }
+.pl-tab.is-active { color: var(--pl-text); border-bottom-color: var(--pl-accent); }
+
+/* Awards tab */
+.pl-awards-groups { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.pl-root .pl-awards-stage {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pl-muted);
+}
+.pl-awards-table td { vertical-align: middle; }
+.pl-awards-row { background: var(--pl-bg); }
+.pl-awards-row.is-dragging { position: relative; z-index: 2; box-shadow: var(--shadow-md); background: var(--pl-surface-2); }
+.pl-awards-row.is-selected td { background: rgba(212, 175, 55, 0.06); }
+.pl-awards-dots { display: flex; flex-direction: column; gap: 0.2rem; }
+.pl-awards-waiting { display: block; font-size: 0.75rem; }
+
+/* Award panel */
+.pl-awards-contenders { border: 1px solid var(--pl-border); border-radius: var(--radius-sm); padding: var(--spacing-xs); margin: 0; display: flex; flex-direction: column; gap: var(--spacing-xs); }
+.pl-awards-contenders legend { padding: 0 0.25rem; font-size: 0.8125rem; color: var(--pl-muted); }
+.pl-awards-contender {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--pl-border);
+}
+.pl-awards-contender-note { grid-column: 1 / -1; font-size: 0.8125rem; }
+.pl-awards-panel-pieces { margin-top: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-xs); }
+.pl-awards-panel-pieces h3 { margin: 0; font-size: 1rem; }
+.pl-awards-panel-pieces ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--spacing-xs); }
+
 /* Phone */
 @media (max-width: 760px) {
   .pl-shell { grid-template-columns: 1fr; }
