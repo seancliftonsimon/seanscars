@@ -72,7 +72,7 @@ export default function PlannerLayout({ email, onSignOut, children }: Props) {
             {email}
           </span>
           <button type="button" className="pl-btn pl-btn-quiet" onClick={onSignOut}>
-            Sign out
+            Lock
           </button>
         </div>
       </aside>

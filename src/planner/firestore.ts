@@ -20,7 +20,6 @@ import { auth, db } from '../services/firebase';
 import { omitId, prepareUpdate, stripUndefined } from './logic/records';
 import type {
   Person,
-  PlannerAccess,
   RecordMeta,
   Rsvp,
   Season,
@@ -54,7 +53,6 @@ export function makeConverter<T extends object>(): FirestoreDataConverter<WithId
 const seasonConverter = makeConverter<Season>();
 const personConverter = makeConverter<Person>();
 const rsvpConverter = makeConverter<Rsvp>();
-const accessConverter = makeConverter<PlannerAccess>();
 const showConfigConverter = makeConverter<ShowConfig>();
 
 type SubConverters = {
@@ -76,7 +74,6 @@ const subConverters: SubConverters = {
 
 /* ---------- path helpers ---------- */
 
-export const plannerAccessDoc = () => doc(db, 'plannerConfig', 'access').withConverter(accessConverter);
 
 export const seasonsCol = () => collection(db, 'seasons').withConverter(seasonConverter);
 export const seasonDoc = (seasonId: string) => doc(db, 'seasons', seasonId).withConverter(seasonConverter);
@@ -107,7 +104,7 @@ export const showConfigDoc = (timerDocId: string) =>
 export type RecordInput<M> = Omit<M, 'id' | keyof RecordMeta>;
 
 function currentEmail(): string {
-  return auth.currentUser?.email ?? '';
+  return auth.currentUser?.email ?? 'planner';
 }
 
 /**
