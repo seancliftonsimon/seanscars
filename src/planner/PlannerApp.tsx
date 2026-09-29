@@ -5,6 +5,7 @@ import PlannerLayout from './components/PlannerLayout';
 import PasscodeScreen from './screens/auth/PasscodeScreen';
 import PlaceholderScreen from './screens/placeholder/PlaceholderScreen';
 import SeasonSettings from './screens/season/SeasonSettings';
+import ImportScreen from './screens/import/ImportScreen';
 import { PLANNER_SECTIONS } from './routes';
 import './planner.css';
 
@@ -20,7 +21,7 @@ export default function PlannerApp() {
     <SeasonProvider>
       <PlannerLayout email="Planner" onSignOut={lock}>
         <Routes>
-          {PLANNER_SECTIONS.filter((s) => s.path !== 'season').map((section) =>
+          {PLANNER_SECTIONS.filter((s) => s.path !== 'season' && s.path !== 'import').map((section) =>
             section.path === '' ? (
               <Route key="index" index element={<PlaceholderScreen section={section} />} />
             ) : (
@@ -28,6 +29,7 @@ export default function PlannerApp() {
             ),
           )}
           <Route path="season" element={<SeasonSettings />} />
+          <Route path="import" element={<ImportScreen />} />
           <Route path="*" element={<Navigate to="/plan" replace />} />
         </Routes>
       </PlannerLayout>

@@ -103,7 +103,7 @@ export const showConfigDoc = (timerDocId: string) =>
 /** Record fields a caller supplies: everything except the id and metadata. */
 export type RecordInput<M> = Omit<M, 'id' | keyof RecordMeta>;
 
-function currentEmail(): string {
+export function currentEmail(): string {
   return auth.currentUser?.email ?? 'planner';
 }
 

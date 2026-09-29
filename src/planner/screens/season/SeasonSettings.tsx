@@ -12,6 +12,7 @@ import {
   type SeasonDraftErrors,
 } from '../../logic/season';
 import type { Season, WithId } from '../../types';
+import StartFromPrevious from './StartFromPrevious';
 
 function errorMessage(err: unknown): string {
   const code = (err as { code?: string }).code;
@@ -217,6 +218,8 @@ export default function SeasonSettings() {
         )}
         <CreateSeasonForm />
       </div>
+
+      {seasons.length > 0 && <StartFromPrevious />}
 
       {season && (
         <div className="pl-panel">
