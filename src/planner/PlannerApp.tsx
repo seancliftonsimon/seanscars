@@ -3,7 +3,7 @@ import { usePlannerPasscode } from './hooks/usePlannerPasscode';
 import SeasonProvider from './components/SeasonProvider';
 import PlannerLayout from './components/PlannerLayout';
 import PasscodeScreen from './screens/auth/PasscodeScreen';
-import PlaceholderScreen from './screens/placeholder/PlaceholderScreen';
+import NowScreen from './screens/now/NowScreen';
 import SeasonSettings from './screens/season/SeasonSettings';
 import ImportScreen from './screens/import/ImportScreen';
 import ShowScreen from './screens/show/ShowScreen';
@@ -12,7 +12,6 @@ import AwardsScreen from './screens/awards/AwardsScreen';
 import FilmsScreen from './screens/films/FilmsScreen';
 import PeopleScreen from './screens/people/PeopleScreen';
 import LogisticsScreen from './screens/logistics/LogisticsScreen';
-import { PLANNER_SECTIONS } from './routes';
 import './planner.css';
 
 /** Route root for /plan/*: passcode gate, then the planner shell. */
@@ -27,13 +26,7 @@ export default function PlannerApp() {
     <SeasonProvider>
       <PlannerLayout email="Planner" onSignOut={lock}>
         <Routes>
-          {PLANNER_SECTIONS.filter((s) => !['season', 'import', 'show', 'show/print', 'awards', 'films', 'people', 'logistics'].includes(s.path)).map((section) =>
-            section.path === '' ? (
-              <Route key="index" index element={<PlaceholderScreen section={section} />} />
-            ) : (
-              <Route key={section.path} path={section.path} element={<PlaceholderScreen section={section} />} />
-            ),
-          )}
+          <Route index element={<NowScreen />} />
           <Route path="season" element={<SeasonSettings />} />
           <Route path="import" element={<ImportScreen />} />
           <Route path="show" element={<ShowScreen />} />

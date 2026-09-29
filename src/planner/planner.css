@@ -635,6 +635,33 @@
 .pl-people-rsvp-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--spacing-sm); }
 .pl-people-rsvp-actions .pl-field:first-child { flex: 1 1 14rem; }
 
+/* Now */
+.pl-now-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--spacing-md);
+  align-items: start;
+}
+.pl-now-col-head { display: flex; align-items: baseline; justify-content: space-between; }
+.pl-now-col-head h2 { margin: 0; font-size: 1.15rem; }
+.pl-now-hint { margin: 0; font-size: 0.8125rem; }
+.pl-now-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.pl-now-list li + li { border-top: 1px solid var(--pl-border); }
+.pl-now-list li.is-dim { opacity: 0.55; }
+.pl-now-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.25rem;
+  color: var(--pl-text);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+.pl-now-item:hover,
+.pl-now-item:focus-visible { background: var(--pl-surface-2); }
+.pl-now-title { font-weight: 500; }
+.pl-now-context { font-size: 0.8125rem; }
+
 /* Phone */
 @media (max-width: 760px) {
   .pl-shell { grid-template-columns: 1fr; }
