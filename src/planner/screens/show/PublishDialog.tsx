@@ -54,7 +54,7 @@ export default function PublishDialog({ season, segments, people, publishes, onC
   const preview = useMemo(() => toTimerPayload(season, segments, peopleById, 0), [season, segments, peopleById]);
   const diff = useMemo(() => diffTimerConfigs(target.data, preview), [target.data, preview]);
   const lastToTarget = publishes.find((p) => p.targetDocId === targetId) ?? null;
-  const timerEdits = timerEditsSincePublish(lastToTarget, target.data);
+  const timerEdits = timerEditsSincePublish(lastToTarget, target.data, lastToTarget?.showStartTime);
 
   async function publish() {
     setBusy(true);
@@ -71,6 +71,7 @@ export default function PublishDialog({ season, segments, people, publishes, onC
         totalSec: diff.afterTotalSec,
         byEmail: currentEmail(),
         payloadUpdatedAtMs: nowMs,
+        showStartTime: payload.showStartTime,
         segments: payload.segments,
       });
       setDone(true);

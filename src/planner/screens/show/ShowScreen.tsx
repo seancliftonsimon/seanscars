@@ -23,7 +23,7 @@ import SegmentPanel from './SegmentPanel';
 import SegmentRow from './SegmentRow';
 import PublishDialog from './PublishDialog';
 import { toTimerPayload } from '../../logic/timerPayload';
-import { diffTimerConfigs } from '../../logic/publishDiff';
+import { changedSincePublish } from '../../logic/publishDiff';
 import type { Piece, Segment, WithId } from '../../types';
 
 /** Rows only move up and down. */
@@ -63,11 +63,10 @@ export default function ShowScreen() {
   );
   const lastPublish = publishes[0] ?? null;
   // "Changed since" compares what would be published now with what was published last.
-  const changedSincePublish = useMemo(() => {
-    if (!season || !lastPublish?.segments) return false;
+  const planChanged = useMemo(() => {
+    if (!season) return false;
     const now = toTimerPayload(season, segments, new Map(people.map((p) => [p.id, p])), 0);
-    const before = { showStartTime: season.showStartTime, segments: lastPublish.segments, updatedAtMs: 0 };
-    return !diffTimerConfigs(before, now).identical;
+    return changedSincePublish(now, lastPublish) === true;
   }, [season, segments, people, lastPublish]);
   const segmentIds = useMemo(() => new Set(segments.map((s) => s.id)), [segments]);
   // Pieces pointing at a deleted segment count as unassigned.
@@ -199,7 +198,7 @@ export default function ShowScreen() {
             <>
               Last published {lastPublish.at ? lastPublish.at.toDate().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'just now'}{' '}
               to <code>{lastPublish.targetDocId}</code>
-              {changedSincePublish && <span className="pl-tag pl-tag-switch">changed since</span>}
+              {planChanged && <span className="pl-tag pl-tag-switch">changed since</span>}
             </>
           ) : (
             'Not published to the timer yet.'

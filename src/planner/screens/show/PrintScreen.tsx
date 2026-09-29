@@ -6,7 +6,9 @@ import { peopleCol, seasonCol } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { computeSchedule, formatClockTime } from '../../logic/clock';
 import { describeOverUnder, formatDuration, formatHMS } from '../../logic/clockFormat';
-import type { Segment, Venue, WithId } from '../../types';
+import { changedSincePublish } from '../../logic/publishDiff';
+import { toTimerPayload } from '../../logic/timerPayload';
+import type { Publish, Segment, Venue, WithId } from '../../types';
 import './print.css';
 
 const MONTHS = [
@@ -63,20 +65,23 @@ export default function PrintScreen() {
   const segmentsById = useMemo(() => new Map(segments.map((s) => [s.id, s])), [segments]);
   const namesById = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
 
-  const latestPublishMs = useMemo(() => {
-    let latest: number | null = null;
-    for (const p of publishesState.data) {
-      const ms = p.at?.toMillis();
-      if (ms !== undefined && (latest === null || ms > latest)) latest = ms;
-    }
-    return latest;
-  }, [publishesState.data]);
-  const changedSince = useMemo(
+  const publishes = publishesState.data;
+  const latestPublish = useMemo(
     () =>
-      latestPublishMs !== null &&
-      segments.some((s) => (s.updatedAt?.toMillis() ?? 0) > latestPublishMs),
-    [segments, latestPublishMs],
+      publishes.reduce<WithId<Publish> | null>(
+        (latest, p) => (!latest || p.payloadUpdatedAtMs > latest.payloadUpdatedAtMs ? p : latest),
+        null,
+      ),
+    [publishes],
   );
+  const latestPublishMs = latestPublish ? (latestPublish.at?.toMillis() ?? latestPublish.payloadUpdatedAtMs) : null;
+  // Compare what would be published now with what was published, not edit
+  // timestamps: notes don't reach the timer, but start time and names do.
+  const changedSince = useMemo(() => {
+    if (!season) return null;
+    const now = toTimerPayload(season, segments, new Map(people.map((p) => [p.id, p])), 0);
+    return changedSincePublish(now, latestPublish);
+  }, [season, segments, people, latestPublish]);
 
   if (!season) {
     return (
@@ -141,7 +146,11 @@ export default function PrintScreen() {
               <span>Printed {formatDateTime(printedAt)}</span>
               {latestPublishMs !== null && (
                 <span>
-                  {changedSince ? 'Changed since timer version' : 'Matches timer version'}{' '}
+                  {changedSince === null
+                    ? 'Last published to timer'
+                    : changedSince
+                      ? 'Changed since timer version'
+                      : 'Matches timer version'}{' '}
                   {formatDateTime(latestPublishMs)}
                 </span>
               )}
