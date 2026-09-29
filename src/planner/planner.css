@@ -356,6 +356,189 @@
   padding-left: 1.2rem;
 }
 
+/* Clock bar */
+.pl-clockbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--pl-surface);
+  border-bottom: 1px solid var(--pl-border);
+  padding: var(--spacing-sm) var(--spacing-md, 1rem);
+}
+.pl-clockbar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.4rem;
+}
+.pl-clockbar-total {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-gold);
+}
+.pl-clockbar-status { color: var(--pl-muted); }
+.pl-clockbar.is-tight .pl-clockbar-total { color: var(--color-gold-light); }
+.pl-clockbar.is-tight .pl-clockbar-status { color: var(--color-gold-light); }
+.pl-clockbar.is-over .pl-clockbar-total,
+.pl-clockbar.is-over .pl-clockbar-status { color: var(--pl-danger); }
+.pl-clockbar-track {
+  position: relative;
+  display: flex;
+  height: 14px;
+  background: var(--pl-surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pl-clockbar-seg { display: block; height: 100%; flex: none; }
+.pl-clockbar-seg-sean { background: var(--color-gold-light); }
+.pl-clockbar-seg-contrib { background: var(--color-gold); }
+.pl-clockbar-seg-house { background: var(--color-gold-dark); }
+.pl-clockbar-seg-hard {
+  background: repeating-linear-gradient(45deg, rgba(250, 249, 246, 0.25) 0 3px, transparent 3px 6px);
+}
+.pl-clockbar-over {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-red-velvet-light);
+  opacity: 0.85;
+}
+.pl-clockbar-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+}
+.pl-clockbar-buffer { background: var(--pl-muted); }
+.pl-clockbar-cap { background: var(--pl-text); }
+.pl-clockbar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--pl-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pl-clockbar-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 0.3rem;
+}
+
+/* Show */
+.pl-screen-wide { max-width: none; }
+.pl-push-right { margin-left: auto; }
+.pl-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pl-btn-danger { border-color: var(--pl-danger); color: var(--pl-danger); }
+.pl-btn-danger:hover { background: rgba(224, 87, 79, 0.12); }
+.pl-table-wrap { overflow-x: auto; }
+.pl-show-table td { vertical-align: middle; }
+.pl-show-table .pl-seg-notes { color: var(--pl-muted); font-size: 0.8125rem; max-width: 16rem; }
+.pl-seg { background: var(--pl-bg); }
+.pl-seg.is-dragging { position: relative; z-index: 2; box-shadow: var(--shadow-md); background: var(--pl-surface-2); }
+.pl-seg-handle { width: 1.5rem; padding-right: 0 !important; }
+.pl-drag-handle {
+  display: inline-flex;
+  padding: 0.2rem;
+  background: none;
+  border: none;
+  color: var(--pl-muted);
+  cursor: grab;
+  touch-action: none;
+  border-radius: var(--radius-sm);
+}
+.pl-drag-handle:hover,
+.pl-drag-handle:focus-visible { color: var(--pl-text); background: var(--pl-surface-2); }
+.pl-seg-start { white-space: nowrap; }
+.pl-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--pl-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  color: var(--pl-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pl-tag-switch { border-color: var(--pl-accent); color: var(--pl-accent); }
+.pl-tag-alert { border-color: var(--pl-danger); color: var(--pl-danger); }
+.pl-seg-title { text-align: left; font-weight: 500; }
+.pl-seg-pieces { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+.pl-length { display: inline-flex; align-items: center; gap: 0.15rem; white-space: nowrap; }
+.pl-nudge,
+.pl-length-value {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--pl-text);
+  font: inherit;
+  cursor: pointer;
+}
+.pl-nudge { width: 1.5rem; color: var(--pl-muted); }
+.pl-length-value { min-width: 3.25rem; font-variant-numeric: tabular-nums; }
+.pl-nudge:hover,
+.pl-length-value:hover,
+.pl-nudge:focus-visible,
+.pl-length-value:focus-visible { border-color: var(--pl-border-strong); color: var(--pl-text); }
+.pl-length-input {
+  width: 4rem;
+  padding: 0.1rem 0.3rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  background: var(--pl-surface-2);
+  color: var(--pl-text);
+  border: 1px solid var(--pl-accent);
+  border-radius: var(--radius-sm);
+}
+.pl-length-input[aria-invalid='true'] { border-color: var(--pl-danger); }
+.pl-seg-detail > td { background: var(--pl-surface); }
+.pl-table-inner { margin-bottom: var(--spacing-xs); font-size: 0.875rem; }
+.pl-assign { max-width: 24rem; }
+
+/* Side panel: a drawer over the right edge, so the table keeps its width. */
+.pl-side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  width: min(24rem, 100vw);
+  overflow-y: auto;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--pl-surface);
+  border-left: 1px solid var(--pl-border-strong);
+  box-shadow: var(--shadow-lg);
+}
+.pl-side-panel-header { display: flex; align-items: center; justify-content: space-between; }
+.pl-side-panel-header h2 { margin: 0; font-size: 1.1rem; }
+.pl-side-panel .pl-form { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.pl-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); }
+.pl-owner-picker { border: 1px solid var(--pl-border); border-radius: var(--radius-sm); padding: var(--spacing-xs); margin: 0; }
+.pl-owner-picker legend { padding: 0 0.25rem; font-size: 0.8125rem; color: var(--pl-muted); }
+.pl-owner-list { max-height: 12rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.15rem; }
+.pl-check { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+
+/* Dialog */
+.pl-root.pl-dialog {
+  min-height: 0;
+  max-width: 28rem;
+  padding: var(--spacing-md);
+  border: 1px solid var(--pl-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--pl-surface);
+}
+.pl-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.pl-dialog h2 { margin: 0 0 var(--spacing-xs); font-size: 1.1rem; }
+
 /* Phone */
 @media (max-width: 760px) {
   .pl-shell { grid-template-columns: 1fr; }
