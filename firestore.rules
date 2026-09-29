@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Planner helpers ----------
+
+    // Signed in with a verified email that is listed in plannerConfig/access.
+    // The list lives only in Firestore so no addresses appear in this file.
+    function isPlanner() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in
+          get(/databases/$(database)/documents/plannerConfig/access).data.emails;
+    }
+
+    // Optional field: absent, or a string under 2,000 characters.
+    function shortString(d, key) {
+      return !(key in d) || (d[key] is string && d[key].size() < 2000);
+    }
+
+    // Public RSVP form submission: only the form's fields, short strings,
+    // and a server timestamp. Planner-only fields cannot be set here.
+    function isValidRsvp(d) {
+      return d.keys().hasOnly([
+          'firstName', 'lastName', 'email', 'rsvp', 'guestsComment',
+          'attendanceType', 'awardName', 'brunch', 'createdAt', 'source', 'seasonHint'
+        ])
+        && d.createdAt == request.time
+        && shortString(d, 'firstName')
+        && shortString(d, 'lastName')
+        && shortString(d, 'email')
+        && shortString(d, 'rsvp')
+        && shortString(d, 'guestsComment')
+        && shortString(d, 'attendanceType')
+        && shortString(d, 'awardName')
+        && shortString(d, 'source')
+        && (!('brunch' in d) || d.brunch is bool || shortString(d, 'brunch'))
+        && (!('seasonHint' in d) || d.seasonHint is int || shortString(d, 'seasonHint'));
+    }
+
+    // ---------- Existing public site (unchanged) ----------
+
+    match /ballots/{ballotId} {
+      allow create: if true;
+      allow read, update, delete: if true;
+    }
+
+    match /moviePopularity/{movieId} {
+      allow read, create, update: if true;
+      allow delete: if false;
+    }
+
+    // Backstage run-of-show sync documents. Public (the timer is unauthenticated).
+    // Widened from the 2026 doc only to any season's rundown (and its -test twin)
+    // so the planner can publish future seasons.
+    match /showConfigs/{docId} {
+      allow read, write: if docId.matches('^seanscars-20[0-9]{2}-rundown(-test)?$');
+    }
+
+    // ---------- Planner ----------
+
+    // Access list. Edited only in the Firebase console.
+    match /plannerConfig/{docId} {
+      allow read: if docId == 'access' && isPlanner();
+      allow write: if false;
+    }
+
+    // Seasons and every subcollection under them.
+    match /seasons/{path=**} {
+      allow read, write: if isPlanner();
+    }
+
+    match /people/{personId} {
+      allow read, write: if isPlanner();
+    }
+
+    // RSVPs: anyone may submit; only planners may read or process them.
+    match /rsvps/{rsvpId} {
+      allow create: if isValidRsvp(request.resource.data);
+      allow read, update, delete: if isPlanner();
+    }
+
+    // ---------- Everything else ----------
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
