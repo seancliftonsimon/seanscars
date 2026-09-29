@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -13,7 +13,11 @@ import Vote from './pages/Vote/Vote';
 import AdminDashboard from './pages/Admin/Dashboard';
 import Presentation from './pages/Admin/Presentation';
 import BackstageTimer from './pages/BackstageTimer';
+import { isPlannerPath, plannerPageTitle } from './planner/routes';
 import './index.css';
+
+// The planner is private and loaded on demand so public pages don't download it.
+const PlannerApp = lazy(() => import('./planner/PlannerApp'));
 
 const BASE_TITLE = 'The 2026 Award Sharemony';
 
@@ -33,6 +37,7 @@ function getPageTitle(pathname: string): string {
   if (pathname === '/nominees') return `Adam Awards | ${BASE_TITLE}`;
   if (pathname === '/vote' || pathname === '/voting') return `Vote | ${BASE_TITLE}`;
   if (pathname === '/backstage' || pathname === '/timer') return `Backstage Timer | ${BASE_TITLE}`;
+  if (isPlannerPath(pathname)) return plannerPageTitle(pathname);
   if (pathname === `${adminRoutePath}/present`) return `Presentation | ${BASE_TITLE}`;
   if (pathname === adminRoutePath || pathname.startsWith(`${adminRoutePath}/`)) return `Admin Dashboard | ${BASE_TITLE}`;
   return BASE_TITLE;
@@ -49,7 +54,8 @@ function AppContent() {
   const isAdminPath =
     location.pathname === adminRoutePath ||
     location.pathname.startsWith(`${adminRoutePath}/`);
-  const hideNavbar = isVotePath || isAdminPath || isBackstagePath;
+  const isPlanner = isPlannerPath(location.pathname);
+  const hideNavbar = isVotePath || isAdminPath || isBackstagePath || isPlanner;
 
   return (
     <div className="app">
@@ -70,6 +76,14 @@ function AppContent() {
           <Route path="/timer" element={<BackstageTimer />} />
           <Route path={adminRoutePath} element={<AdminDashboard />} />
           <Route path={`${adminRoutePath}/present`} element={<Presentation />} />
+          <Route
+            path="/plan/*"
+            element={
+              <Suspense fallback={null}>
+                <PlannerApp />
+              </Suspense>
+            }
+          />
         </Routes>
       </main>
     </div>

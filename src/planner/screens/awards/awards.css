@@ -1,0 +1,36 @@
+/* Pieces tab */
+.pl-awards-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.pl-awards-filters select,
+.pl-awards-filters input[type='search'] { min-width: 0; }
+.pl-awards-count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.pl-awards-pieces-scroll { overflow-x: auto; }
+.pl-awards-title-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+}
+.pl-awards-title-btn:hover,
+.pl-awards-title-btn:focus-visible { text-decoration-color: currentColor; }
+.pl-awards-empty { padding: 24px 0; text-align: center; }
+
+/* Piece panel */
+.pl-awards-step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pl-awards-step-row { display: flex; align-items: center; gap: 6px; }
+.pl-awards-step-row input { flex: 1; min-width: 0; }
+.pl-awards-step-status { min-width: 4.5rem; }
+.pl-awards-link-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.pl-awards-link-row input { flex: 1; min-width: 0; }
+.pl-awards-link-open { white-space: nowrap; }
+.pl-awards-wait-note { margin: 4px 0 0; }

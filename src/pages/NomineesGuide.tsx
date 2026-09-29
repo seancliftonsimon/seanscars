@@ -121,23 +121,26 @@ const buildWatchTags = (
   return tags;
 };
 
+// Static data, so compute once at module load.
+const AVERAGE_RATING = (() => {
+  const numericRatings = nomineesGuideData
+    .map((entry) => parseNumericRating(entry.myRating))
+    .filter((rating): rating is number => rating !== null);
+  if (numericRatings.length === 0) {
+    return 'N/A';
+  }
+
+  const total = numericRatings.reduce((sum, rating) => sum + rating, 0);
+  return (total / numericRatings.length).toFixed(2);
+})();
+
 const NomineesGuide = () => {
   const orderedEntries = useMemo(
     () => [...nomineesGuideData].sort((a, b) => a.film.localeCompare(b.film)),
     []
   );
 
-  const averageRating = useMemo(() => {
-    const numericRatings = nomineesGuideData
-      .map((entry) => parseNumericRating(entry.myRating))
-      .filter((rating): rating is number => rating !== null);
-    if (numericRatings.length === 0) {
-      return 'N/A';
-    }
-
-    const total = numericRatings.reduce((sum, rating) => sum + rating, 0);
-    return (total / numericRatings.length).toFixed(2);
-  }, []);
+  const averageRating = AVERAGE_RATING;
 
   const winnerTagCount = useMemo(
     () =>
