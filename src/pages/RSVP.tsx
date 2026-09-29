@@ -49,16 +49,6 @@ const RSVP = () => {
             awardName: formData.awardName,
         };
 
-        // Also file the reply in the planner's RSVP inbox. A failure here is
-        // logged only; the Formspree email below stays the source of truth.
-        const saved = addDoc(collection(db, 'rsvps'), {
-            ...fields,
-            brunch: formData.brunch,
-            createdAt: serverTimestamp(),
-            source: 'site',
-            seasonHint: RSVP_SEASON,
-        }).catch((err) => console.error('Saving RSVP to the planner failed', err));
-
         try {
             const response = await fetch('https://formspree.io/f/meoykkzy', {
                 method: 'POST',
@@ -70,9 +60,18 @@ const RSVP = () => {
                     brunch: formData.brunch ? 'Yes' : 'No'
                 }),
             });
-            await saved;
 
             if (response.ok) {
+                // Also file the reply in the planner's RSVP inbox, only once
+                // Formspree has accepted it so a retried submission can't
+                // leave duplicates. Best effort: a failure is only logged.
+                addDoc(collection(db, 'rsvps'), {
+                    ...fields,
+                    brunch: formData.brunch,
+                    createdAt: serverTimestamp(),
+                    source: 'site',
+                    seasonHint: RSVP_SEASON,
+                }).catch((err) => console.error('Saving RSVP to the planner failed', err));
                 setSubmitted(true);
                 // Reset form after 3 seconds
                 setTimeout(() => {

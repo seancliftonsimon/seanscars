@@ -240,6 +240,8 @@ export interface Publish extends RecordMeta {
   payloadUpdatedAtMs: number;
   /** The segments as published, so later timer edits can be listed. */
   segments?: TimerSegment[];
+  /** The start time as published, for the same comparisons. */
+  showStartTime?: TimeOfDay;
 }
 
 /* ---------- rsvps/{id} (public create-only) ---------- */

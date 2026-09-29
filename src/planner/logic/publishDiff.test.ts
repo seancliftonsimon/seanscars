@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ShowConfig, TimerSegment } from '../types';
-import { describeChanges, diffTimerConfigs, timerEditsSincePublish } from './publishDiff';
+import { changedSincePublish, describeChanges, diffTimerConfigs, timerEditsSincePublish } from './publishDiff';
 
 const s = (id: string, title = id, durationSec = 300, over: Partial<TimerSegment> = {}): TimerSegment => ({
   id,
@@ -143,5 +143,32 @@ describe('timerEditsSincePublish', () => {
   it('ignores start time when lastShowStartTime is omitted', () => {
     const d = timerEditsSincePublish(last, cfg([s('a')], '19:30', 200));
     expect(d!.startTimeChanged).toBeNull();
+  });
+});
+
+describe('changedSincePublish', () => {
+  const seg = (id: string, durationSec: number) =>
+    ({ id, title: `Seg ${id}`, presenter: 'Ada Example', type: 'live' as const, durationSec });
+  const now = { showStartTime: '19:00', segments: [seg('a', 300), seg('b', 600)], updatedAtMs: 5 };
+
+  it('is null without a publish or stored segments', () => {
+    expect(changedSincePublish(now, null)).toBeNull();
+    expect(changedSincePublish(now, { showStartTime: '19:00' })).toBeNull();
+  });
+
+  it('is false when segments and start time match, ignoring timestamps', () => {
+    expect(changedSincePublish(now, { segments: now.segments, showStartTime: '19:00' })).toBe(false);
+  });
+
+  it('catches a start-time change against the published start time', () => {
+    expect(changedSincePublish(now, { segments: now.segments, showStartTime: '19:30' })).toBe(true);
+  });
+
+  it('catches segment changes', () => {
+    expect(changedSincePublish(now, { segments: [seg('a', 300), seg('b', 630)], showStartTime: '19:00' })).toBe(true);
+  });
+
+  it('falls back to the current start time for older records', () => {
+    expect(changedSincePublish(now, { segments: now.segments })).toBe(false);
   });
 });

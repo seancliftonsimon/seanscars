@@ -24,9 +24,17 @@ export default function PeopleScreen() {
   const tab: Tab = params.get('tab') === 'inbox' ? 'inbox' : 'guests';
   const personId = params.get('person');
 
+  // Only RSVPs for the selected season (or with no season hint), so a reply
+  // can't be filed under an archived or future season by mistake.
+  const seasonId = season?.id ?? null;
   const inbox = useMemo(
-    () => sortRsvpsNewestFirst(rsvpState.data.filter((r) => !r.processed)),
-    [rsvpState.data],
+    () =>
+      sortRsvpsNewestFirst(
+        rsvpState.data.filter(
+          (r) => !r.processed && (r.seasonHint === undefined || r.seasonHint === '' || String(r.seasonHint) === seasonId),
+        ),
+      ),
+    [rsvpState.data, seasonId],
   );
 
   function go(next: { tab?: Tab; person?: string | null }) {

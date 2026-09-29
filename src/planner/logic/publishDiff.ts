@@ -154,6 +154,24 @@ export function describeChanges(diff: PublishDiff): string[] {
  * visible changes"). `lastShowStartTime` is the start time as published;
  * omit it to ignore start-time changes.
  */
+/**
+ * Whether publishing `now` would change the timer compared with what `last`
+ * published (segments and start time, ignoring timestamps). null when the
+ * record can't tell: no publish, or an older record without stored segments.
+ */
+export function changedSincePublish(
+  now: ShowConfig,
+  last: Pick<Publish, 'segments' | 'showStartTime'> | null,
+): boolean | null {
+  if (!last?.segments) return null;
+  const published: ShowConfig = {
+    showStartTime: last.showStartTime ?? now.showStartTime,
+    segments: last.segments,
+    updatedAtMs: 0,
+  };
+  return !diffTimerConfigs(published, now).identical;
+}
+
 export function timerEditsSincePublish(
   lastPublish: Pick<Publish, 'payloadUpdatedAtMs' | 'segments'> | null,
   current: ShowConfig | null,
