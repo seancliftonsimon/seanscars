@@ -11,7 +11,8 @@ import { errorMessage } from '../../errors';
 /**
  * "Start {year} from {previous}": copies returning awards, Sean's and house
  * segments, last year's confirmed guests and draft contributor pieces into
- * a new season. Only creates documents, so running it twice changes nothing.
+ * a new season. Only creates missing documents, so running it twice changes
+ * nothing.
  */
 export default function StartFromPrevious() {
   const { seasons, season, setSeasonId } = useSeason();
@@ -34,9 +35,13 @@ export default function StartFromPrevious() {
       ? 'No earlier season to start from.'
       : loading
         ? 'Checking…'
-        : targetSegments.length > 0
-          ? `${year} already has segments.`
-          : null;
+        : null;
+  // Only creates missing documents, so re-running just fills gaps (e.g. after
+  // importing last season's awards or guests).
+  const rerunNote =
+    !loading && targetSegments.length > 0
+      ? `${year} already has segments; running again only adds what's missing.`
+      : null;
 
   async function run() {
     if (!targetId || !prevId) return;
@@ -133,7 +138,7 @@ export default function StartFromPrevious() {
         <button type="button" className="pl-btn pl-btn-primary" disabled={busy || Boolean(disabledReason)} onClick={run}>
           {busy ? 'Starting…' : `Start ${targetId ?? '…'} from ${prevId ?? '…'}`}
         </button>
-        {disabledReason && !busy && <span className="pl-muted">{disabledReason}</span>}
+        {!busy && (disabledReason ?? rerunNote) && <span className="pl-muted">{disabledReason ?? rerunNote}</span>}
       </div>
       {message && <p className="pl-form-message">{message}</p>}
     </div>
