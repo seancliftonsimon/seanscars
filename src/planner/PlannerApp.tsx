@@ -7,6 +7,7 @@ import PlaceholderScreen from './screens/placeholder/PlaceholderScreen';
 import SeasonSettings from './screens/season/SeasonSettings';
 import ImportScreen from './screens/import/ImportScreen';
 import ShowScreen from './screens/show/ShowScreen';
+import PrintScreen from './screens/show/PrintScreen';
 import { PLANNER_SECTIONS } from './routes';
 import './planner.css';
 
@@ -22,7 +23,7 @@ export default function PlannerApp() {
     <SeasonProvider>
       <PlannerLayout email="Planner" onSignOut={lock}>
         <Routes>
-          {PLANNER_SECTIONS.filter((s) => !['season', 'import', 'show'].includes(s.path)).map((section) =>
+          {PLANNER_SECTIONS.filter((s) => !['season', 'import', 'show', 'show/print'].includes(s.path)).map((section) =>
             section.path === '' ? (
               <Route key="index" index element={<PlaceholderScreen section={section} />} />
             ) : (
@@ -32,6 +33,7 @@ export default function PlannerApp() {
           <Route path="season" element={<SeasonSettings />} />
           <Route path="import" element={<ImportScreen />} />
           <Route path="show" element={<ShowScreen />} />
+          <Route path="show/print" element={<PrintScreen />} />
           <Route path="*" element={<Navigate to="/plan" replace />} />
         </Routes>
       </PlannerLayout>

@@ -238,6 +238,8 @@ export interface Publish extends RecordMeta {
   totalSec: number;
   byEmail: string;
   payloadUpdatedAtMs: number;
+  /** The segments as published, so later timer edits can be listed. */
+  segments?: TimerSegment[];
 }
 
 /* ---------- rsvps/{id} (public create-only) ---------- */

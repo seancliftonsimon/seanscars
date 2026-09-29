@@ -526,9 +526,11 @@
 .pl-owner-picker legend { padding: 0 0.25rem; font-size: 0.8125rem; color: var(--pl-muted); }
 .pl-owner-list { max-height: 12rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.15rem; }
 .pl-check { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.pl-check > input { width: auto; flex: none; margin: 0; }
 
 /* Dialog */
 .pl-root.pl-dialog {
+  margin: auto;
   min-height: 0;
   max-width: 28rem;
   padding: var(--spacing-md);
@@ -538,6 +540,24 @@
 }
 .pl-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
 .pl-dialog h2 { margin: 0 0 var(--spacing-xs); font-size: 1.1rem; }
+
+/* Publish */
+.pl-header-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
+.pl-header-actions a.pl-btn { text-decoration: none; }
+.pl-publish-status { margin: 0; font-size: 0.8125rem; }
+.pl-root.pl-publish { max-width: 36rem; width: calc(100vw - 2rem); }
+.pl-publish-target { border: 1px solid var(--pl-border); border-radius: var(--radius-sm); padding: var(--spacing-xs); margin: 0 0 var(--spacing-sm); }
+.pl-publish-target legend { padding: 0 0.25rem; font-size: 0.8125rem; color: var(--pl-muted); }
+.pl-publish-warning {
+  margin: 0 0 var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-gold-light);
+  border-radius: var(--radius-sm);
+  background: rgba(244, 208, 63, 0.08);
+}
+.pl-publish-warning ul,
+.pl-publish-changes { margin: 0.25rem 0 0; padding-left: 1.2rem; max-height: 14rem; overflow-y: auto; }
+.pl-publish-last { margin: var(--spacing-xs) 0 0; font-size: 0.8125rem; }
 
 /* Phone */
 @media (max-width: 760px) {

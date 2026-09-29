@@ -1,0 +1,166 @@
+/* Printable run of show. On screen: a white paper card in the dark planner. */
+.pl-print-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pl-print-sheet {
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.5in;
+  background: #fff;
+  color: #000;
+  font-size: 11pt;
+  border-radius: 4px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+}
+
+.pl-root .pl-print-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.6em;
+  color: #000;
+}
+
+.pl-print-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0.15rem 0;
+}
+
+.pl-print-small {
+  font-size: 0.85em;
+  color: #444;
+}
+
+.pl-print-table {
+  width: 100%;
+  margin-top: 0.75rem;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  color: #000;
+}
+
+.pl-print-table th,
+.pl-print-table td {
+  padding: 0.25em 0.4em;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #ccc;
+  background: transparent;
+  color: #000;
+}
+
+.pl-print-table thead th {
+  border-bottom: 2px solid #000;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pl-print-time {
+  white-space: nowrap;
+}
+
+.pl-print-num,
+.pl-print-len {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.pl-print-switch td {
+  font-weight: 700;
+  background: #eee !important;
+  border-top: 1px solid #000;
+  padding: 0.15em 0.4em;
+}
+
+.pl-print-intermission td {
+  font-weight: 700;
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+}
+
+.pl-print-footer {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 2px solid #000;
+}
+
+.pl-print-footer p {
+  margin: 0.2rem 0;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  html,
+  body,
+  .pl-root {
+    background: white !important;
+    color: black !important;
+  }
+
+  .pl-sidebar,
+  .pl-print-toolbar,
+  .pl-clockbar {
+    display: none !important;
+  }
+
+  .pl-shell {
+    display: block !important;
+  }
+
+  .pl-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .pl-screen {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .pl-print-sheet {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+    font-size: 10pt;
+  }
+
+  .pl-root .pl-print-header h1 {
+    font-size: 16pt;
+  }
+
+  .pl-print-table {
+    font-size: 9.5pt;
+    margin-top: 0.4rem;
+  }
+
+  .pl-print-table thead {
+    display: table-header-group;
+  }
+
+  .pl-print-table tr {
+    break-inside: avoid;
+  }
+
+  .pl-print-table th,
+  .pl-print-table td {
+    padding: 0.15em 0.35em;
+  }
+
+  .pl-print-switch td {
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

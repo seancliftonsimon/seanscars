@@ -21,6 +21,9 @@ import ClockBar from '../../components/ClockBar';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import SegmentPanel from './SegmentPanel';
 import SegmentRow from './SegmentRow';
+import PublishDialog from './PublishDialog';
+import { toTimerPayload } from '../../logic/timerPayload';
+import { diffTimerConfigs } from '../../logic/publishDiff';
 import type { Piece, Segment, WithId } from '../../types';
 
 /** Rows only move up and down. */
@@ -34,6 +37,8 @@ export default function ShowScreen() {
   const segmentsState = useCollection(seasonId ? seasonCol(seasonId, 'segments') : null);
   const piecesState = useCollection(seasonId ? seasonCol(seasonId, 'pieces') : null);
   const { data: people } = useCollection(peopleCol());
+  const { data: publishData } = useCollection(seasonId ? seasonCol(seasonId, 'publishes') : null);
+  const [publishing, setPublishing] = useState(false);
 
   const [panel, setPanel] = useState<Panel>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -52,6 +57,18 @@ export default function ShowScreen() {
   );
   const rowsById = useMemo(() => new Map(schedule?.rows.map((r) => [r.segmentId, r])), [schedule]);
   const namesById = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
+  const publishes = useMemo(
+    () => [...publishData].sort((a, b) => (b.payloadUpdatedAtMs ?? 0) - (a.payloadUpdatedAtMs ?? 0)),
+    [publishData],
+  );
+  const lastPublish = publishes[0] ?? null;
+  // "Changed since" compares what would be published now with what was published last.
+  const changedSincePublish = useMemo(() => {
+    if (!season || !lastPublish?.segments) return false;
+    const now = toTimerPayload(season, segments, new Map(people.map((p) => [p.id, p])), 0);
+    const before = { showStartTime: season.showStartTime, segments: lastPublish.segments, updatedAtMs: 0 };
+    return !diffTimerConfigs(before, now).identical;
+  }, [season, segments, people, lastPublish]);
   const segmentIds = useMemo(() => new Set(segments.map((s) => s.id)), [segments]);
   // Pieces pointing at a deleted segment count as unassigned.
   const unassigned = pieces.filter((p) => !p.segmentId || !segmentIds.has(p.segmentId));
@@ -165,10 +182,29 @@ export default function ShowScreen() {
           <span className="pl-muted">
             {season.name} · starts {season.showStartTime}
           </span>
-          <button type="button" className="pl-btn pl-btn-primary pl-push-right" onClick={() => setPanel({ mode: 'add' })}>
-            Add segment
-          </button>
+          <div className="pl-header-actions">
+            <Link to="/plan/show/print" className="pl-btn">
+              Print
+            </Link>
+            <button type="button" className="pl-btn" onClick={() => setPublishing(true)} disabled={segments.length === 0}>
+              Publish to timer
+            </button>
+            <button type="button" className="pl-btn pl-btn-primary" onClick={() => setPanel({ mode: 'add' })}>
+              Add segment
+            </button>
+          </div>
         </header>
+        <p className="pl-muted pl-publish-status">
+          {lastPublish ? (
+            <>
+              Last published {lastPublish.at ? lastPublish.at.toDate().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'just now'}{' '}
+              to <code>{lastPublish.targetDocId}</code>
+              {changedSincePublish && <span className="pl-tag pl-tag-switch">changed since</span>}
+            </>
+          ) : (
+            'Not published to the timer yet.'
+          )}
+        </p>
         {error && <p className="pl-error">Couldn't save: {error}</p>}
 
         {loading ? (
@@ -240,6 +276,16 @@ export default function ShowScreen() {
           people={people}
           onClose={() => setPanel(null)}
           onDelete={setConfirmDelete}
+        />
+      )}
+
+      {publishing && (
+        <PublishDialog
+          season={season}
+          segments={segments}
+          people={people}
+          publishes={publishes}
+          onClose={() => setPublishing(false)}
         />
       )}
 
