@@ -1,4 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { ArrowUp, MoreHorizontal, Filter, Plus } from 'lucide-react';
+import { wasInvited, INVITATION_LABELS } from '../../logic/guestOverview';
 import { createRecord, peopleCol, seasonSubDoc, updateRecord } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { presentingIds } from '../../logic/headcount';
@@ -9,6 +11,9 @@ import './people.css';
 interface Props {
   seasonId: string;
   data: SeasonData;
+  search: string;
+  adding: boolean;
+  onCloseAdd: () => void;
   onOpenPerson: (personId: string) => void;
 }
 
@@ -25,9 +30,10 @@ function todayIso(): string {
 const NEW_INVITATION = { status: 'invite?', plusOnes: 0, brunch: false, rsvpIds: [] } as const;
 
 /** Guest list for one season: one row per invited person. */
-export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
+export default function GuestsTab({ seasonId, data, onOpenPerson, search, adding, onCloseAdd }: Props) {
   const [showEveryone, setShowEveryone] = useState(false);
-  const [search, setSearch] = useState('');
+  const [quickFilter, setQuickFilter] = useState('all');
+  const [sort, setSort] = useState('name');
   const [statusFilter, setStatusFilter] = useState<'all' | InvitationStatus>('all');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newName, setNewName] = useState('');
@@ -45,11 +51,15 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
       .filter(({ person, inv }) => {
         if (!inv && !showEveryone) return false;
         if (statusFilter !== 'all' && inv?.status !== statusFilter) return false;
+        if (quickFilter === 'sent' && (!inv || !wasInvited(inv))) return false;
+        if (quickFilter === 'presenting' && !presenting.has(person.id)) return false;
+        if (quickFilter === 'brunch' && !inv?.brunch) return false;
+        if (['confirmed', 'declined', 'invited', 'invite?'].includes(quickFilter) && inv?.status !== quickFilter) return false;
         if (!q) return true;
         return [person.name, person.email ?? '', ...(person.aliases ?? [])].some((s) => s.toLowerCase().includes(q));
       })
-      .sort((a, b) => rank(a.inv?.status) - rank(b.inv?.status) || a.person.name.localeCompare(b.person.name));
-  }, [data.people, invById, showEveryone, statusFilter, search]);
+      .sort((a, b) => (sort === 'status' ? rank(a.inv?.status) - rank(b.inv?.status) : 0) || (sort === 'name-desc' ? -1 : 1) * a.person.name.localeCompare(b.person.name));
+  }, [data.people, invById, showEveryone, statusFilter, search, quickFilter, sort, presenting]);
 
   async function run(action: () => Promise<void>, failure: string) {
     setMessage(null);
@@ -94,6 +104,7 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
       const id = await createRecord(peopleCol(), { name });
       await createRecord(seasonSubDoc(seasonId, 'invitations', id), { ...NEW_INVITATION, rsvpIds: [] });
       setNewName('');
+      onCloseAdd();
     }, "Couldn't add");
     setBusy(false);
   }
@@ -103,35 +114,21 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
   return (
     <div className="pl-people-guests">
       <div className="pl-people-toolbar">
-        <input
-          type="search"
-          placeholder="Search name, alias, email"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search guests"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'all' | InvitationStatus)}
-          aria-label="Filter by status"
-        >
-          <option value="all">All statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-        <label className="pl-check">
-          <input type="checkbox" checked={showEveryone} onChange={(e) => setShowEveryone(e.target.checked)} />
-          <span>Show everyone</span>
-        </label>
+        <div className="pl-filter-chips" aria-label="Guest views">
+          {[['all', 'All guests'], ['sent', 'Invited'], ['confirmed', 'Confirmed'], ['declined', 'Declined'], ['invited', 'No response'], ['invite?', 'Not invited'], ['presenting', 'Presenting'], ['brunch', 'Brunch']].map(([value, label]) =>
+            <button key={value} type="button" className={`pl-filter-chip${quickFilter === value ? ' is-active' : ''}`} aria-pressed={quickFilter === value} onClick={() => setQuickFilter(value)}>{label}</button>)}
+        </div>
+        <details className="pl-more-filters"><summary><Filter size={16} aria-hidden="true" />More filters{statusFilter !== 'all' || showEveryone ? ' •' : ''}</summary><div className="pl-filter-popover">
+          <label className="pl-field"><span>Invitation status</span><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | InvitationStatus)}><option value="all">All statuses</option>{STATUSES.map((s) => <option key={s} value={s}>{INVITATION_LABELS[s]}</option>)}</select></label>
+          <label className="pl-check"><input type="checkbox" checked={showEveryone} onChange={(e) => setShowEveryone(e.target.checked)} /><span>Include people outside this season</span></label>
+        </div></details>
+        <label className="pl-sort-field"><span>Sort:</span><select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort guests"><option value="name">Name A → Z</option><option value="name-desc">Name Z → A</option><option value="status">Status</option></select></label>
       </div>
-
-      <form className="pl-people-add" onSubmit={addPerson}>
-        <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Add person (name)" aria-label="New person name" />
-        <button type="submit" className="pl-btn" disabled={busy || !newName.trim()}>
-          Add person
-        </button>
-      </form>
+      {adding && <form className="pl-people-add pl-panel" onSubmit={addPerson}>
+        <label className="pl-field pl-grow"><span>New guest’s name</span><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Full name" aria-label="New person name" autoFocus /></label>
+        <button type="submit" className="pl-btn pl-btn-primary" disabled={busy || !newName.trim()}><Plus size={16} aria-hidden="true" />{busy ? 'Adding…' : 'Add to guest list'}</button>
+        <button type="button" className="pl-btn pl-btn-quiet" onClick={onCloseAdd} disabled={busy}>Cancel</button>
+      </form>}
 
       {selectedCount > 0 && (
         <div className="pl-people-bulk">
@@ -147,21 +144,21 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
       {message && <p className="pl-error">{message}</p>}
 
       {rows.length === 0 ? (
-        <p className="pl-empty">No guests match.</p>
+        <p className="pl-empty">No guests match this view. Try All guests or clear the search.</p>
       ) : (
         <div className="pl-table-wrap">
           <table className="pl-table pl-people-table">
             <thead>
               <tr>
-                <th aria-label="Select" />
-                <th>Name</th>
+                <th><input type="checkbox" aria-label="Select all visible guests" checked={rows.some((r) => r.inv) && rows.filter((r) => r.inv).every((r) => selected.has(r.person.id))} onChange={(e) => { const next = new Set(selected); rows.filter((r) => r.inv).forEach((r) => e.target.checked ? next.add(r.person.id) : next.delete(r.person.id)); setSelected(next); }} /></th>
+                <th>Name {sort === 'name' && <ArrowUp size={12} aria-hidden="true" />}</th>
                 <th>Status</th>
                 <th>+1</th>
                 <th>Brunch</th>
                 <th>Method</th>
                 <th>Invited</th>
                 <th>Presenting</th>
-                <th>Notes</th>
+                <th>Notes</th><th><span className="pl-sr-only">Details</span></th>
               </tr>
             </thead>
             <tbody>
@@ -178,20 +175,21 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
                     )}
                   </td>
                   <td>
-                    <button type="button" className="pl-link-btn pl-people-name" onClick={() => onOpenPerson(person.id)}>
+                    <div className="pl-person-identity"><span className={`pl-avatar pl-avatar-${[...person.id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 6}`} aria-hidden="true">{person.name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()}</span><button type="button" className="pl-link-btn pl-people-name" onClick={() => onOpenPerson(person.id)}>
                       {person.name}
-                    </button>
+                    </button></div>
                   </td>
                   {inv ? (
                     <>
                       <td>
                         <select
+                          className={`pl-status-select pl-status-${inv.status === 'invite?' ? 'not-invited' : inv.status}`}
                           value={inv.status}
                           onChange={(e) => void patch(person.id, { status: e.target.value as InvitationStatus })}
                           aria-label={`Status for ${person.name}`}
                         >
                           {STATUSES.map((s) => (
-                            <option key={s}>{s}</option>
+                            <option key={s} value={s}>{INVITATION_LABELS[s]}</option>
                           ))}
                         </select>
                       </td>
@@ -226,7 +224,7 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
                         >
                           <option value="">—</option>
                           {METHODS.map((m) => (
-                            <option key={m}>{m}</option>
+                            <option key={m} value={m}>{m === 'hand' ? 'In person' : m[0].toUpperCase() + m.slice(1)}</option>
                           ))}
                         </select>
                       </td>
@@ -250,10 +248,9 @@ export default function GuestsTab({ seasonId, data, onOpenPerson }: Props) {
                       <td colSpan={4} />
                     </>
                   )}
-                  <td>{presenting.has(person.id) && <span className="pl-tag">yes</span>}</td>
-                  <td className="pl-muted pl-people-notes" title={inv?.notes}>
-                    {inv?.notes}
-                  </td>
+                  <td><input type="checkbox" checked={presenting.has(person.id)} disabled aria-label={`${person.name} presenting`} title="Based on contributor presentation pieces" /></td>
+                  <td className="pl-people-notes">{inv && <input key={inv.notes ?? ''} defaultValue={inv.notes ?? ''} aria-label={`Invitation notes for ${person.name}`} onBlur={(e) => { const notes = e.target.value.trim(); if (notes !== (inv.notes ?? '')) void patch(person.id, { notes: notes || undefined }); }} />}</td>
+                  <td><button type="button" className="pl-btn pl-row-menu" onClick={() => onOpenPerson(person.id)} aria-label={`Edit details for ${person.name}`}><MoreHorizontal size={18} aria-hidden="true" /></button></td>
                 </tr>
               ))}
             </tbody>
