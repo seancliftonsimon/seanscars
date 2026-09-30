@@ -183,7 +183,7 @@ export default function FilmsScreen() {
         kind,
         ownerPersonIds: [],
         order: nextOrder(pieces),
-        steps: defaultSteps(kind),
+        steps: defaultSteps(kind, 'todo', season.pieceTemplates),
         links: idea.link ? [{ label: 'Idea link', url: idea.link }] : [],
         notes: `From idea: ${idea.text}`,
       });
@@ -209,8 +209,10 @@ export default function FilmsScreen() {
       {error && <p className="pl-error">Couldn't save: {error}</p>}
       {data.error && <p className="pl-error">Couldn't load: {errorMessage(data.error)}</p>}
 
+      <p className="pl-lead">Collect the films. Catch the ideas. Turn the best ones into something for the show.</p>
       <div className="pl-panel">
-        <h2>Film pool</h2>
+        <h2>Film pool <span className="pl-muted">· {films.length}</span></h2>
+        <p className="pl-muted">Track what you’ve seen and the ideas it sparks. “On ballot” is a planning flag; it doesn’t change the public voting page.</p>
         <form className="pl-films-add" onSubmit={(e) => void addFilm(e)}>
           <input
             type="text"
@@ -222,6 +224,9 @@ export default function FilmsScreen() {
             placeholder="Add a film"
             aria-label="Add a film"
           />
+          <button type="submit" className="pl-btn pl-btn-primary" disabled={!newFilm.trim()}>Add film</button>
+        </form>
+        <div className="pl-films-add">
           <input
             type="search"
             value={filter}
@@ -229,7 +234,7 @@ export default function FilmsScreen() {
             placeholder="Filter films"
             aria-label="Filter films"
           />
-        </form>
+        </div>
         {filmMsg && <p className="pl-error">{filmMsg}</p>}
         {data.loading ? (
           <p className="pl-muted">Loading films…</p>
@@ -342,7 +347,8 @@ export default function FilmsScreen() {
       </div>
 
       <div className="pl-panel">
-        <h2>Ideas inbox</h2>
+        <h2>Ideas inbox <span className="pl-muted">· {ideas.filter((i) => !i.promotedTo).length} to explore</span></h2>
+        <p className="pl-muted">Keep rough thoughts here. Create an award for a category, or a production piece when you’re ready to make a song, video or bit.</p>
         <form className="pl-films-add" onSubmit={(e) => void addIdea(e)}>
           <select value={ideaTag} onChange={(e) => setIdeaTag(e.target.value as IdeaTag)} aria-label="Idea tag">
             {TAGS.map((t) => (
@@ -400,7 +406,7 @@ export default function FilmsScreen() {
                         disabled={busyIdea === idea.id}
                         onClick={() => void promoteToAward(idea)}
                       >
-                        Promote to award
+                        Create award
                       </button>
                       <button
                         type="button"
@@ -408,7 +414,7 @@ export default function FilmsScreen() {
                         disabled={busyIdea === idea.id}
                         onClick={() => void promoteToPiece(idea)}
                       >
-                        Promote to piece
+                        Create piece
                       </button>
                     </>
                   )}

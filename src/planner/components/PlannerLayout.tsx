@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { useLayoutEffect, type ReactNode } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { PLANNER_SECTIONS, sectionHref } from '../routes';
 import { useSeason } from '../hooks/useSeason';
 
@@ -43,6 +43,8 @@ function SeasonSwitcher() {
 
 /** Planner shell: left nav, season switcher, signed-in account, content. */
 export default function PlannerLayout({ email, onSignOut, children }: Props) {
+  const { pathname } = useLocation();
+  useLayoutEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   const primary = PLANNER_SECTIONS.filter((s) => s.nav === 'primary');
   const secondary = PLANNER_SECTIONS.filter((s) => s.nav === 'secondary');
 

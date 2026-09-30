@@ -46,6 +46,7 @@ export function planRollover(source: RolloverSource, year: number): RolloverPlan
     runtimeCapSec: prev.runtimeCapSec,
     bufferTargetSec: prev.bufferTargetSec,
     archived: false,
+    ...(prev.pieceTemplates ? { pieceTemplates: structuredClone(prev.pieceTemplates) } : {}),
   };
 
   const awards = source.awards
@@ -101,7 +102,7 @@ export function planRollover(source: RolloverSource, year: number): RolloverPlan
         kind: 'contributor-deck' as const,
         ownerPersonIds: [...s.ownerPersonIds],
         order: s.order,
-        steps: defaultSteps('contributor-deck'),
+        steps: defaultSteps('contributor-deck', 'todo', prev.pieceTemplates),
         estSec: s.plannedSec,
         links: [],
         notes: `Ask again? (${prev.year} slot: ${minutesLabel(s.plannedSec)} min)`,

@@ -14,6 +14,8 @@ describe('planner routes', () => {
     expect(plannerPageTitle('/plan/')).toBe('Planner | Now');
     expect(plannerPageTitle('/plan/show')).toBe('Planner | Show');
     expect(plannerPageTitle('/plan/show/print')).toBe('Planner | Print run of show');
+    expect(plannerPageTitle('/plan/awards')).toBe('Planner | Awards & pieces');
+    expect(plannerPageTitle('/plan/templates')).toBe('Planner | Task templates');
     expect(plannerPageTitle('/plan/films')).toBe('Planner | Films & ideas');
     expect(plannerPageTitle('/plan/nope')).toBe('Planner | Now');
   });

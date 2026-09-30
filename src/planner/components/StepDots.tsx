@@ -1,3 +1,4 @@
+import { STEP_STATUS_LABELS } from '../logic/steps';
 import type { PieceStep } from '../types';
 import './stepDots.css';
 
@@ -13,8 +14,8 @@ export default function StepDots({ steps, onCycle, size = 'sm' }: Props) {
   return (
     <span className={`pl-dots pl-dots-${size}`}>
       {steps.map((step, index) => {
-        const text = `${step.label}: ${step.status}`;
-        const cls = `pl-dot pl-dot-${step.status}`;
+        const text = `${step.label}: ${STEP_STATUS_LABELS[step.status]}`;
+        const cls = `pl-dot pl-dot-${STEP_STATUS_LABELS[step.status]}`;
         return onCycle ? (
           <button
             key={`${step.key}-${index}`}

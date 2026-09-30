@@ -96,7 +96,7 @@ export function computeNow(
       id: q.id,
       title: q.question,
       context: parts.join(' · '),
-      href: '/plan/logistics',
+      href: `/plan/logistics?question=${encodeURIComponent(q.id)}`,
       overdue: q.dueDate ? q.dueDate < todayIso : undefined,
     };
   });
@@ -136,7 +136,7 @@ export function computeNow(
       id: '',
       title: 'No venue booked',
       context: `${plural(k, 'option', 'options')} under consideration`,
-      href: '/plan/logistics',
+      href: '/plan/logistics?section=venues',
     });
   }
 
@@ -208,7 +208,7 @@ export function computeNow(
             'days',
           )} ago)`
         : 'Inquired · No contact date logged',
-      href: '/plan/logistics',
+      href: `/plan/logistics?venue=${encodeURIComponent(v.id)}`,
     });
   }
 
@@ -271,7 +271,7 @@ export function computeNow(
       id: c.id,
       title: c.text,
       context: `${c.area ? `${c.area} · ` : ''}due ${formatDay(c.dueDate!)}`,
-      href: '/plan/logistics',
+      href: `/plan/logistics?checklist=${encodeURIComponent(c.id)}`,
       overdue: c.dueDate! < todayIso,
     });
   }

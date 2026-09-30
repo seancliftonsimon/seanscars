@@ -20,6 +20,8 @@ import { auth, db } from '../services/firebase';
 import { omitId, prepareUpdate, stripUndefined } from './logic/records';
 import type {
   Person,
+  PieceKind,
+  PieceTemplates,
   RecordMeta,
   Rsvp,
   Season,
@@ -148,4 +150,13 @@ export async function updateRecord<M extends object>(
 
 export async function deleteRecord<M extends object>(ref: DocumentReference<M, DocumentData>): Promise<void> {
   await deleteDoc(ref);
+}
+
+/** Update one template without replacing another editor's changes to other kinds. */
+export async function savePieceTemplate(seasonId: string, kind: PieceKind, steps: NonNullable<PieceTemplates[PieceKind]>): Promise<void> {
+  await updateDoc(seasonDoc(seasonId).withConverter(null), {
+    [`pieceTemplates.${kind}`]: steps,
+    updatedAt: serverTimestamp(),
+    updatedBy: currentEmail(),
+  });
 }

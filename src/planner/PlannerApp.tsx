@@ -12,6 +12,7 @@ import AwardsScreen from './screens/awards/AwardsScreen';
 import FilmsScreen from './screens/films/FilmsScreen';
 import PeopleScreen from './screens/people/PeopleScreen';
 import LogisticsScreen from './screens/logistics/LogisticsScreen';
+import TemplatesScreen from './screens/templates/TemplatesScreen';
 import './planner.css';
 
 /** Route root for /plan/*: passcode gate, then the planner shell. */
@@ -27,6 +28,7 @@ export default function PlannerApp() {
       <PlannerLayout email="Planner" onSignOut={lock}>
         <Routes>
           <Route index element={<NowScreen />} />
+          <Route path="templates" element={<TemplatesScreen />} />
           <Route path="season" element={<SeasonSettings />} />
           <Route path="import" element={<ImportScreen />} />
           <Route path="show" element={<ShowScreen />} />
