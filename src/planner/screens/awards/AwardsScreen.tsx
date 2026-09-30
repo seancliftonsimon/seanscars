@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useSeason } from '../../hooks/useSeason';
 import { useSeasonData } from '../../hooks/useSeasonData';
+import { PIECE_KIND_LABELS } from '../../logic/steps';
+import type { PieceKind } from '../../types';
 import { errorMessage } from '../../errors';
 import AwardsTab from './AwardsTab';
 import AwardPanel from './AwardPanel';
@@ -25,6 +27,8 @@ export default function AwardsScreen() {
   const tab: Tab = params.get('tab') === 'pieces' ? 'pieces' : 'awards';
   const awardParam = params.get('award');
   const pieceParam = params.get('piece');
+  const kindParam = params.get('kind');
+  const newKind = kindParam && Object.hasOwn(PIECE_KIND_LABELS, kindParam) ? kindParam as PieceKind : undefined;
 
   function go(next: { tab?: Tab; award?: string | null; piece?: string | null }) {
     const p = new URLSearchParams();
@@ -39,7 +43,7 @@ export default function AwardsScreen() {
     return (
       <section className="pl-screen">
         <header className="pl-screen-header">
-          <h1>Awards</h1>
+          <h1>Awards &amp; pieces</h1>
         </header>
         <p className="pl-empty">
           No season yet. <Link to="/plan/season">Create one in Season settings.</Link>
@@ -57,7 +61,7 @@ export default function AwardsScreen() {
     <>
       <section className="pl-screen pl-screen-wide">
         <header className="pl-screen-header">
-          <h1>Awards</h1>
+          <h1>Awards &amp; pieces</h1>
           <span className="pl-muted">{season.name}</span>
           <div className="pl-header-actions">
             <button
@@ -69,6 +73,7 @@ export default function AwardsScreen() {
             </button>
           </div>
         </header>
+
 
         <div className="pl-tabs" role="tablist">
           <button
@@ -89,6 +94,7 @@ export default function AwardsScreen() {
           >
             All pieces <span className="pl-muted">{data.pieces.length}</span>
           </button>
+          <Link className="pl-tab" to="/plan/templates">Task templates ↗</Link>
         </div>
 
         {error && <p className="pl-error">{error}</p>}
@@ -115,7 +121,8 @@ export default function AwardsScreen() {
             onAddPiece={() => go({ piece: 'new' })}
           />
         )}
-      </section>
+      <details className="pl-page-help"><summary>How this page works</summary><p>Awards hold your contenders and winners. Pieces track the videos, songs and presentations you’re making.</p></details>
+    </section>
 
       {showAwardPanel && !data.loading && (
         <AwardPanel
@@ -134,7 +141,7 @@ export default function AwardsScreen() {
           key={pieceParam ?? 'none'}
           seasonId={season.id}
           piece={piece}
-          defaults={awardParam && awardParam !== 'new' ? { awardId: awardParam } : undefined}
+          defaults={{ ...(awardParam && awardParam !== 'new' ? { awardId: awardParam } : {}), ...(newKind ? { kind: newKind } : {}) }}
           data={data}
           onClose={() => go({ award: tab === 'awards' ? awardParam : null })}
         />

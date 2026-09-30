@@ -130,7 +130,7 @@ describe('decide', () => {
     expect(v.decide[0]).toMatchObject({
       key: 'question:qc',
       context: 'Due Nov 6 · 2 items wait on this',
-      href: '/plan/logistics',
+      href: '/plan/logistics?question=qc',
     });
     expect(v.decide[1].context).toBe('Due Nov 6 · 1 item waits on this');
     expect(v.decide[3].context).toBe('No due date');
@@ -274,7 +274,7 @@ describe('chase', () => {
     expect(v.chase.map((i) => i.id)).toEqual(['none', 'stale']);
     expect(v.chase[0].context).toContain('No contact date logged');
     expect(v.chase[1].context).toContain('Oct 20');
-    expect(v.chase[1].href).toBe('/plan/logistics');
+    expect(v.chase[1].href).toBe('/plan/logistics?venue=stale');
   });
 });
 
@@ -343,7 +343,7 @@ describe('make', () => {
     });
     const v = computeNow(season, d, TODAY);
     expect(v.make.map((i) => i.id)).toEqual(['late', 'soon']);
-    expect(v.make[0]).toMatchObject({ kind: 'checklist', overdue: true, context: 'due Oct 30' });
+    expect(v.make[0]).toMatchObject({ kind: 'checklist', overdue: true, context: 'due Oct 30', href: '/plan/logistics?checklist=late' });
     expect(v.make[1].context).toBe('Food · due Nov 15');
   });
 });

@@ -52,6 +52,8 @@ export interface Season extends RecordMeta {
   driveFolderUrl?: string;
   theme?: string;
   archived: boolean;
+  /** Reusable task lists for this season. Existing pieces keep their own steps. */
+  pieceTemplates?: PieceTemplates;
 }
 
 /* ---------- seasons/{s}/segments/{id} ---------- */
@@ -100,6 +102,8 @@ export interface Award extends RecordMeta {
 
 export type PieceKind = 'award-video' | 'song' | 'slides-bit' | 'contributor-deck' | 'other';
 export type StepStatus = 'todo' | 'doing' | 'done';
+
+export type PieceTemplates = Partial<Record<PieceKind, { key: string; label: string }[]>>;
 
 export interface PieceStep {
   key: string;

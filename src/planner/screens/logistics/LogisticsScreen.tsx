@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useSeason } from '../../hooks/useSeason';
 import { useSeasonData } from '../../hooks/useSeasonData';
 import { createRecord, deleteRecord, seasonCol, seasonDoc, seasonSubDoc, updateRecord } from '../../firestore';
@@ -124,9 +124,17 @@ function LinksCell({ links, onSave, name }: { links: PlanLink[]; onSave: (next: 
 
 export default function LogisticsScreen() {
   const { season } = useSeason();
+  const [params] = useSearchParams();
+  const target = params.get('question') ? `question-${params.get('question')}` : params.get('venue') ? `venue-${params.get('venue')}` : params.get('checklist') ? `checklist-${params.get('checklist')}` : params.get('section') === 'venues' ? 'venues' : null;
   const seasonId = season?.id ?? null;
   const data = useSeasonData(seasonId);
   const { venues, questions, checklist, awards, pieces } = data;
+  useEffect(() => {
+    if (!target || data.loading) return;
+    const row = document.getElementById(`pl-${target}`);
+    row?.scrollIntoView({ block: 'center' });
+    row?.focus({ preventScroll: true });
+  }, [target, data.loading]);
 
   const [error, setError] = useState<string | null>(null);
   const [newVenue, setNewVenue] = useState('');
@@ -332,12 +340,13 @@ export default function LogisticsScreen() {
         <h1>Logistics</h1>
       </header>
 
+
       {error && <p className="pl-error">Couldn't save: {error}</p>}
       {data.error && <p className="pl-error">Couldn't load: {errorMessage(data.error)}</p>}
 
       {/* ---------- venues ---------- */}
       <div className="pl-panel">
-        <h2>Venue options</h2>
+        <h2 id="pl-venues" tabIndex={-1}>Venue options</h2>
         <form className="pl-logistics-add" onSubmit={(e) => void addVenue(e)}>
           <input value={newVenue} onChange={(e) => setNewVenue(e.target.value)} placeholder="Add venue" aria-label="Add venue" />
           <button type="submit" className="pl-btn" disabled={!newVenue.trim()}>
@@ -367,7 +376,7 @@ export default function LogisticsScreen() {
               </thead>
               <tbody>
                 {sortedVenues.map((v) => (
-                  <tr key={v.id}>
+                  <tr key={v.id} id={`pl-venue-${v.id}`} tabIndex={-1} className={target === `venue-${v.id}` ? 'pl-row-target' : undefined}>
                     <td className="pl-logistics-wide">
                       <Cell value={v.name} label={`Name of ${v.name}`} onSave={(n) => n && void patchVenue(v, { name: n })} />
                       {season.venueOptionId === v.id && <span className="pl-tag">Season venue</span>}
@@ -474,7 +483,7 @@ export default function LogisticsScreen() {
                   const decided = q.status === 'decided';
                   const blocked = blockedCount({ kind: 'question', id: q.id }, data);
                   return (
-                    <tr key={q.id} className={decided ? 'pl-logistics-dim' : undefined}>
+                    <tr key={q.id} id={`pl-question-${q.id}`} tabIndex={-1} className={[decided ? 'pl-logistics-dim' : '', target === `question-${q.id}` ? 'pl-row-target' : ''].join(' ')}>
                       <td className="pl-logistics-wide">
                         <Cell value={q.question} label="Question" onSave={(n) => n && void patchQuestion(q, { question: n })} />
                         {blocked > 0 && (
@@ -587,7 +596,7 @@ export default function LogisticsScreen() {
                   </thead>
                   <tbody>
                     {g.items.map((item) => (
-                      <tr key={item.id} className={item.done ? 'pl-logistics-done' : undefined}>
+                      <tr key={item.id} id={`pl-checklist-${item.id}`} tabIndex={-1} className={[item.done ? 'pl-logistics-done' : '', target === `checklist-${item.id}` ? 'pl-row-target' : ''].join(' ')}>
                         <td>
                           <input
                             type="checkbox"
@@ -636,6 +645,7 @@ export default function LogisticsScreen() {
           ))
         )}
       </div>
+    <details className="pl-page-help"><summary>How this page works</summary><p>Keep venue options, open decisions and practical tasks in one place. Table edits save when you leave a field.</p></details>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import type { Invitation, InvitationStatus, Person, Piece, RecordMeta, Rsvp, WithId } from '../types';
+import type { Invitation, InvitationStatus, Person, Piece, PieceTemplates, RecordMeta, Rsvp, WithId } from '../types';
 import { normalizeName } from './importers';
 import { defaultSteps } from './steps';
 
@@ -96,8 +96,9 @@ export function contributorPieceFromRsvp(
   personId: string,
   order: number,
   todayIso: string,
+  templates?: PieceTemplates,
 ): Omit<Piece, keyof RecordMeta> {
-  const steps = defaultSteps('contributor-deck').map((s) =>
+  const steps = defaultSteps('contributor-deck', 'todo', templates).map((s) =>
     s.key === 'asked' ? { ...s, status: 'done' as const } : s,
   );
   return {

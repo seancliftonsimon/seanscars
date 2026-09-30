@@ -1,8 +1,9 @@
+import { useSeason } from '../../hooks/useSeason';
 import { useState, type FormEvent } from 'react';
 import { createRecord, deleteRecord, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { nextOrder } from '../../logic/records';
-import { defaultSteps, progress } from '../../logic/steps';
+import { defaultSteps, progress, PIECE_KIND_LABELS } from '../../logic/steps';
 import { pieceLengthSec } from '../../logic/clock';
 import { formatDuration } from '../../logic/clockFormat';
 import StepDots from '../../components/StepDots';
@@ -55,6 +56,7 @@ interface Props {
 
 /** Drawer to add or edit an award: details, contenders, winner and its pieces. */
 export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece, onCreated }: Props) {
+  const { season } = useSeason();
   const [draft, setDraft] = useState<Draft>(() => toDraft(award));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -152,7 +154,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
         awardId: award.id,
         segmentId: award.segmentId,
         order: nextOrder(data.pieces),
-        steps: defaultSteps(newKind),
+        steps: defaultSteps(newKind, 'todo', season?.pieceTemplates),
         links: [],
       });
       onOpenPiece(id);
@@ -187,6 +189,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
         </button>
       </header>
 
+      <p className="pl-muted pl-drawer-intro">Define the category, collect contenders, then choose your nominees and winner.</p>
       <form className="pl-form" onSubmit={handleSubmit} noValidate>
         <label className="pl-field">
           <span>Name</span>
@@ -223,7 +226,8 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
         </label>
 
         <fieldset className="pl-awards-contenders">
-          <legend>Contenders</legend>
+          <legend>Contenders & nominees</legend>
+          <p className="pl-muted pl-now-hint">Add possibilities below. Check Nominee for your shortlist; those names appear in the winner menu.</p>
           <datalist id={filmListId}>
             {data.films.map((f) => (
               <option key={f.id} value={f.title} />
@@ -304,7 +308,8 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
 
       {award && (
         <section className="pl-awards-panel-pieces">
-          <h3>Pieces</h3>
+          <h3>Production pieces</h3>
+          <p className="pl-muted pl-now-hint">Create a video, song or slides for this award. Each starts with its own task checklist.</p>
           {pieces.length === 0 ? (
             <p className="pl-muted">No pieces yet.</p>
           ) : (
@@ -318,7 +323,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
                     </button>
                     <span className="pl-muted">
                       {' '}
-                      {p.kind} · {done}/{total} · {formatDuration(pieceLengthSec(p))}
+                      {PIECE_KIND_LABELS[p.kind]} · {done}/{total} · {formatDuration(pieceLengthSec(p))}
                     </span>
                     <StepDots steps={p.steps} />
                   </li>
@@ -329,7 +334,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
           <div className="pl-inline-form">
             <select value={newKind} onChange={(e) => setNewKind(e.target.value as PieceKind)} aria-label="Piece kind">
               {PIECE_KINDS.map((k) => (
-                <option key={k}>{k}</option>
+                <option key={k} value={k}>{PIECE_KIND_LABELS[k]}</option>
               ))}
             </select>
             <button type="button" className="pl-btn" onClick={addPiece}>

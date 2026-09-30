@@ -27,7 +27,7 @@ export const PLANNER_SECTIONS: PlannerSection[] = [
   },
   {
     path: 'awards',
-    label: 'Awards',
+    label: 'Awards & pieces',
     nav: 'primary',
   },
   {
@@ -50,6 +50,7 @@ export const PLANNER_SECTIONS: PlannerSection[] = [
     label: 'Season',
     nav: 'secondary',
   },
+  { path: 'templates', label: 'Task templates', nav: 'secondary' },
   {
     path: 'import',
     label: 'Import',

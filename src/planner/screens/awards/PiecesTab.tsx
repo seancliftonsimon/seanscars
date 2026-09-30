@@ -4,7 +4,7 @@ import { seasonSubDoc, updateRecord } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { formatDuration } from '../../logic/clockFormat';
 import { pieceLengthSec } from '../../logic/clock';
-import { cycleStep, isComplete, nextStep } from '../../logic/steps';
+import { cycleStep, isComplete, nextStep, PIECE_KIND_LABELS } from '../../logic/steps';
 import { derivedWaiting, isResolved, waitingLabel, type WaitReason } from '../../logic/waiting';
 import type { Piece, PieceKind, WithId } from '../../types';
 import type { SeasonData } from '../../hooks/useSeasonData';
@@ -98,7 +98,7 @@ export default function PiecesTab({ seasonId, data, selectedPieceId, onSelectPie
           <option value="all">All kinds</option>
           {KINDS.map((k) => (
             <option key={k} value={k}>
-              {k}
+              {PIECE_KIND_LABELS[k]}
             </option>
           ))}
         </select>

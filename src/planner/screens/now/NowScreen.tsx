@@ -78,6 +78,12 @@ export default function NowScreen() {
         </span>
       </header>
 
+      <div className="pl-start-grid" aria-label="Planning shortcuts">
+        <Link className="pl-start-card" to="/plan/films"><span className="pl-eyebrow">Collect</span><strong>Films & ideas</strong><span>Add a film or catch a new idea.</span></Link>
+        <Link className="pl-start-card" to="/plan/awards?award=new"><span className="pl-eyebrow">Develop</span><strong>Create an award</strong><span>Build a category and its shortlist.</span></Link>
+        <Link className="pl-start-card" to="/plan/awards?tab=pieces&piece=new"><span className="pl-eyebrow">Make</span><strong>Start a production piece</strong><span>A song, video, bit or presentation.</span></Link>
+        <Link className="pl-start-card" to="/plan/templates"><span className="pl-eyebrow">Your process</span><strong>Task templates</strong><span>Set the checklists you’ll reuse.</span></Link>
+      </div>
       {data.error ? (
         <p className="pl-error">Couldn't load: {errorMessage(data.error)}</p>
       ) : !view ? (

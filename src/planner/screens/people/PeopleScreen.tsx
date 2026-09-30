@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Search, Plus } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useSeason } from '../../hooks/useSeason';
 import { useSeasonData } from '../../hooks/useSeasonData';
@@ -17,6 +18,8 @@ type Tab = 'guests' | 'inbox';
 /** Guests and invitations, the headcount, and the RSVP inbox (`?tab=inbox`, `?person=…`). */
 export default function PeopleScreen() {
   const { season } = useSeason();
+  const [search, setSearch] = useState('');
+  const [adding, setAdding] = useState(false);
   const data = useSeasonData(season?.id ?? null);
   const rsvpState = useCollection(rsvpsCol());
   const [params, setParams] = useSearchParams();
@@ -62,7 +65,10 @@ export default function PeopleScreen() {
       <section className="pl-screen pl-screen-wide">
         <header className="pl-screen-header">
           <h1>People</h1>
-          <span className="pl-muted">{season.name}</span>
+          <div className="pl-header-actions">
+            {tab === 'guests' && <label className="pl-search-field"><Search size={19} aria-hidden="true" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search people, aliases, or email…" aria-label="Search guests" /></label>}
+            <button className="pl-btn pl-btn-primary" onClick={() => { go({ tab: 'guests' }); setAdding(true); }}><Plus size={19} aria-hidden="true" />Add person</button>
+          </div>
         </header>
 
         {!data.loading && <HeadcountCard data={data} capacity={season.capacity} />}
@@ -93,7 +99,7 @@ export default function PeopleScreen() {
         ) : data.error ? (
           <p className="pl-error">Couldn't load: {errorMessage(data.error)}</p>
         ) : tab === 'guests' ? (
-          <GuestsTab seasonId={season.id} data={data} onOpenPerson={(id) => go({ person: id })} />
+          <GuestsTab key={season.id} seasonId={season.id} data={data} search={search} adding={adding} onCloseAdd={() => setAdding(false)} onOpenPerson={(id) => go({ person: id })} />
         ) : rsvpState.error ? (
           <p className="pl-error">Couldn't load RSVPs: {errorMessage(rsvpState.error)}</p>
         ) : (

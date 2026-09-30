@@ -1,3 +1,4 @@
+import { useSeason } from '../../hooks/useSeason';
 import { useState } from 'react';
 import type { Timestamp } from 'firebase/firestore';
 import {
@@ -44,6 +45,7 @@ interface CardProps {
 
 /** One RSVP: suggested match, plus-ones, optional contributor piece, then apply or ignore. */
 function RsvpCard({ seasonId, rsvp, data, onOpenPerson }: CardProps) {
+  const { season } = useSeason();
   const match = matchRsvp(rsvp, data.people);
   const name = rsvpFullName(rsvp);
   const status = statusFromRsvp(rsvp.rsvp);
@@ -79,7 +81,7 @@ function RsvpCard({ seasonId, rsvp, data, onOpenPerson }: CardProps) {
       if (presenting && makePiece) {
         await createRecord(
           seasonCol(seasonId, 'pieces'),
-          contributorPieceFromRsvp(rsvp, personId, nextOrder(data.pieces), todayIso()),
+          contributorPieceFromRsvp(rsvp, personId, nextOrder(data.pieces), todayIso(), season?.pieceTemplates),
         );
       }
       await updateRecord(rsvpDoc(rsvp.id), { processed: true, matchedPersonId: personId });

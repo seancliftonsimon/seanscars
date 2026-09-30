@@ -1,9 +1,21 @@
-import type { Piece, PieceKind, PieceStep, StepStatus } from "../types";
+import type { Piece, PieceKind, PieceStep, PieceTemplates, StepStatus } from "../types";
 
 /*
  * Default steps for each kind of piece. A piece's steps are copied from
  * here when it is created, then edited freely.
  */
+
+export const PIECE_KIND_LABELS: Record<PieceKind, string> = {
+  'award-video': 'Award video',
+  song: 'Song / parody',
+  'slides-bit': 'Slides / comedy bit',
+  'contributor-deck': 'Contributor presentation',
+  other: 'Other production',
+};
+
+export const STEP_STATUS_LABELS: Record<StepStatus, string> = {
+  todo: 'To do', doing: 'In progress', done: 'Done',
+};
 
 export const DEFAULT_STEP_LABELS: Record<PieceKind, string[]> = {
   "award-video": [
@@ -47,12 +59,10 @@ export function stepKey(label: string): string {
 export function defaultSteps(
   kind: PieceKind,
   status: StepStatus = "todo",
+  templates?: PieceTemplates,
 ): PieceStep[] {
-  return DEFAULT_STEP_LABELS[kind].map((label) => ({
-    key: stepKey(label),
-    label,
-    status,
-  }));
+  const template = templates?.[kind] ?? DEFAULT_STEP_LABELS[kind].map((label) => ({ key: stepKey(label), label }));
+  return template.map((step) => ({ ...step, status }));
 }
 
 export function progress(piece: Pick<Piece, "steps">): {
@@ -113,4 +123,18 @@ export function deliveryStep(piece: Pick<Piece, "steps">): PieceStep | null {
     piece.steps[piece.steps.length - 1] ??
     null
   );
+}
+
+/** Strip progress from a piece while retaining semantic keys used by dependency tracking. */
+export function reusableSteps(steps: PieceStep[]): { key: string; label: string }[] {
+  return steps.map(({ key, label }) => ({ key, label: label.trim() }));
+}
+
+/** Unique keys even when two tasks have the same label. */
+export function uniqueStepKey(label: string, steps: { key: string }[]): string {
+  const base = stepKey(label) || 'step';
+  const taken = new Set(steps.map((step) => step.key));
+  let key = base;
+  for (let n = 2; taken.has(key); n++) key = `${base}-${n}`;
+  return key;
 }

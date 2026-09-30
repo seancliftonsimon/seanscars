@@ -31,6 +31,7 @@ All paths are under `/#/plan`. Route labels and paths are declared in `src/plann
 | `/plan/films` (Films & ideas) | The film pool and the ideas inbox. |
 | `/plan/people` (People) | People and invitations. The RSVP inbox is a tab here. |
 | `/plan/logistics` (Logistics) | Venue options, open questions and the checklist. |
+| `/plan/templates` (Task templates) | Edit and reorder reusable production checklists for the selected season. |
 | `/plan/season` (Season) | Create a season, edit its settings, and start a season from the previous one. |
 | `/plan/import` (Import) | One-time imports of the archive and CSV season files. |
 
@@ -124,3 +125,13 @@ npm run build   # tsc -b && vite build
 - Pure logic goes in `src/planner/logic/` with a `*.test.ts` beside it. Tests use invented data only.
 - Keep `lint`, `build` and `test` green, and check that the public pages and `/#/timer` still load.
 - The GitHub repo is public. `planning/` (specs and real data) is local-only, excluded through `.git/info/exclude`, and must never be committed. Never copy guest names, emails, venue terms, passcodes or hashes from it into tracked files.
+
+## Production task templates
+
+Task templates (`/plan/templates`) define the starting checklist for each production type: award video, song/parody, slides/bit, contributor presentation and other. Add, rename, remove or reorder tasks, then **Save template**. At least one named task is required. Unsaved drafts are kept in the current browser tab so switching types or navigating away does not lose them.
+
+Templates are stored in `seasons/{year}.pieceTemplates` as a partial map from piece kind to `{key, label}[]`. Missing kinds use the original defaults. Saved templates are shared with other planner devices; no new Firestore rules are needed. Starting a season from the previous one copies its templates. New pieces, idea-to-piece creation, RSVP contributor pieces and rollover contributor drafts use these defaults. Historical archive imports retain their original completed checklists.
+
+A piece keeps its own steps and progress. Updating a template never changes existing pieces. **Save checklist as reusable default** in a piece's panel copies its task labels and keys without copying progress. Renaming/reordering template tasks preserves keys such as `winner-decided`, `submitted`, `checked…` and `in-master-deck`, which dependency and revision logic use. Removing these milestones removes their specialized behavior (delivery falls back to the final step).
+
+Now-screen links to Logistics scroll to, focus and highlight the relevant question, venue or checklist row.

@@ -1,14 +1,16 @@
+import { Link } from 'react-router-dom';
+import { useSeason } from '../../hooks/useSeason';
 import { useMemo, useState, type FormEvent } from 'react';
 import StepDots from '../../components/StepDots';
-import { createRecord, deleteRecord, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
+import { createRecord, deleteRecord, seasonCol, seasonSubDoc, updateRecord, savePieceTemplate } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { parseLength } from '../../logic/duration';
 import { formatDuration } from '../../logic/clockFormat';
 import { nextOrder } from '../../logic/records';
-import { cycleStep, defaultSteps, revisionReceived, stepKey } from '../../logic/steps';
+import { cycleStep, defaultSteps, revisionReceived, uniqueStepKey, reusableSteps, PIECE_KIND_LABELS, STEP_STATUS_LABELS } from '../../logic/steps';
 import { derivedWaiting, waitingLabel } from '../../logic/waiting';
 import type { SeasonData } from '../../hooks/useSeasonData';
-import type { Link, Piece, PieceKind, PieceStep, WaitingOn, WithId } from '../../types';
+import type { Link as PieceLink, Piece, PieceKind, PieceStep, WaitingOn, WithId } from '../../types';
 import './awards.css';
 
 const KINDS: PieceKind[] = ['award-video', 'song', 'slides-bit', 'contributor-deck', 'other'];
@@ -24,7 +26,7 @@ interface Draft {
   est: string;
   confirmed: string;
   measured: string;
-  links: Link[];
+  links: PieceLink[];
   waiting: string; // '' | 'kind:id'
   notes: string;
 }
@@ -76,7 +78,10 @@ interface Props {
 
 /** Side panel to add or edit a piece. */
 export default function PiecePanel({ seasonId, piece, defaults, data, onClose }: Props) {
-  const [draft, setDraft] = useState<Draft>(() => toDraft(piece, defaults));
+  const { season } = useSeason();
+  const [draft, setDraft] = useState<Draft>(() => toDraft(piece, {
+    ...defaults, steps: defaults?.steps ?? defaultSteps(defaults?.kind ?? 'other', 'todo', season?.pieceTemplates),
+  }));
   const [peopleFilter, setPeopleFilter] = useState('');
   const [newStep, setNewStep] = useState('');
   const [errors, setErrors] = useState<Partial<Record<'title' | 'est' | 'confirmed' | 'measured', string>>>({});
@@ -102,7 +107,7 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
   }
 
   function setKind(kind: PieceKind) {
-    setDraft((prev) => ({ ...prev, kind, steps: piece ? prev.steps : defaultSteps(kind) }));
+    setDraft((prev) => ({ ...prev, kind, steps: piece ? prev.steps : defaultSteps(kind, 'todo', season?.pieceTemplates) }));
   }
 
   function toggleOwner(id: string) {
@@ -135,15 +140,12 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
   function addStep() {
     const label = newStep.trim();
     if (!label) return;
-    const taken = new Set(steps.map((s) => s.key));
-    const base = stepKey(label) || 'step';
-    let key = base;
-    for (let n = 2; taken.has(key); n++) key = `${base}-${n}`;
+    const key = uniqueStepKey(label, steps);
     setNewStep('');
     void changeSteps([...steps, { key, label, status: 'todo' }]);
   }
 
-  function setLink(index: number, patch: Partial<Link>) {
+  function setLink(index: number, patch: Partial<PieceLink>) {
     set(
       'links',
       draft.links.map((l, i) => (i === index ? { ...l, ...patch } : l)),
@@ -242,6 +244,7 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
           Close
         </button>
       </header>
+      <p className="pl-muted pl-drawer-intro">Track what you’re making, the tasks it needs, and its working files.</p>
       <form className="pl-form" onSubmit={handleSubmit} noValidate>
         <label className="pl-field">
           <span>Title</span>
@@ -249,17 +252,17 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
           {errors.title && <small className="pl-error">{errors.title}</small>}
         </label>
         <label className="pl-field">
-          <span>Kind</span>
+          <span>Production type</span>
           <select value={draft.kind} onChange={(e) => setKind(e.target.value as PieceKind)}>
             {KINDS.map((k) => (
-              <option key={k}>{k}</option>
+              <option key={k} value={k}>{PIECE_KIND_LABELS[k]}</option>
             ))}
           </select>
         </label>
 
         <fieldset className="pl-field pl-owner-picker">
           <legend>Owners</legend>
-          <small className="pl-muted">None = Sean.</small>
+          <small className="pl-muted">Leave everyone unchecked for work you’re making yourself.</small>
           <input
             type="search"
             placeholder="Filter people"
@@ -269,7 +272,7 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
           />
           <div className="pl-owner-list">
             {visiblePeople.length === 0 ? (
-              <p className="pl-muted">No people match.</p>
+              <p className="pl-muted">{data.people.length ? 'No people match.' : <>Making this with someone else? <Link to="/plan/people">Add them in People</Link>.</>}</p>
             ) : (
               visiblePeople.map((p) => (
                 <label key={p.id} className="pl-check">
@@ -311,7 +314,8 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
         </div>
 
         <fieldset className="pl-field">
-          <legend>Steps</legend>
+          <legend>Production checklist</legend>
+          <p className="pl-muted pl-now-hint">Click a status to move from To do → In progress → Done. {piece ? 'Checklist changes save immediately. ' : ''}<Link to={`/plan/templates?kind=${draft.kind}`}>Edit reusable defaults</Link></p>
           <StepDots steps={steps} size="md" />
           <ul className="pl-awards-step-list">
             {steps.map((step, index) => (
@@ -327,7 +331,7 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
                   onClick={() => void changeSteps(cycleStep(steps, index))}
                   title="Click to cycle todo, doing, done"
                 >
-                  {step.status}
+                  {STEP_STATUS_LABELS[step.status]}
                 </button>
                 <button
                   type="button"
@@ -366,6 +370,13 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
           )}
         </fieldset>
 
+        <button type="button" className="pl-btn" disabled={busy || steps.length === 0 || !season || steps.some((s) => !s.label.trim())} onClick={async () => {
+          if (!season || !window.confirm(`Use this checklist as the default for new ${PIECE_KIND_LABELS[draft.kind].toLowerCase()} pieces? Existing pieces keep their progress.`)) return;
+          setBusy(true);
+          try { await savePieceTemplate(seasonId, draft.kind, reusableSteps(steps)); setMessage('Default template saved for future pieces.'); }
+          catch (err) { setMessage(`Couldn't save template: ${errorMessage(err)}`); }
+          finally { setBusy(false); }
+        }}>Save checklist as reusable default</button>
         <label className="pl-field">
           <span>Due date</span>
           <input type="date" value={draft.dueDate} onChange={(e) => set('dueDate', e.target.value)} />
