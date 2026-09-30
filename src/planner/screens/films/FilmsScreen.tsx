@@ -209,10 +209,10 @@ export default function FilmsScreen() {
       {error && <p className="pl-error">Couldn't save: {error}</p>}
       {data.error && <p className="pl-error">Couldn't load: {errorMessage(data.error)}</p>}
 
-      <p className="pl-lead">Collect the films. Catch the ideas. Turn the best ones into something for the show.</p>
+
       <div className="pl-panel">
         <h2>Film pool <span className="pl-muted">· {films.length}</span></h2>
-        <p className="pl-muted">Track what you’ve seen and the ideas it sparks. “On ballot” is a planning flag; it doesn’t change the public voting page.</p>
+
         <form className="pl-films-add" onSubmit={(e) => void addFilm(e)}>
           <input
             type="text"
@@ -427,6 +427,7 @@ export default function FilmsScreen() {
           </ul>
         )}
       </div>
+    <details className="pl-page-help"><summary>How this page works</summary><p>Collect the films. Catch the ideas. Turn the best ones into something for the show. “On ballot” is a planning flag; it doesn’t change the public voting page.</p></details>
     </section>
   );
 }

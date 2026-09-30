@@ -64,7 +64,7 @@ export default function PeopleScreen() {
     <>
       <section className="pl-screen pl-screen-wide">
         <header className="pl-screen-header">
-          <div className="pl-page-heading"><h1>People</h1><p className="pl-muted">Manage your Sharemony guest list, presenters and invites for the {season.year} season.</p></div>
+          <h1>People</h1>
           <div className="pl-header-actions">
             {tab === 'guests' && <label className="pl-search-field"><Search size={19} aria-hidden="true" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search people, aliases, or email…" aria-label="Search guests" /></label>}
             <button className="pl-btn pl-btn-primary" onClick={() => { go({ tab: 'guests' }); setAdding(true); }}><Plus size={19} aria-hidden="true" />Add person</button>

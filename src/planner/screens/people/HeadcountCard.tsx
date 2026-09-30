@@ -15,9 +15,9 @@ export default function HeadcountCard({ data, capacity }: { data: SeasonData; ca
   return <div className="pl-people-stats" aria-label="Guest overview">
     <section className={`pl-stat-card pl-stat-gold${over ? ' is-over' : ''}`}>
       <span className="pl-stat-icon"><Users size={25} aria-hidden="true" /></span>
-      <div className="pl-stat-content"><div className="pl-stat-label">Confirmed attendance <Link to="/plan/season" aria-label="Edit venue capacity"><Settings2 size={16} /></Link></div>
+      <div className="pl-stat-content"><div className="pl-stat-label">Attendance <Link to="/plan/season" aria-label="Edit venue capacity"><Settings2 size={16} /></Link></div>
         <strong className="pl-stat-value">{h.total}{capacity !== undefined && <span> / {capacity}</span>}</strong>
-        <p className="pl-stat-caption">{h.confirmedPeople} guests + {h.confirmedPlusOnes} plus-ones</p>
+        <p className="pl-stat-caption">{h.confirmedPeople} confirmed + {h.confirmedPlusOnes} plus-ones</p>
       </div>
       {capacity !== undefined ? <><Meter value={h.total} total={capacity} label="Confirmed attendance vs capacity" /><p className="pl-stat-foot">{over ? `${-h.remaining!} over capacity` : `${h.remaining} spots remaining`}</p></> : <p className="pl-stat-foot"><Link to="/plan/season">Set venue capacity</Link></p>}
     </section>

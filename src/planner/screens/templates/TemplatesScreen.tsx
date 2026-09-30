@@ -100,11 +100,10 @@ export default function TemplatesScreen() {
   return (
     <section className="pl-screen">
       <header className="pl-screen-header"><h1>Task templates</h1><span className="pl-muted">{season?.year}</span></header>
-      <p className="pl-lead">Your usual process, ready for the next piece.</p>
-      <p className="pl-muted">Templates are shared within this season and copied when you start a season from it. Editing a template leaves existing pieces and their progress as they are.</p>
       {loading ? <p className="pl-muted">Loading templates…</p> : error ? <p className="pl-error">Couldn't load: {errorMessage(error)}</p> : !season ? <p className="pl-empty"><Link to="/plan/season">Create a season</Link> to save your templates.</p> : <>
         <label className="pl-field pl-template-picker"><span>Production type</span><select value={kind} onChange={(e) => setParams({ kind: e.target.value })}>{KINDS.map((k) => <option key={k} value={k}>{PIECE_KIND_LABELS[k]}</option>)}</select></label>
         <TemplateEditor key={`${season.id}-${kind}`} seasonId={season.id} kind={kind} templates={season.pieceTemplates} />
+        <details className="pl-page-help"><summary>How templates work</summary><p>Templates are shared within this season and copied when you start a season from it. Editing a template leaves existing pieces and their progress as they are.</p></details>
         <p className="pl-muted">Ready to use it? <Link to={`/plan/awards?tab=pieces&piece=new&kind=${kind}`}>Create a {PIECE_KIND_LABELS[kind].toLowerCase()} piece</Link> or <Link to="/plan/films">develop an idea</Link>.</p>
       </>}
     </section>

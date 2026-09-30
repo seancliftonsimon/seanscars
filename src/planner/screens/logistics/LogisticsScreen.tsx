@@ -340,7 +340,7 @@ export default function LogisticsScreen() {
         <h1>Logistics</h1>
       </header>
 
-      <p className="pl-lead">Keep venue options, open decisions and practical tasks in one place. Table edits save when you leave a field.</p>
+
       {error && <p className="pl-error">Couldn't save: {error}</p>}
       {data.error && <p className="pl-error">Couldn't load: {errorMessage(data.error)}</p>}
 
@@ -645,6 +645,7 @@ export default function LogisticsScreen() {
           ))
         )}
       </div>
+    <details className="pl-page-help"><summary>How this page works</summary><p>Keep venue options, open decisions and practical tasks in one place. Table edits save when you leave a field.</p></details>
     </section>
   );
 }

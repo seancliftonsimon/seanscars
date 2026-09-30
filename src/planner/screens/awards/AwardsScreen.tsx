@@ -74,7 +74,7 @@ export default function AwardsScreen() {
           </div>
         </header>
 
-        <p className="pl-lead">Awards hold your contenders and winners. Pieces track the videos, songs and presentations you’re making.</p>
+
         <div className="pl-tabs" role="tablist">
           <button
             type="button"
@@ -121,7 +121,8 @@ export default function AwardsScreen() {
             onAddPiece={() => go({ piece: 'new' })}
           />
         )}
-      </section>
+      <details className="pl-page-help"><summary>How this page works</summary><p>Awards hold your contenders and winners. Pieces track the videos, songs and presentations you’re making.</p></details>
+    </section>
 
       {showAwardPanel && !data.loading && (
         <AwardPanel
