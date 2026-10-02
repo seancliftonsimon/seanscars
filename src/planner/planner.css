@@ -12,7 +12,7 @@
   /* Text: cream, then two quieter steps (all ≥ 4.5:1 on --pl-surface). */
   --pl-text: #f3f1ea;
   --pl-muted: #b3b0a7;
-  --pl-faint: #8f8c85;
+  --pl-faint: #9a978f;
   /* One accent (gold) for actions and the current place. */
   --pl-accent: var(--color-gold);
   --pl-accent-strong: var(--color-gold-light);

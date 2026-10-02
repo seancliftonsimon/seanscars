@@ -9,3 +9,7 @@
 @media print {
   .pl-door { box-shadow: none !important; padding: 0 !important; }
 }
+@media screen and (max-width: 760px) {
+  .pl-door { padding: 1rem; font-size: 10pt; }
+  .pl-door td:nth-child(5), .pl-door th:nth-child(5) { display: none; }
+}

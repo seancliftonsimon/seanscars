@@ -40,6 +40,12 @@ export default function ClockSummary({ totals, verdict, compact }: { totals: Sch
         <li><i className="pl-sw is-house" /> House <b>{formatDuration(house)}</b></li>
         <li className="pl-faint">Cap {formatHMS(totals.capSec)} · buffer {formatDuration(totals.bufferTargetSec)}</li>
       </ul>
+      {!compact && gaps > 0 && (
+        <p className="pl-small pl-muted">
+          Includes {formatDuration(gaps)} of waiting for a hard time. Shortening segments before it won’t shorten the show; it
+          only adds to the wait.
+        </p>
+      )}
       {!compact && verdict.candidates.length > 0 && (
         <div className="pl-trim">
           <span className="pl-small pl-muted">Best places to trim:</span>
