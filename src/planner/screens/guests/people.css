@@ -34,3 +34,9 @@
 .pl-people-link-row input { flex: 1 1 8rem; min-width: 0; }
 .pl-people-subhead { margin: var(--spacing-sm) 0 var(--spacing-xs); font-size: 1rem; }
 .pl-people-list { margin: 0; padding-left: 1.1rem; }
+
+.pl-person-season { display: flex; flex-direction: column; gap: var(--pl-s2); margin-bottom: var(--pl-s5); padding-bottom: var(--pl-s4); border-bottom: 1px solid var(--pl-border); }
+.pl-props { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--pl-s2) var(--pl-s3); align-items: center; margin: 0; }
+.pl-props dt { font-size: var(--pl-fs-sm); color: var(--pl-muted); }
+.pl-props dd { margin: 0; min-width: 0; }
+.pl-root .pl-date-inline { width: auto; padding: 0.2rem 0.4rem; }

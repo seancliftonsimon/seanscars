@@ -1,11 +1,20 @@
 import { useState, type FormEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { personDoc, seasonSubDoc, updateRecord } from '../../firestore';
+import { Coffee } from 'lucide-react';
+import { createRecord, personDoc, seasonSubDoc, updateRecord, type RecordInput } from '../../firestore';
+import { usePlanner } from '../../hooks/plannerContext';
+import { useUndoableUpdate } from '../../hooks/useUndoable';
+import { ChipSelect } from '../../components/ui/Chip';
+import { Stepper } from '../../components/ui/Stepper';
+import { InlineText } from '../../components/ui/InlineText';
+import { INVITATION_OPTIONS } from '../../components/status';
+import { INVITATION_STATUS_LABEL, INVITE_METHOD_LABEL, INVITE_METHODS } from '../../logic/labels';
+import { plural } from '../../logic/dates';
 import { errorMessage } from '../../errors';
 import { useDoc } from '../../hooks/useDoc';
 import { useSeason } from '../../hooks/useSeason';
 import type { SeasonData } from '../../hooks/useSeasonData';
-import type { Link } from '../../types';
+import type { Invitation, Link } from '../../types';
 import './people.css';
 
 interface Props {
@@ -19,7 +28,7 @@ function SeasonInvitation({ seasonId, label, personId }: { seasonId: string; lab
   let text = '—';
   if (loading) text = '…';
   else if (inv) {
-    const parts: string[] = [inv.status];
+    const parts: string[] = [INVITATION_STATUS_LABEL[inv.status]];
     if (inv.plusOnes > 0) parts.push(`+${inv.plusOnes}`);
     if (inv.brunch) parts.push('brunch');
     text = parts.join(', ');
@@ -43,6 +52,7 @@ export default function PersonPanel({ personId, data, onClose }: Props) {
           Close
         </button>
       </header>
+      {person && <ThisSeason personId={personId} />}
       {person ? <PersonForm key={personId} personId={personId} data={data} /> : <p className="pl-empty">Person not found.</p>}
     </aside>
   );
@@ -143,7 +153,7 @@ function PersonForm({ personId, data }: { personId: string; data: SeasonData }) 
       </div>
 
       <section>
-        <h3 className="pl-people-subhead">Invitations</h3>
+        <h3 className="pl-people-subhead">Every season</h3>
         <ul className="pl-people-list">
           {seasons.map((s) => (
             <SeasonInvitation key={s.id} seasonId={s.id} label={String(s.year)} personId={personId} />
@@ -158,12 +168,80 @@ function PersonForm({ personId, data }: { personId: string; data: SeasonData }) 
           <ul className="pl-people-list">
             {pieces.map((p) => (
               <li key={p.id}>
-                <RouterLink to={`/plan/awards?tab=pieces&piece=${encodeURIComponent(p.id)}`}>{p.title}</RouterLink>
+                <RouterLink to={`/plan/make?piece=${encodeURIComponent(p.id)}`}>{p.title}</RouterLink>
               </li>
             ))}
           </ul>
         )}
       </section>
     </form>
+  );
+}
+
+/** This season's invitation, edited in place (each change has Undo). */
+function ThisSeason({ personId }: { personId: string }) {
+  const { season, data } = usePlanner();
+  const update = useUndoableUpdate();
+  if (!season) return null;
+  const inv = data.invitations.find((i) => i.id === personId);
+  const name = data.peopleById.get(personId)?.name ?? 'them';
+  const ref = seasonSubDoc(season.id, 'invitations', personId);
+
+  if (!inv) {
+    return (
+      <section className="pl-person-season">
+        <h3 className="pl-people-subhead">{season.year}</h3>
+        <p className="pl-muted">Not on this year’s list.</p>
+        <button type="button" className="pl-btn pl-btn-sm" onClick={() => void createRecord(ref, { status: 'invite?', plusOnes: 0, brunch: false, rsvpIds: [] })}>
+          Put on the list
+        </button>
+      </section>
+    );
+  }
+  const set = (patch: Partial<RecordInput<Invitation>>, msg: string) => void update(ref, inv, patch, `${name}: ${msg}`);
+  return (
+    <section className="pl-person-season" aria-label={`${season.year} invitation`}>
+      <h3 className="pl-people-subhead">{season.year}</h3>
+      <dl className="pl-props">
+        <dt>Status</dt>
+        <dd>
+          <ChipSelect value={inv.status} options={INVITATION_OPTIONS} label="Status" onChange={(status) => set({ status }, INVITATION_STATUS_LABEL[status])} />
+        </dd>
+        <dt>Plus-ones</dt>
+        <dd>
+          <Stepper value={inv.plusOnes} label="Plus-ones" onChange={(plusOnes) => set({ plusOnes }, plural(plusOnes, 'plus-one'))} />
+        </dd>
+        <dt>Brunch</dt>
+        <dd>
+          <button type="button" className="pl-toggle" aria-pressed={inv.brunch} onClick={() => set({ brunch: !inv.brunch }, inv.brunch ? 'no brunch' : 'brunch')}>
+            <Coffee size={12} aria-hidden /> {inv.brunch ? 'Coming to brunch' : 'No brunch'}
+          </button>
+        </dd>
+        <dt>Invited by</dt>
+        <dd>
+          <span className="pl-seg-ctl" role="group" aria-label="Invited by">
+            {INVITE_METHODS.map((m) => (
+              <button key={m} type="button" aria-pressed={inv.method === m} onClick={() => set({ method: inv.method === m ? undefined : m }, INVITE_METHOD_LABEL[m])}>
+                {INVITE_METHOD_LABEL[m]}
+              </button>
+            ))}
+          </span>
+        </dd>
+        <dt>Sent</dt>
+        <dd>
+          <input type="date" className="pl-date-inline" value={inv.invitedAt ?? ''} aria-label="Invitation sent on" onChange={(e) => set({ invitedAt: e.target.value || undefined }, 'sent date')} />
+        </dd>
+        {inv.nudgedAt && (
+          <>
+            <dt>Last nudged</dt>
+            <dd>{inv.nudgedAt}</dd>
+          </>
+        )}
+        <dt>Notes</dt>
+        <dd>
+          <InlineText value={inv.notes ?? ''} label="Invitation notes" onSave={(notes) => set({ notes: notes || undefined }, 'notes saved')} placeholder="Add a note…" />
+        </dd>
+      </dl>
+    </section>
   );
 }

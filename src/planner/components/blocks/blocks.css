@@ -1,0 +1,32 @@
+.pl-verdict { display: flex; align-items: flex-start; gap: var(--pl-s2); margin: 0; font-size: var(--pl-fs-lg); font-weight: 500; color: var(--pl-text); }
+.pl-verdict > svg { flex: none; margin-top: 3px; }
+.pl-verdict.is-ok > svg { color: var(--pl-good); }
+.pl-verdict.is-tight > svg { color: var(--pl-warn); }
+.pl-verdict.is-over > svg { color: var(--pl-danger); }
+.pl-verdict.is-unknown > svg { color: var(--pl-muted); }
+.pl-headcount-cap { margin-top: var(--pl-s2) !important; }
+
+.pl-clocksum { display: flex; flex-direction: column; gap: var(--pl-s3); }
+.pl-clockmeter { position: relative; display: flex; height: 14px; border-radius: 999px; background: var(--pl-surface-3); overflow: visible; }
+.pl-clockmeter > span { display: block; height: 100%; transition: width 0.3s ease; }
+.pl-clockmeter > span:first-child { border-radius: 999px 0 0 999px; }
+.pl-clockmeter .is-sean, .pl-sw.is-sean { background: var(--pl-accent); }
+.pl-clockmeter .is-guests, .pl-sw.is-guests { background: var(--pl-info); }
+.pl-clockmeter .is-house, .pl-sw.is-house { background: #8a8577; }
+.pl-clockmeter .is-gap { background: repeating-linear-gradient(45deg, rgba(243, 241, 234, 0.25) 0 3px, transparent 3px 6px); }
+.pl-clockmeter i { position: absolute; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; }
+.pl-clockmeter-buffer { background: var(--pl-muted); }
+.pl-clockmeter-cap { background: var(--pl-text); }
+.pl-trim { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pl-s2); }
+.pl-root .pl-trim-chip {
+  display: inline-flex;
+  gap: 0.4rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--pl-border-strong);
+  border-radius: 999px;
+  color: var(--pl-text);
+  font-size: var(--pl-fs-sm);
+  text-decoration: none;
+}
+.pl-root .pl-trim-chip:hover { border-color: var(--pl-accent); }
+.pl-trim-chip .pl-num { color: var(--pl-muted); }
