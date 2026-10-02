@@ -39,3 +39,12 @@ describe('readiness', () => {
     expect(byId({ segmentCount: 0 }).clock.done).toBe(false);
   });
 });
+
+describe('timerTargetDocId', () => {
+  it('uses the env value, else the timer default', async () => {
+    const { timerTargetDocId } = await import('./readiness');
+    expect(timerTargetDocId(' seanscars-2027-rundown ')).toBe('seanscars-2027-rundown');
+    expect(timerTargetDocId(undefined)).toBe('seanscars-2026-rundown');
+    expect(timerTargetDocId('')).toBe('seanscars-2026-rundown');
+  });
+});

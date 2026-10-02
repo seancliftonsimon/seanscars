@@ -103,3 +103,13 @@ export function readiness(input: ReadinessInput): ReadinessItem[] {
     },
   ];
 }
+
+/**
+ * The document this build of the site's Backstage Timer reads. Mirrors the
+ * timer's own rule (src/pages/BackstageTimer.tsx, which the planner never
+ * changes): VITE_RUN_OF_SHOW_DOC_ID, else its built-in default.
+ */
+export const TIMER_DEFAULT_DOC_ID = 'seanscars-2026-rundown';
+export function timerTargetDocId(envValue: string | undefined): string {
+  return envValue?.trim() || TIMER_DEFAULT_DOC_ID;
+}

@@ -764,3 +764,4 @@
   box-shadow: var(--pl-shadow);
 }
 @media (max-width: 760px) { .pl-bulkbar { bottom: calc(4.75rem + env(safe-area-inset-bottom)); } }
+.pl-step-num { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; flex: none; border: 1.5px solid var(--pl-border-strong); border-radius: 50%; font-size: var(--pl-fs-xs); font-weight: 700; color: var(--pl-muted); }

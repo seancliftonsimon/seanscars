@@ -329,8 +329,9 @@ export default function ImportScreen() {
       <header className="pl-screen-header">
         <h1>Import</h1>
       </header>
-      <p className="pl-muted">
-        Importers are safe to re-run: matching rows update instead of duplicating. Rows with problems are skipped.
+      <p className="pl-page-answer">
+        One-time setup: bring in the 2026 archive and season spreadsheets. Each card previews before it writes; re-running updates
+        matching rows instead of duplicating them. Day to day, you won’t need this page.
       </p>
 
       <h2 className="pl-section-title">2026 archive</h2>

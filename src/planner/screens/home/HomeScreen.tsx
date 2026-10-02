@@ -204,7 +204,7 @@ function useBlocks(d: Derived | null, phase: PhaseId) {
       id: 'awardDecisions',
       node: (
         <Card title="Awards" icon={Trophy} href="/plan/make?view=awards" linkText="Awards" headline={h('awardDecisions')}>
-          <p>{undecided.length ? `${plural(undecided.length, 'award')} still need a winner.` : 'Every award has a winner.'} {data.awards.filter((a) => a.stage === 'idea').length > 0 && `${data.awards.filter((a) => a.stage === 'idea').length} still ideas.`}</p>
+          <p>{data.awards.length === 0 ? 'No awards yet. Start from last year, or promote an idea.' : undecided.length ? `${plural(undecided.length, 'award')} still need a winner.` : 'Every award has a winner.'} {data.awards.filter((a) => a.stage === 'idea').length > 0 && `${data.awards.filter((a) => a.stage === 'idea').length} still ideas.`}</p>
         </Card>
       ),
     });

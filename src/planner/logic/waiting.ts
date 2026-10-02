@@ -130,3 +130,28 @@ export function waitHref(w: Pick<WaitReason, 'kind' | 'id'>): string {
       return '/plan/prep?view=venues';
   }
 }
+
+export interface BlockedItem {
+  kind: 'piece' | 'checklist';
+  id: string;
+  title: string;
+  href: string;
+}
+
+/** The pieces and open checklist items waiting on `target`, for "blocking N things". */
+export function blockedItems(target: WaitingOn, data: WaitingData): BlockedItem[] {
+  const out: BlockedItem[] = [];
+  for (const piece of data.pieces) {
+    const reason = derivedWaiting(piece, data);
+    if (reason && matches(target, reason.kind, reason.id)) {
+      out.push({ kind: 'piece', id: piece.id, title: piece.title, href: `/plan/make?piece=${piece.id}` });
+    }
+  }
+  for (const item of data.checklist ?? []) {
+    if (item.done || !item.waitingOn || isResolved(item.waitingOn, data)) continue;
+    if (matches(target, item.waitingOn.kind, item.waitingOn.id)) {
+      out.push({ kind: 'checklist', id: item.id, title: item.text, href: `/plan/prep?task=${item.id}` });
+    }
+  }
+  return out;
+}

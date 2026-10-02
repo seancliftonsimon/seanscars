@@ -48,3 +48,7 @@
   .pl-tl-end { grid-template-columns: auto 1fr; }
   .pl-root .pl-unplaced select { max-width: none; width: 100%; }
 }
+.pl-ready .is-done .pl-list-title, .pl-switch .is-done .pl-list-title { color: var(--pl-muted); }
+.pl-ok-icon { color: var(--pl-good); flex: none; }
+.pl-switch code, .pl-ready code { font-size: 0.85em; padding: 0 0.25rem; border-radius: 4px; background: var(--pl-surface-3); color: var(--pl-text); }
+.pl-switch .pl-list-row { align-items: flex-start; }
