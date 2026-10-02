@@ -1,0 +1,22 @@
+.pl-piece-row.is-blocked .pl-ring { opacity: 0.6; }
+.pl-piece-next { font-size: var(--pl-fs-sm); color: var(--pl-text); }
+.pl-piece-wait { display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--pl-fs-sm); color: var(--pl-warn); }
+.pl-root .pl-piece-wait a { color: var(--pl-warn); }
+.pl-root .pl-group-title { margin: 0; font-size: var(--pl-fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pl-muted); }
+.pl-award-row .pl-drag-handle { align-self: flex-start; margin-top: 2px; }
+.pl-award-pieces { display: flex; flex-wrap: wrap; gap: var(--pl-s2); margin-top: 0.25rem; }
+.pl-award-piece { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.1rem 0.5rem 0.1rem 0.15rem; border: 1px solid var(--pl-border); border-radius: 999px; background: none; color: var(--pl-muted); font: inherit; font-size: var(--pl-fs-xs); cursor: pointer; }
+.pl-award-piece:hover { color: var(--pl-text); border-color: var(--pl-border-strong); }
+.pl-award-piece.is-blocked { color: var(--pl-warn); }
+.pl-list li.is-dragging { position: relative; z-index: 3; background: var(--pl-surface-2); box-shadow: var(--pl-shadow); }
+.pl-root .pl-select-auto { width: auto; }
+
+.pl-board { display: grid; grid-template-columns: repeat(5, minmax(11rem, 1fr)); gap: var(--pl-s3); overflow-x: auto; padding-bottom: var(--pl-s2); }
+.pl-board-col { display: flex; flex-direction: column; gap: var(--pl-s2); min-width: 0; padding: var(--pl-s3); background: var(--pl-surface); border: 1px solid var(--pl-border); border-radius: var(--pl-r2); }
+.pl-root .pl-board-col h3 { margin: 0; display: flex; gap: var(--pl-s2); align-items: baseline; }
+.pl-board-col header p { margin: 0 !important; }
+.pl-board-card { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; padding: var(--pl-s3); background: var(--pl-surface-2); border: 1px solid var(--pl-border); border-radius: var(--pl-r1); }
+.pl-board-card.is-overdue { border-color: rgba(240, 113, 103, 0.5); }
+@media (max-width: 900px) {
+  .pl-board { grid-template-columns: 1fr; overflow: visible; }
+}

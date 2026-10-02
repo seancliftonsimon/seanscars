@@ -225,10 +225,10 @@ export function seedFor(name: string, ts: MakeTs): SeedDoc[] {
     ['Finale & thank-yous', 'live', 'slides', 420, []],
   ];
   // Pushes the show a few minutes over the 2:50 available time in early phases.
-  const extra = sc.progress < 0.8 ? 1 : 0;
+  const extraMin = name === 'production' ? 18 : name === 'invites' ? 6 : 0;
   segs.forEach(([title, type, src, sec, owners, label], i) =>
     put(`${S}/segments/s${i + 1}`, {
-      order: (i + 1) * 1000, title, type, playbackSource: src, plannedSec: sec + (i === 9 ? extra * 360 : 0),
+      order: (i + 1) * 1000, title, type, playbackSource: src, plannedSec: sec + (i === 9 ? extraMin * 60 : 0),
       ownerPersonIds: owners, ...(label ? { presenterLabel: label } : {}),
       ...(i === 12 ? { hardTime: '21:15' } : {}),
       ...(i === 5 ? { notes: 'Check the audio level on the last clip.' } : {}),

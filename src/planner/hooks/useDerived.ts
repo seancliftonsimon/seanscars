@@ -25,7 +25,8 @@ export function useDerived() {
     const livePublish = data.publishes.find((p) => p.targetDocId === season.timerDocId) ?? null;
     const payload = toTimerPayload(season, data.segments, data.peopleById, 0);
     const changedSinceLive = livePublish ? changedSincePublish(payload, livePublish) === true : false;
-    const changedSinceLast = data.publishes[0] ? changedSincePublish(payload, data.publishes[0]) === true : false;
+    /** null when the last publish has no snapshot to compare with. */
+    const changedSinceLast = data.publishes[0] ? changedSincePublish(payload, data.publishes[0]) : null;
     const ready = readiness({
       season,
       totals: schedule.totals,

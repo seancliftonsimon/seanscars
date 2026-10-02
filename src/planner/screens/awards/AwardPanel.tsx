@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AWARD_STAGE_LABEL, PIECE_KIND_LABEL } from '../../logic/labels';
 import { createRecord, deleteRecord, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { nextOrder } from '../../logic/records';
@@ -6,6 +7,7 @@ import { defaultSteps, progress } from '../../logic/steps';
 import { pieceLengthSec } from '../../logic/clock';
 import { formatDuration } from '../../logic/clockFormat';
 import StepDots from '../../components/StepDots';
+import { derivedWaiting } from '../../logic/waiting';
 import type { SeasonData } from '../../hooks/useSeasonData';
 import { AWARD_STAGES } from './stages';
 import type { Award, AwardStage, Contender, PieceKind, WithId } from '../../types';
@@ -59,6 +61,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [newKind, setNewKind] = useState<PieceKind>('award-video');
+  const [unblocked, setUnblocked] = useState<{ id: string; title: string }[]>([]);
 
   const pieces = award ? data.pieces.filter((p) => p.awardId === award.id) : [];
   const nominees = draft.contenders.filter((c) => c.nominee && c.label.trim());
@@ -129,7 +132,10 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
     setBusy(true);
     try {
       if (award) {
+        // Pieces that were waiting on this award's winner, to show what the decision unblocks.
+        const waiting = !award.winnerContenderId && fields.winnerContenderId ? pieces.filter((p) => derivedWaiting(p, data)?.kind === 'award') : [];
         await updateRecord(seasonSubDoc(seasonId, 'awards', award.id), fields);
+        setUnblocked(waiting.map((p) => ({ id: p.id, title: p.title })));
         setMessage('Saved.');
       } else {
         const id = await createRecord(seasonCol(seasonId, 'awards'), { ...fields, order: nextOrder(data.awards) });
@@ -201,7 +207,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
             <span>Stage</span>
             <select value={draft.stage} onChange={(e) => set('stage', e.target.value as AwardStage)}>
               {AWARD_STAGES.map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>{AWARD_STAGE_LABEL[s]}</option>
               ))}
             </select>
           </label>
@@ -300,6 +306,21 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
           )}
           {message && <span className="pl-form-message">{message}</span>}
         </div>
+        {unblocked.length > 0 && (
+          <div className="pl-banner is-good" role="status">
+            <span>
+              Winner picked. Now unblocked:{' '}
+              {unblocked.map((p, i) => (
+                <span key={p.id}>
+                  <button type="button" className="pl-link-btn" onClick={() => onOpenPiece(p.id)}>
+                    {p.title}
+                  </button>
+                  {i < unblocked.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+            </span>
+          </div>
+        )}
       </form>
 
       {award && (
@@ -318,7 +339,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
                     </button>
                     <span className="pl-muted">
                       {' '}
-                      {p.kind} · {done}/{total} · {formatDuration(pieceLengthSec(p))}
+                      {PIECE_KIND_LABEL[p.kind]} · {done}/{total} · {formatDuration(pieceLengthSec(p))}
                     </span>
                     <StepDots steps={p.steps} />
                   </li>
@@ -329,7 +350,7 @@ export default function AwardPanel({ seasonId, award, data, onClose, onOpenPiece
           <div className="pl-inline-form">
             <select value={newKind} onChange={(e) => setNewKind(e.target.value as PieceKind)} aria-label="Piece kind">
               {PIECE_KINDS.map((k) => (
-                <option key={k}>{k}</option>
+                <option key={k} value={k}>{PIECE_KIND_LABEL[k]}</option>
               ))}
             </select>
             <button type="button" className="pl-btn" onClick={addPiece}>

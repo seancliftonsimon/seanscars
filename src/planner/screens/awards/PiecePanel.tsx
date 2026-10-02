@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { PIECE_KIND_LABEL, STEP_STATUS_LABEL } from '../../logic/labels';
 import StepDots from '../../components/StepDots';
 import { createRecord, deleteRecord, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
 import { errorMessage } from '../../errors';
@@ -252,7 +253,7 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
           <span>Kind</span>
           <select value={draft.kind} onChange={(e) => setKind(e.target.value as PieceKind)}>
             {KINDS.map((k) => (
-              <option key={k}>{k}</option>
+              <option key={k} value={k}>{PIECE_KIND_LABEL[k]}</option>
             ))}
           </select>
         </label>
@@ -325,9 +326,9 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
                   type="button"
                   className="pl-btn pl-awards-step-status"
                   onClick={() => void changeSteps(cycleStep(steps, index))}
-                  title="Click to cycle todo, doing, done"
+                  title="Click to cycle: to do, in progress, done"
                 >
-                  {step.status}
+                  {STEP_STATUS_LABEL[step.status]}
                 </button>
                 <button
                   type="button"

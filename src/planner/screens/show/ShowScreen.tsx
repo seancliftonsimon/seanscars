@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   closestCenter,
   DndContext,
@@ -11,291 +11,243 @@ import {
   type Modifier,
 } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useSeason } from '../../hooks/useSeason';
-import { useCollection } from '../../hooks/useCollection';
-import { deleteRecord, peopleCol, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
-import { errorMessage } from '../../errors';
-import { computeSchedule } from '../../logic/clock';
+import { CheckCircle2, Clapperboard, Plus, Printer, Radio } from 'lucide-react';
+import { deleteRecord, seasonSubDoc, updateRecord } from '../../firestore';
+import { usePlanner } from '../../hooks/plannerContext';
+import { useDerived } from '../../hooks/useDerived';
+import { useSafeWrite, useUndoableUpdate } from '../../hooks/useUndoable';
 import { orderForMove, renumber, moveItem } from '../../logic/order';
-import ClockBar from '../../components/ClockBar';
+import { formatDuration } from '../../logic/clockFormat';
+import { formatClockTime, pieceLengthSec } from '../../logic/clock';
+import { PIECE_KIND_LABEL } from '../../logic/labels';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import ClockSummary from '../../components/blocks/ClockSummary';
+import { EmptyState, PageHeader, Section, Skeleton } from '../../components/ui/Basics';
+import { Chip } from '../../components/ui/Chip';
+import { DrawerFrame } from '../../components/ui/Drawer';
 import SegmentPanel from './SegmentPanel';
-import SegmentRow from './SegmentRow';
+import SegmentCard from './SegmentCard';
 import PublishDialog from './PublishDialog';
-import { toTimerPayload } from '../../logic/timerPayload';
-import { changedSincePublish } from '../../logic/publishDiff';
-import type { Piece, Segment, WithId } from '../../types';
+import { PublishStatus } from './PublishStatus';
+import type { Segment, WithId } from '../../types';
+import './show.css';
 
 /** Rows only move up and down. */
 const restrictToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 
-type Panel = { mode: 'add' } | { mode: 'edit'; id: string } | null;
-
+/** The run of show as a timeline, with the clock verdict on top. `?segment=<id|new>`. */
 export default function ShowScreen() {
-  const { season } = useSeason();
-  const seasonId = season?.id ?? null;
-  const segmentsState = useCollection(seasonId ? seasonCol(seasonId, 'segments') : null);
-  const piecesState = useCollection(seasonId ? seasonCol(seasonId, 'pieces') : null);
-  const { data: people } = useCollection(peopleCol());
-  const { data: publishData } = useCollection(seasonId ? seasonCol(seasonId, 'publishes') : null);
+  const { season, data } = usePlanner();
+  const d = useDerived();
+  const [params, setParams] = useSearchParams();
+  const update = useUndoableUpdate();
+  const write = useSafeWrite();
   const [publishing, setPublishing] = useState(false);
-
-  const [panel, setPanel] = useState<Panel>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<WithId<Segment> | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const segments = useMemo(
-    () => [...segmentsState.data].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)),
-    [segmentsState.data],
-  );
-  const pieces = piecesState.data;
-  const schedule = useMemo(
-    () => (season ? computeSchedule(season, segments, pieces) : null),
-    [season, segments, pieces],
-  );
-  const rowsById = useMemo(() => new Map(schedule?.rows.map((r) => [r.segmentId, r])), [schedule]);
-  const namesById = useMemo(() => new Map(people.map((p) => [p.id, p.name])), [people]);
-  const publishes = useMemo(
-    () => [...publishData].sort((a, b) => (b.payloadUpdatedAtMs ?? 0) - (a.payloadUpdatedAtMs ?? 0)),
-    [publishData],
-  );
-  const lastPublish = publishes[0] ?? null;
-  // "Changed since" compares what would be published now with what was published last.
-  const planChanged = useMemo(() => {
-    if (!season) return false;
-    const now = toTimerPayload(season, segments, new Map(people.map((p) => [p.id, p])), 0);
-    return changedSincePublish(now, lastPublish) === true;
-  }, [season, segments, people, lastPublish]);
-  const segmentIds = useMemo(() => new Set(segments.map((s) => s.id)), [segments]);
-  // Pieces pointing at a deleted segment count as unassigned.
-  const unassigned = pieces.filter((p) => !p.segmentId || !segmentIds.has(p.segmentId));
+  const segmentParam = params.get('segment');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const segments = data.segments;
+  const segmentIds = useMemo(() => new Set(segments.map((s) => s.id)), [segments]);
+  const unassigned = data.pieces.filter((p) => !p.segmentId || !segmentIds.has(p.segmentId));
 
-  function names(ids: string[]): string {
-    return ids.map((id) => namesById.get(id) ?? 'Unknown').join(' & ');
+  if (!season) {
+    return <EmptyState icon={Clapperboard} title="No season yet" action={<Link to="/plan/season" className="pl-btn pl-btn-primary">Create a season</Link>}>The run of show belongs to a season.</EmptyState>;
   }
+  if (!d) return <div className="pl-page"><Skeleton rows={2} label="Loading run of show" /><Skeleton rows={10} /></div>;
+  const sid = season.id;
+  const rowsById = new Map(d.schedule.rows.map((r) => [r.segmentId, r]));
+  const trimIds = new Set(d.verdict.candidates.map((c) => c.segmentId));
 
-  function presenterFor(segment: Segment): string {
-    if (segment.ownerPersonIds.length > 0) return names(segment.ownerPersonIds);
-    return segment.presenterLabel || 'Sean';
-  }
-
-  function pieceOwner(piece: Piece): string {
-    return piece.ownerPersonIds.length > 0 ? names(piece.ownerPersonIds) : 'Sean';
-  }
-
-  async function run(action: () => Promise<unknown>) {
-    setError(null);
-    try {
-      await action();
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  }
-
-  function handleDragEnd({ active, over }: DragEndEvent) {
-    if (!over || active.id === over.id) return;
-    move(
-      segments.findIndex((s) => s.id === active.id),
-      segments.findIndex((s) => s.id === over.id),
-    );
-  }
+  const openSegment = (id: string | null) => {
+    const p = new URLSearchParams(params);
+    if (id) p.set('segment', id);
+    else p.delete('segment');
+    setParams(p);
+  };
 
   function move(from: number, to: number) {
-    if (!seasonId || from < 0 || to < 0 || to >= segments.length || from === to) return;
+    if (from < 0 || to < 0 || to >= segments.length || from === to) return;
     const order = orderForMove(segments, from, to);
-    void run(async () => {
-      if (order !== null) {
-        await updateRecord(seasonSubDoc(seasonId, 'segments', segments[from].id), { order });
-      } else {
+    void write(async () => {
+      if (order !== null) await updateRecord(seasonSubDoc(sid, 'segments', segments[from].id), { order });
+      else {
         const changes = renumber(moveItem(segments, from, to));
-        await Promise.all(changes.map((c) => updateRecord(seasonSubDoc(seasonId, 'segments', c.id), { order: c.order })));
+        await Promise.all(changes.map((c) => updateRecord(seasonSubDoc(sid, 'segments', c.id), { order: c.order })));
       }
     });
   }
 
-  function setLength(segment: WithId<Segment>, plannedSec: number) {
-    if (!seasonId) return;
-    void run(() => updateRecord(seasonSubDoc(seasonId, 'segments', segment.id), { plannedSec }));
+  function onDragEnd({ active, over }: DragEndEvent) {
+    if (!over || active.id === over.id) return;
+    move(segments.findIndex((s) => s.id === active.id), segments.findIndex((s) => s.id === over.id));
   }
 
-  function assignPiece(pieceId: string, segmentId: string | undefined) {
-    if (!seasonId) return;
-    void run(() => updateRecord(seasonSubDoc(seasonId, 'pieces', pieceId), { segmentId }));
-  }
-
-  function toggle(id: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const assign = (pieceId: string, segmentId: string | undefined) => {
+    const piece = data.pieces.find((p) => p.id === pieceId);
+    if (!piece) return;
+    const seg = segments.find((s) => s.id === segmentId);
+    void update(seasonSubDoc(sid, 'pieces', pieceId), piece, { segmentId }, seg ? `${piece.title} placed in ${seg.title}` : `${piece.title} removed from its segment`);
+  };
 
   async function deleteSegment(segment: WithId<Segment>) {
-    if (!seasonId) return;
     setBusy(true);
-    // Unassign its pieces first so none point at a missing segment.
-    await run(async () => {
-      const piecesHere = pieces.filter((p) => p.segmentId === segment.id);
-      await Promise.all(
-        piecesHere.map((p) => updateRecord(seasonSubDoc(seasonId, 'pieces', p.id), { segmentId: undefined })),
-      );
-      await deleteRecord(seasonSubDoc(seasonId, 'segments', segment.id));
-      setPanel(null);
-    });
+    await write(async () => {
+      const here = data.pieces.filter((p) => p.segmentId === segment.id);
+      await Promise.all(here.map((p) => updateRecord(seasonSubDoc(sid, 'pieces', p.id), { segmentId: undefined })));
+      await deleteRecord(seasonSubDoc(sid, 'segments', segment.id));
+      openSegment(null);
+    }, `Deleted “${segment.title}”`);
     setBusy(false);
     setConfirmDelete(null);
   }
 
-  if (!season) {
-    return (
-      <section className="pl-screen">
-        <header className="pl-screen-header">
-          <h1>Show</h1>
-        </header>
-        <p className="pl-empty">
-          No season yet. <Link to="/plan/season">Create one in Season settings.</Link>
-        </p>
-      </section>
-    );
-  }
-
-  const editing = panel?.mode === 'edit' ? (segments.find((s) => s.id === panel.id) ?? null) : null;
-  const loading = segmentsState.loading || piecesState.loading;
-  const loadError = segmentsState.error ?? piecesState.error;
+  const editing = segmentParam && segmentParam !== 'new' ? (segments.find((s) => s.id === segmentParam) ?? null) : null;
+  const ready = d.ready.filter((r) => r.done).length;
 
   return (
     <>
-      <section className="pl-screen pl-screen-wide">
-        {schedule && <ClockBar totals={schedule.totals} />}
-        <header className="pl-screen-header">
-          <h1>Show</h1>
-          <span className="pl-muted">
-            {season.name} · starts {season.showStartTime}
-          </span>
-          <div className="pl-header-actions">
-            <Link to="/plan/show/print" className="pl-btn">
-              Print
-            </Link>
-            <button type="button" className="pl-btn" onClick={() => setPublishing(true)} disabled={segments.length === 0}>
-              Publish to timer
-            </button>
-            <button type="button" className="pl-btn pl-btn-primary" onClick={() => setPanel({ mode: 'add' })}>
-              Add segment
-            </button>
-          </div>
-        </header>
-        <p className="pl-muted pl-publish-status">
-          {lastPublish ? (
+      <div className="pl-page pl-show">
+        <PageHeader
+          title="Show"
+          answer={segments.length ? <>Starts {formatClockTime(season.showStartTime)}. {d.verdict.headline}</> : 'No run of show yet.'}
+          actions={
             <>
-              Last published {lastPublish.at ? lastPublish.at.toDate().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'just now'}{' '}
-              to <code>{lastPublish.targetDocId}</code>
-              {planChanged && <span className="pl-tag pl-tag-switch">changed since</span>}
+              <Link to="/plan/show/ready" className="pl-btn">
+                <CheckCircle2 size={16} aria-hidden /> Show week <span className="pl-count">{ready}/{d.ready.length}</span>
+              </Link>
+              <Link to="/plan/show/print" className="pl-btn">
+                <Printer size={16} aria-hidden /> Print
+              </Link>
+              <button type="button" className="pl-btn" onClick={() => setPublishing(true)} disabled={segments.length === 0}>
+                <Radio size={16} aria-hidden /> Publish to timer
+              </button>
+              <button type="button" className="pl-btn pl-btn-primary" onClick={() => openSegment('new')}>
+                <Plus size={16} aria-hidden /> Add segment
+              </button>
             </>
-          ) : (
-            'Not published to the timer yet.'
-          )}
-        </p>
-        {error && <p className="pl-error">Couldn't save: {error}</p>}
+          }
+        />
+        <PublishStatus />
 
-        {loading ? (
-          <p className="pl-muted">Loading run of show…</p>
-        ) : loadError ? (
-          <p className="pl-error">Couldn't load: {errorMessage(loadError)}</p>
-        ) : segments.length === 0 ? (
-          <p className="pl-empty">
-            No segments yet. Add one, or <Link to="/plan/season">start this season from the last one</Link>.
-          </p>
+        {segments.length === 0 ? (
+          <EmptyState
+            icon={Clapperboard}
+            title="Shape the evening"
+            action={
+              <>
+                <button type="button" className="pl-btn pl-btn-primary" onClick={() => openSegment('new')}>Add the first segment</button>
+                <Link to="/plan/season" className="pl-btn">Start from last year</Link>
+              </>
+            }
+          >
+            The run of show is the order of the night: each segment’s length, who’s on, and what plays. Times add up as you go, and the
+            clock tells you whether it fits.
+          </EmptyState>
         ) : (
-          <div className="pl-table-wrap">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              modifiers={[restrictToVerticalAxis]}
-              onDragEnd={handleDragEnd}
-            >
-              <table className="pl-table pl-show-table">
-                <thead>
-                  <tr>
-                    <th aria-label="Reorder" />
-                    <th>Start</th>
-                    <th>Title</th>
-                    <th>Presenter</th>
-                    <th>Type</th>
-                    <th>Source</th>
-                    <th>Length</th>
-                    <th>Pieces</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
+          <div className="pl-show-layout">
+            <div className="pl-show-main">
+              <div className="pl-card pl-show-clock">
+                <ClockSummary totals={d.schedule.totals} verdict={d.verdict} />
+              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
                 <SortableContext items={segments.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-                  {segments.map((segment, index) => {
-                    const row = rowsById.get(segment.id);
-                    if (!row) return null;
-                    return (
-                      <SegmentRow
-                        key={segment.id}
-                        segment={segment}
-                        row={row}
-                        presenter={presenterFor(segment)}
-                        pieces={pieces.filter((p) => p.segmentId === segment.id)}
-                        unassignedPieces={unassigned}
-                        ownerName={pieceOwner}
-                        expanded={expanded.has(segment.id)}
-                        onToggle={() => toggle(segment.id)}
-                        onEdit={() => setPanel({ mode: 'edit', id: segment.id })}
-                        onLength={(sec) => setLength(segment, sec)}
-                        onAssign={(pieceId) => assignPiece(pieceId, segment.id)}
-                        onUnassign={(pieceId) => assignPiece(pieceId, undefined)}
-                        onMove={(delta) => move(index, index + delta)}
-                      />
-                    );
-                  })}
+                  <ol className="pl-timeline" aria-label="Run of show">
+                    {segments.map((segment, index) => {
+                      const row = rowsById.get(segment.id);
+                      if (!row) return null;
+                      return (
+                        <SegmentCard
+                          key={segment.id}
+                          segment={segment}
+                          row={row}
+                          pieces={data.pieces.filter((p) => p.segmentId === segment.id)}
+                          unassigned={unassigned}
+                          peopleById={data.peopleById}
+                          expanded={expanded.has(segment.id)}
+                          trim={trimIds.has(segment.id)}
+                          onToggle={() =>
+                            setExpanded((prev) => {
+                              const next = new Set(prev);
+                              if (!next.delete(segment.id)) next.add(segment.id);
+                              return next;
+                            })
+                          }
+                          onEdit={() => openSegment(segment.id)}
+                          onLength={(plannedSec) =>
+                            void update(seasonSubDoc(sid, 'segments', segment.id), segment, { plannedSec }, `${segment.title}: ${formatDuration(plannedSec)}`)
+                          }
+                          onAssign={(pieceId) => assign(pieceId, segment.id)}
+                          onUnassign={(pieceId) => assign(pieceId, undefined)}
+                          onMove={(delta) => move(index, index + delta)}
+                        />
+                      );
+                    })}
+                    <li className="pl-tl-end">
+                      <div className="pl-tl-time pl-num">{d.schedule.rows.length ? formatEnd(season.showStartTime, d.schedule.totals.totalSec) : ''}</div>
+                      <div className="pl-small pl-muted">End of show</div>
+                    </li>
+                  </ol>
                 </SortableContext>
-              </table>
-            </DndContext>
+              </DndContext>
+            </div>
+            <aside className="pl-show-side">
+              <Section title={`Not placed yet (${unassigned.length})`}>
+                {unassigned.length === 0 ? (
+                  <p className="pl-small pl-muted">Every piece has a segment.</p>
+                ) : (
+                  <ul className="pl-list">
+                    {unassigned.map((p) => (
+                      <li key={p.id}>
+                        <div className="pl-list-row pl-unplaced">
+                          <div className="pl-list-main">
+                            <Link to={`/plan/make?piece=${p.id}`} className="pl-list-title">{p.title}</Link>
+                            <span className="pl-list-meta">
+                              <Chip tone="faint">{PIECE_KIND_LABEL[p.kind]}</Chip> {formatDuration(pieceLengthSec(p))}
+                            </span>
+                          </div>
+                          <select value="" aria-label={`Place ${p.title}`} onChange={(e) => e.target.value && assign(p.id, e.target.value)}>
+                            <option value="">Place in…</option>
+                            {segments.map((s) => (
+                              <option key={s.id} value={s.id}>{s.title}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Section>
+            </aside>
           </div>
         )}
-      </section>
+      </div>
 
-      {panel && (panel.mode === 'add' || editing) && (
-        <SegmentPanel
-          key={panel.mode === 'edit' ? panel.id : 'add'}
-          seasonId={season.id}
-          segment={editing}
-          segments={segments}
-          people={people}
-          onClose={() => setPanel(null)}
-          onDelete={setConfirmDelete}
-        />
+      {segmentParam && (segmentParam === 'new' || editing) && (
+        <DrawerFrame onClose={() => openSegment(null)}>
+          <SegmentPanel
+            key={segmentParam}
+            seasonId={sid}
+            segment={editing}
+            segments={segments}
+            people={data.people}
+            onClose={() => openSegment(null)}
+            onDelete={setConfirmDelete}
+          />
+        </DrawerFrame>
       )}
 
-      {publishing && (
-        <PublishDialog
-          season={season}
-          segments={segments}
-          people={people}
-          publishes={publishes}
-          onClose={() => setPublishing(false)}
-        />
-      )}
+      {publishing && <PublishDialog season={season} segments={segments} people={data.people} publishes={data.publishes} onClose={() => setPublishing(false)} />}
 
       {confirmDelete && (
         <ConfirmDialog
           title={`Delete “${confirmDelete.title}”?`}
-          message={
-            pieces.some((p) => p.segmentId === confirmDelete.id)
-              ? 'Its pieces are kept and become unassigned.'
-              : 'This removes the segment from the run of show.'
-          }
+          message={data.pieces.some((p) => p.segmentId === confirmDelete.id) ? 'Its pieces are kept and become unplaced.' : 'This removes the segment from the run of show.'}
           confirmLabel="Delete segment"
           busy={busy}
           onConfirm={() => void deleteSegment(confirmDelete)}
@@ -304,4 +256,11 @@ export default function ShowScreen() {
       )}
     </>
   );
+}
+
+function formatEnd(start: string, totalSec: number): string {
+  const [h, m] = start.split(':').map(Number);
+  const mins = (h * 60 + m + Math.round(totalSec / 60)) % (24 * 60);
+  const hh = Math.floor(mins / 60);
+  return `${hh % 12 === 0 ? 12 : hh % 12}:${String(mins % 60).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`;
 }

@@ -56,7 +56,7 @@ export function ProgressRing({ done, total, size = 34, label }: RingProps) {
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </svg>
-      <span className="pl-ring-text">{complete ? '✓' : `${done}/${total}`}</span>
+      {(size >= 30 || complete) && <span className="pl-ring-text">{complete ? '✓' : `${done}/${total}`}</span>}
     </span>
   );
 }

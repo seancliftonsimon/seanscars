@@ -116,3 +116,17 @@ export function blockedCount(target: WaitingOn, data: WaitingData): number {
   }
   return count;
 }
+
+/** Where a "waiting on" reason lives, so the blocker is one click away. */
+export function waitHref(w: Pick<WaitReason, 'kind' | 'id'>): string {
+  switch (w.kind) {
+    case 'award':
+      return `/plan/make?view=awards&award=${w.id}`;
+    case 'piece':
+      return `/plan/make?piece=${w.id}`;
+    case 'question':
+      return `/plan/prep?question=${w.id}`;
+    case 'venue':
+      return '/plan/prep?view=venues';
+  }
+}

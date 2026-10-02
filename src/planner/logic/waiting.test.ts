@@ -261,3 +261,12 @@ describe("blockedCount", () => {
     ).toBe(0);
   });
 });
+
+describe('waitHref', () => {
+  it('links to the blocker', async () => {
+    const { waitHref } = await import('./waiting');
+    expect(waitHref({ kind: 'award', id: 'a' })).toBe('/plan/make?view=awards&award=a');
+    expect(waitHref({ kind: 'question', id: 'q' })).toBe('/plan/prep?question=q');
+    expect(waitHref({ kind: 'venue', id: 'any' })).toBe('/plan/prep?view=venues');
+  });
+});
