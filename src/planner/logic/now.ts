@@ -96,7 +96,7 @@ export function computeNow(
       id: q.id,
       title: q.question,
       context: parts.join(' · '),
-      href: '/plan/logistics',
+      href: `/plan/prep?question=${q.id}`,
       overdue: q.dueDate ? q.dueDate < todayIso : undefined,
     };
   });
@@ -119,7 +119,7 @@ export function computeNow(
       id: a.id,
       title: a.name,
       context: `${plural(n, 'piece', 'pieces')} waiting on the winner`,
-      href: `/plan/awards?award=${a.id}`,
+      href: `/plan/make?award=${a.id}`,
     });
   }
 
@@ -136,7 +136,7 @@ export function computeNow(
       id: '',
       title: 'No venue booked',
       context: `${plural(k, 'option', 'options')} under consideration`,
-      href: '/plan/logistics',
+      href: '/plan/prep?view=venues',
     });
   }
 
@@ -160,8 +160,8 @@ export function computeNow(
       kind: 'piece',
       id: p.id,
       title: p.title,
-      context: `${who ? `${who} · ` : ''}Submitted not done · ${dueInfo(p.dueDate!, todayIso)}`,
-      href: `/plan/awards?tab=pieces&piece=${p.id}`,
+      context: `${who ? `${who} · ` : ''}Not submitted yet · ${dueInfo(p.dueDate!, todayIso)}`,
+      href: `/plan/make?piece=${p.id}`,
       overdue: p.dueDate! < todayIso,
     });
   }
@@ -169,7 +169,9 @@ export function computeNow(
   const invites = data.invitations
     .filter(
       (i) =>
-        i.status === 'invited' && i.invitedAt && daysBetween(i.invitedAt, todayIso) > 14,
+        i.status === 'invited' &&
+        i.invitedAt &&
+        daysBetween(i.nudgedAt && i.nudgedAt > i.invitedAt ? i.nudgedAt : i.invitedAt, todayIso) > 14,
     )
     .sort((a, b) => byDue(a.invitedAt, b.invitedAt));
   for (const i of invites) {
@@ -183,7 +185,7 @@ export function computeNow(
         'day',
         'days',
       )}`,
-      href: `/plan/people?person=${i.id}`,
+      href: `/plan/guests?view=waiting&person=${i.id}`,
     });
   }
 
@@ -202,13 +204,13 @@ export function computeNow(
       id: v.id,
       title: v.name,
       context: v.lastContactDate
-        ? `Inquired, last contact ${formatDay(v.lastContactDate)} (${plural(
+        ? `Asked, last contact ${formatDay(v.lastContactDate)} (${plural(
             daysBetween(v.lastContactDate, todayIso),
             'day',
             'days',
           )} ago)`
-        : 'Inquired · No contact date logged',
-      href: '/plan/logistics',
+        : 'Asked · No contact date logged',
+      href: `/plan/prep?venue=${v.id}`,
     });
   }
 
@@ -232,7 +234,7 @@ export function computeNow(
   }
   const sorter = (a: { p: WithId<Piece> }, b: { p: WithId<Piece> }) =>
     byDue(a.p.dueDate, b.p.dueDate) || pos(a.p) - pos(b.p);
-  const pieceHref = (p: Piece & { id: string }) => `/plan/awards?tab=pieces&piece=${p.id}`;
+  const pieceHref = (p: Piece & { id: string }) => `/plan/make?piece=${p.id}`;
 
   for (const { p } of ready.sort(sorter)) {
     const seg = p.segmentId ? segOrder.get(p.segmentId) : undefined;
@@ -271,7 +273,7 @@ export function computeNow(
       id: c.id,
       title: c.text,
       context: `${c.area ? `${c.area} · ` : ''}due ${formatDay(c.dueDate!)}`,
-      href: '/plan/logistics',
+      href: `/plan/prep?task=${c.id}`,
       overdue: c.dueDate! < todayIso,
     });
   }

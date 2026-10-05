@@ -261,3 +261,30 @@ describe("blockedCount", () => {
     ).toBe(0);
   });
 });
+
+describe('waitHref', () => {
+  it('links to the blocker', async () => {
+    const { waitHref } = await import('./waiting');
+    expect(waitHref({ kind: 'award', id: 'a' })).toBe('/plan/make?view=awards&award=a');
+    expect(waitHref({ kind: 'question', id: 'q' })).toBe('/plan/prep?question=q');
+    expect(waitHref({ kind: 'venue', id: 'any' })).toBe('/plan/prep?view=venues');
+  });
+});
+
+describe('blockedItems', () => {
+  it('lists pieces and open tasks waiting on a question', async () => {
+    const { blockedItems } = await import('./waiting');
+    const data = {
+      awards: [],
+      venues: [],
+      questions: [{ id: 'q', question: 'Q?', status: 'open' as const }],
+      pieces: [{ id: 'p', title: 'P', kind: 'other' as const, ownerPersonIds: [], order: 0, links: [], steps: [{ key: 'a', label: 'A', status: 'todo' as const }], waitingOn: { kind: 'question' as const, id: 'q' } }],
+      checklist: [
+        { id: 't', text: 'T', done: false, order: 0, waitingOn: { kind: 'question' as const, id: 'q' } },
+        { id: 'u', text: 'U', done: true, order: 0, waitingOn: { kind: 'question' as const, id: 'q' } },
+      ],
+    };
+    expect(blockedItems({ kind: 'question', id: 'q' }, data).map((b) => b.id)).toEqual(['p', 't']);
+    expect(blockedItems({ kind: 'question', id: 'q' }, { ...data, questions: [{ ...data.questions[0], status: 'decided' }] })).toEqual([]);
+  });
+});

@@ -1,0 +1,6 @@
+.pl-setup-steps { margin: var(--pl-s3) 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--pl-s2); }
+.pl-setup-steps li { display: flex; align-items: center; gap: var(--pl-s3); }
+.pl-setup-steps li.is-done { color: var(--pl-muted); }
+.pl-setup-steps li.is-done .pl-step-num { background: var(--pl-good-soft); color: var(--pl-good); border-color: transparent; }
+.pl-setup .pl-panel { padding: var(--pl-s4); border-radius: var(--pl-r2); }
+.pl-root .pl-setup .pl-panel h2 { margin: 0; }

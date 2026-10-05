@@ -1,0 +1,4 @@
+.pl-capture { display: flex; flex-direction: column; gap: var(--pl-s3); }
+.pl-capture p { margin: 0; }
+.pl-film-row .pl-list-actions { gap: var(--pl-s2); }
+.pl-root .pl-film-row .pl-list-meta a { display: inline-flex; gap: 0.2rem; align-items: center; }

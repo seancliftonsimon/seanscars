@@ -13,6 +13,10 @@ import {
 } from '../../logic/season';
 import type { Season, WithId } from '../../types';
 import StartFromPrevious from './StartFromPrevious';
+import { Link } from 'react-router-dom';
+import { usePlanner } from '../../hooks/plannerContext';
+import { PageHeader, Skeleton } from '../../components/ui/Basics';
+import './season.css';
 
 function errorMessage(err: unknown): string {
   const code = (err as { code?: string }).code;
@@ -153,7 +157,7 @@ function EditSeasonForm({ season }: { season: WithId<Season> }) {
         <TextField label="Show start" name="showStartTime" placeholder="19:00" hint="HH:MM, 24-hour" {...fieldProps} />
         <TextField label="Runtime cap (min)" name="runtimeCapMin" type="number" {...fieldProps} />
         <TextField label="Buffer target (min)" name="bufferTargetMin" type="number" {...fieldProps} />
-        <TextField label="Capacity" name="capacity" type="number" {...fieldProps} />
+        <TextField label="Capacity (guests incl. plus-ones)" name="capacity" type="number" hint="Also set when you book a venue" {...fieldProps} />
         <TextField label="Timer doc id" name="timerDocId" hint={timerWarning} wide {...fieldProps} />
         <TextField label="Master deck URL" name="masterDeckUrl" type="url" wide {...fieldProps} />
         <TextField label="Drive folder URL" name="driveFolderUrl" type="url" wide {...fieldProps} />
@@ -173,60 +177,86 @@ function EditSeasonForm({ season }: { season: WithId<Season> }) {
   );
 }
 
+function SetupSteps({ season }: { season: WithId<Season> }) {
+  const { data } = usePlanner();
+  const steps = [
+    { done: true, title: `Create the ${season.year} season`, href: null },
+    { done: Boolean(season.showDate && season.capacity), title: 'Set the date, start time and capacity', href: '#season-details' },
+    { done: data.segments.length > 0 || data.awards.length > 0, title: 'Start from last year (awards, your segments, returning guests)', href: '#season-rollover' },
+    { done: data.films.length > 0, title: 'Bring in films and ideas', href: '/plan/import' },
+    { done: Boolean(season.venueOptionId), title: 'Choose and book a venue', href: '/plan/prep?view=venues' },
+  ];
+  const done = steps.filter((s) => s.done).length;
+  return (
+    <section className="pl-card" aria-label="Setup steps">
+      <p className="pl-strong">
+        {done === steps.length ? `${season.year} is set up.` : `${done} of ${steps.length} setup steps done for ${season.year}.`}
+      </p>
+      <ol className="pl-setup-steps">
+        {steps.map((s, i) => (
+          <li key={i} className={s.done ? 'is-done' : undefined}>
+            <span className="pl-step-num" aria-hidden>{s.done ? '✓' : i + 1}</span>
+            {s.href && !s.done ? (
+              s.href.startsWith('#') ? <a href={s.href} onClick={(e) => { e.preventDefault(); document.querySelector(s.href!)?.scrollIntoView({ behavior: 'smooth' }); }}>{s.title}</a> : <Link to={s.href}>{s.title}</Link>
+            ) : (
+              <span>{s.title}{s.done ? <span className="pl-visually-hidden"> (done)</span> : null}</span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export default function SeasonSettings() {
   const { seasons, season, setSeasonId, loading, error } = useSeason();
 
   return (
-    <section className="pl-screen">
-      <header className="pl-screen-header">
-        <h1>Season settings</h1>
-      </header>
+    <div className="pl-page is-narrow pl-setup">
+      <PageHeader
+        title="Season setup"
+        answer={season ? 'A short checklist for the start of the year, then the season’s settings.' : 'Create the first season to start planning.'}
+      />
+      {season && <SetupSteps season={season} />}
 
-      <div className="pl-panel">
-        <h2>Seasons</h2>
+      {season && (
+        <section className="pl-panel" id="season-details">
+          <h2>{season.year} details</h2>
+          <EditSeasonForm key={season.id} season={season} />
+        </section>
+      )}
+
+      {seasons.length > 0 && <div id="season-rollover"><StartFromPrevious /></div>}
+
+      <section className="pl-panel">
+        <h2>All seasons</h2>
         {loading ? (
-          <p className="pl-muted">Loading…</p>
+          <Skeleton rows={3} label="Loading seasons" />
         ) : error ? (
           <p className="pl-error">Couldn't load seasons: {errorMessage(error)}</p>
         ) : seasons.length === 0 ? (
-          <p className="pl-empty">No seasons yet. Create the first one below.</p>
+          <p className="pl-muted">No seasons yet. Create the first one below.</p>
         ) : (
-          <table className="pl-table">
-            <thead>
-              <tr>
-                <th>Year</th>
-                <th>Name</th>
-                <th>Show date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {seasons.map((s) => (
-                <tr key={s.id} className={s.id === season?.id ? 'is-selected' : undefined}>
-                  <td>
-                    <button type="button" className="pl-link-btn" onClick={() => setSeasonId(s.id)}>
-                      {s.year}
-                    </button>
-                  </td>
-                  <td>{s.name}</td>
-                  <td>{s.showDate ?? '—'}</td>
-                  <td>{s.archived ? 'Archived' : s.id === season?.id ? 'Selected' : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="pl-list">
+            {seasons.map((s) => (
+              <li key={s.id}>
+                <div className={`pl-list-row${s.id === season?.id ? ' is-highlight' : ''}`}>
+                  <div className="pl-list-main">
+                    <span className="pl-list-title">{s.name}</span>
+                    <span className="pl-list-meta">{s.showDate ?? 'No date'}{s.archived ? ' · Archived' : ''}</span>
+                  </div>
+                  {s.id === season?.id ? (
+                    <span className="pl-small pl-muted">Open now</span>
+                  ) : (
+                    <button type="button" className="pl-btn pl-btn-sm" onClick={() => setSeasonId(s.id)}>Switch to {s.year}</button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
         <CreateSeasonForm />
-      </div>
-
-      {seasons.length > 0 && <StartFromPrevious />}
-
-      {season && (
-        <div className="pl-panel">
-          <h2>Edit {season.year}</h2>
-          <EditSeasonForm key={season.id} season={season} />
-        </div>
-      )}
-    </section>
+      </section>
+    </div>
   );
 }

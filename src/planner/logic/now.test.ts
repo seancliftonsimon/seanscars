@@ -130,7 +130,7 @@ describe('decide', () => {
     expect(v.decide[0]).toMatchObject({
       key: 'question:qc',
       context: 'Due Nov 6 · 2 items wait on this',
-      href: '/plan/logistics',
+      href: '/plan/prep?question=qc',
     });
     expect(v.decide[1].context).toBe('Due Nov 6 · 1 item waits on this');
     expect(v.decide[3].context).toBe('No due date');
@@ -169,7 +169,7 @@ describe('decide', () => {
     expect(v.decide.map((i) => i.key)).toEqual(['award:a2', 'award:a1']);
     expect(v.decide[0].context).toBe('2 pieces waiting on the winner');
     expect(v.decide[1].context).toBe('1 piece waiting on the winner');
-    expect(v.decide[0].href).toBe('/plan/awards?award=a2');
+    expect(v.decide[0].href).toBe('/plan/make?award=a2');
   });
 
   it('adds "No venue booked" with option count unless booked', () => {
@@ -229,7 +229,7 @@ describe('chase', () => {
     expect(v.chase[0]).toMatchObject({
       title: 'Late',
       overdue: true,
-      href: '/plan/awards?tab=pieces&piece=late',
+      href: '/plan/make?piece=late',
     });
     expect(v.chase[0].context).toContain('Ann & Bo');
     expect(v.chase[0].context).toContain('due Oct 30 (2 days overdue)');
@@ -255,7 +255,7 @@ describe('chase', () => {
       key: 'invitation:u1',
       title: 'Ann',
       context: 'Invited Oct 1, no reply for 31 days',
-      href: '/plan/people?person=u1',
+      href: '/plan/guests?view=waiting&person=u1',
     });
   });
 
@@ -274,7 +274,7 @@ describe('chase', () => {
     expect(v.chase.map((i) => i.id)).toEqual(['none', 'stale']);
     expect(v.chase[0].context).toContain('No contact date logged');
     expect(v.chase[1].context).toContain('Oct 20');
-    expect(v.chase[1].href).toBe('/plan/logistics');
+    expect(v.chase[1].href).toBe('/plan/prep?venue=stale');
   });
 });
 

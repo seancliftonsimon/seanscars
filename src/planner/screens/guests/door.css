@@ -1,0 +1,15 @@
+.pl-door header h1 { color: #000; font-size: 1.4em; margin: 0; }
+.pl-door header p { color: #444; margin: 0.2rem 0 0.8rem; }
+.pl-door table { width: 100%; border-collapse: collapse; font-size: 11pt; }
+.pl-door th, .pl-door td { border-bottom: 1px solid #ccc; padding: 0.35rem 0.4rem; text-align: left; color: #000; }
+.pl-door th { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.04em; color: #444; }
+.pl-door tr.is-maybe td { color: #555; font-style: italic; }
+.pl-door td:nth-child(5) { width: 30%; }
+.pl-door-box { display: inline-block; width: 12px; height: 12px; border: 1.5px solid #000; border-radius: 2px; }
+@media print {
+  .pl-door { box-shadow: none !important; padding: 0 !important; }
+}
+@media screen and (max-width: 760px) {
+  .pl-door { padding: 1rem; font-size: 10pt; }
+  .pl-door td:nth-child(5), .pl-door th:nth-child(5) { display: none; }
+}

@@ -52,7 +52,15 @@ export interface Season extends RecordMeta {
   driveFolderUrl?: string;
   theme?: string;
   archived: boolean;
+  /**
+   * Optional manual phase for the home screen (see logic/phase.ts). Unset =
+   * derived from the season's data. Stored on the season so the phone and
+   * the desktop agree.
+   */
+  phaseOverride?: PhaseId;
 }
+
+export type PhaseId = 'setup' | 'lists' | 'invites' | 'production' | 'showweek' | 'after';
 
 /* ---------- seasons/{s}/segments/{id} ---------- */
 
@@ -163,6 +171,8 @@ export interface Invitation extends RecordMeta {
   respondedAt?: IsoDate;
   rsvpIds: string[];
   notes?: string;
+  /** Optional: last time Sean nudged them for a reply. */
+  nudgedAt?: IsoDate;
 }
 
 /* ---------- seasons/{s}/venues/{id} ---------- */

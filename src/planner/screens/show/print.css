@@ -164,3 +164,8 @@
     print-color-adjust: exact;
   }
 }
+
+/* Phones: the letter-size sheet scrolls inside itself, not the page. */
+@media screen and (max-width: 760px) {
+  .pl-print-sheet { max-width: 100%; padding: 1rem; overflow-x: auto; }
+}

@@ -109,7 +109,7 @@ export default function StartFromPrevious() {
     <div className="pl-panel">
       <h2>Start a season from the previous one</h2>
       <p className="pl-muted">
-        Copies returning awards (as ideas), Sean's and house segments, an "invite?" for everyone confirmed last year, and a
+        Copies returning awards (as ideas), Sean's and house segments, everyone who came last year as “On the list”, and a
         draft contributor piece for each contributor segment.
       </p>
       <div className="pl-inline-form">

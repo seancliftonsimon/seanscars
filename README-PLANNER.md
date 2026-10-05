@@ -20,19 +20,38 @@ The gate only hides the UI. The planner collections are open in `firestore.rules
 
 ## Routes
 
-All paths are under `/#/plan`. Route labels and paths are declared in `src/planner/routes.ts`.
+All paths are under `/#/plan`. Labels and paths are declared in `src/planner/routes.ts`. The nav is organized by what you want to do; old paths redirect (with their query strings translated), so existing links keep working.
 
 | Route | What it does |
 | --- | --- |
-| `/plan` (Now) | What is due, what is waiting and what is next, at a glance. |
-| `/plan/show` (Show) | Run of show with computed start times, the clock bar, piece roll-ups, and Publish to timer. |
-| `/plan/show/print` (Print) | Printable run of show with switch cues, header and totals. Letter size. |
-| `/plan/awards` (Awards) | Awards and contenders. `?tab=pieces` shows all pieces, with steps and "waiting on". |
-| `/plan/films` (Films & ideas) | The film pool and the ideas inbox. |
-| `/plan/people` (People) | People and invitations. The RSVP inbox is a tab here. |
-| `/plan/logistics` (Logistics) | Venue options, open questions and the checklist. |
-| `/plan/season` (Season) | Create a season, edit its settings, and start a season from the previous one. |
+| `/plan` (Home) | Countdown, the season's phase, the three things most worth doing next (with inline actions), and the blocks that matter in this phase. |
+| `/plan/guests` (Guests) | Guest list with the projected headcount vs capacity (plus-ones counted). Views: `?view=send` (send invitations), `replies` (RSVP inbox), `waiting` (who hasn't replied, nudges), `final` (show-week numbers). `?person=` opens a guest. |
+| `/plan/guests/door` | Printable alphabetical door list. |
+| `/plan/show` (Show) | Clock verdict and the run of show as a timeline; Publish to timer. `?segment=<id or new>` opens a segment. |
+| `/plan/show/ready` | Show-week readiness, Publish, Print and the timer switch steps. `?publish=1` opens Publish. |
+| `/plan/show/print` | Printable run of show. Letter size. |
+| `/plan/make` (Make) | My queue. `?view=awards`, `guests` (guest presentations), `pieces`. `?award=`, `?piece=` open a record. |
+| `/plan/prep` (Venue & to-dos) | Venue options, open questions, checklist. `?view=venues|questions|checklist`; `?venue=`, `?question=`, `?task=` link to a record. |
+| `/plan/ideas` (Ideas) | Ideas inbox; `?view=films` for the film pool. `?idea=`, `?film=` link to a record. |
+| `/plan/season` (Season setup) | Setup checklist, season settings, start a season from the previous one. |
 | `/plan/import` (Import) | One-time imports of the archive and CSV season files. |
+
+Old paths: `/plan/people` → `/plan/guests` (`?tab=inbox` → `?view=replies`), `/plan/awards` → `/plan/make` (`?tab=pieces` → `?view=pieces`), `/plan/films` → `/plan/ideas?view=films`, `/plan/logistics` → `/plan/prep`.
+
+Anywhere: Cmd/Ctrl-K (or `/`) searches every record and jumps; `C` opens quick add (idea, guest, task or question; "song: …" tags an idea); `G` then `H`/`G`/`S`/`M`/`V`/`I` jumps to a section; Ctrl/Cmd-Z undoes the last change that offered Undo.
+
+## Phases
+
+The home screen leads with what matters now, using a phase derived from the data (`src/planner/logic/phase.ts`):
+
+- **Set up**: no show date, or no run of show, awards or guest list yet.
+- **Build the lists**: no invitation sent yet. Reply counts stay off screen; the headline is the projected headcount if everyone listed says yes.
+- **Invitations out**: at least one sent, more than four weeks to go, and over a quarter of sent invitations unanswered.
+- **Production**: invitations out and the show is four weeks away or less, or most replies are in.
+- **Show week**: seven days or less to go.
+- **After the show**: the date has passed.
+
+An invitation counts as sent once it has a sent date, is "Invited", or has a reply. The phase can be set by hand from Home (stored as `phaseOverride` on the season); "Automatic" goes back to the derived one. The relevance matrix in the same file decides what each phase shows as headline, supporting or hidden; hidden blocks are only left off Home and stay reachable from their screens.
 
 ## Data model
 
@@ -51,13 +70,13 @@ Times of day are `'HH:MM'`, durations are whole seconds (`...Sec` fields), dates
 1. **First time only: Import** (`/plan/import`). Loads the 2026 archive from Firestore and CSV files. Each card previews before it writes, and re-importing does not duplicate records.
 2. **Each year: Season** (`/plan/season`). Use "Start {year} from {previous}". It copies returning awards, Sean's and house segments, last year's confirmed guests and draft contributor pieces into the new season. It only creates missing records, so it is safe to re-run, for example after importing more of last year's data.
 3. **Season files** (`/plan/import`, season cards). Import films, venues, ideas, questions and similar CSVs into the season picked at the top of the page.
-4. Then work in Awards, Show, People and Logistics through the year.
+4. Then work from Home: Guests, Show, Make and Venue & to-dos through the year. Season setup shows what is left to set up.
 
 ## RSVPs
 
 The public form (`src/pages/RSVP.tsx`) still sends the Formspree email, which stays the source of truth. It also adds a document to the `rsvps` collection. That write is best-effort and failures are only logged.
 
-Process them in People, RSVP inbox. Each RSVP shows a suggested person match (by email, name or alias). Apply does the following:
+Process them in Guests, Replies (`/plan/guests?view=replies`); the nav shows a count from anywhere. Each RSVP shows a suggested person match (by email, name or alias). Apply does the following:
 
 - Sets the invitation status from the answer and records the brunch choice, the response date and the RSVP id.
 - Saves the RSVP email on the person if they had none.
@@ -78,7 +97,7 @@ The public RSVP form can only create well-formed `rsvps` documents. Everything e
 
 ## Publishing to the Backstage Timer
 
-On the Show screen, Publish to timer opens a dialog.
+On the Show screen (or Show week), Publish to timer opens a dialog.
 
 - **Test vs live.** The target is the season's `timerDocId` (for example `seanscars-2027-rundown`) or its test copy, `{timerDocId}-test`. The dialog defaults to wherever the last publish went (the test copy before any publish), so writing to the live timer is always a deliberate choice.
 - **Diff.** It compares the plan with the target document as it stands: segments added, removed, retimed or reordered, and the total before and after.
@@ -113,12 +132,14 @@ Before the show, point the live timer at the new season:
 ## Development
 
 ```sh
-npm run dev     # local server, port 5173
+npm run dev       # local server, port 5173 (real Firebase project: careful)
+npm run dev:fake  # same app on an in-memory fake with invented data
 npm test        # Vitest
 npm run lint
 npm run build   # tsc -b && vite build
 ```
 
+- `npm run dev:fake` swaps Firebase for `src/planner/dev/fakeFirestore.ts` (Vite `--mode fake`), so nothing reaches the real project. Pick a phase with `?scenario=` before the `#`: `empty`, `fresh`, `lists`, `invites` (default), `production`, `showweek`, `after`, e.g. `http://localhost:5173/?scenario=lists#/plan`. Edits persist for the tab; add `?reset` to start over. Seed data in `src/planner/dev/seed.ts` is invented; keep it that way. The passcode gate still applies.
 - Pushing to `main` deploys the whole site to GitHub Pages (`.github/workflows/deploy.yml`). Work on a branch and merge deliberately.
 - Planner styles live in `src/planner/planner.css`; every class starts with `pl-`.
 - Pure logic goes in `src/planner/logic/` with a `*.test.ts` beside it. Tests use invented data only.

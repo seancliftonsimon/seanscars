@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { PLAYBACK_LABEL, SEGMENT_TYPE_LABEL } from '../../logic/labels';
 import { createRecord, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
 import { errorMessage } from '../../errors';
 import { parseLength } from '../../logic/duration';
@@ -137,7 +138,7 @@ export default function SegmentPanel({ seasonId, segment, segments, people, onCl
             <span>Type</span>
             <select value={draft.type} onChange={(e) => setType(e.target.value as SegmentType)}>
               {SEGMENT_TYPES.map((t) => (
-                <option key={t}>{t}</option>
+                <option key={t} value={t}>{SEGMENT_TYPE_LABEL[t]}</option>
               ))}
             </select>
           </label>
@@ -151,7 +152,7 @@ export default function SegmentPanel({ seasonId, segment, segments, people, onCl
               }}
             >
               {PLAYBACK_SOURCES.map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>{PLAYBACK_LABEL[s]}</option>
               ))}
             </select>
           </label>

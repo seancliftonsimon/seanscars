@@ -2,23 +2,65 @@
    .pl-root so the public site's styles are untouched. */
 
 .pl-root {
-  --pl-bg: #111111;
-  --pl-surface: #181818;
-  --pl-surface-2: #202020;
-  --pl-border: rgba(250, 249, 246, 0.1);
-  --pl-border-strong: rgba(250, 249, 246, 0.2);
-  --pl-text: var(--color-cream);
-  --pl-muted: rgba(250, 249, 246, 0.6);
+  /* Surfaces: one dark ramp, lighter = closer. */
+  --pl-bg: #0f0f12;
+  --pl-surface: #17171b;
+  --pl-surface-2: #1f1f24;
+  --pl-surface-3: #29292f;
+  --pl-border: rgba(243, 241, 234, 0.08);
+  --pl-border-strong: rgba(243, 241, 234, 0.16);
+  /* Text: cream, then two quieter steps (all ≥ 4.5:1 on --pl-surface). */
+  --pl-text: #f3f1ea;
+  --pl-muted: #b3b0a7;
+  --pl-faint: #9a978f;
+  /* One accent (gold) for actions and the current place. */
   --pl-accent: var(--color-gold);
-  --pl-danger: #e0574f;
+  --pl-accent-strong: var(--color-gold-light);
+  --pl-accent-soft: rgba(212, 175, 55, 0.14);
+  --pl-on-accent: #141006;
+  /* Status palette, always paired with an icon or a word. */
+  --pl-good: #6fcf97;
+  --pl-good-soft: rgba(111, 207, 151, 0.14);
+  --pl-warn: #f2a65a;
+  --pl-warn-soft: rgba(242, 166, 90, 0.14);
+  --pl-danger: #f07167;
+  --pl-danger-soft: rgba(240, 113, 103, 0.14);
+  --pl-info: #8fb3f5;
+  --pl-info-soft: rgba(143, 179, 245, 0.14);
+  --pl-neutral-soft: rgba(243, 241, 234, 0.07);
+  /* Type scale (rem at 16px): 12 · 13 · 14 · 16 · 20 · 28 · 40. */
+  --pl-fs-xs: 0.75rem;
+  --pl-fs-sm: 0.8125rem;
+  --pl-fs-md: 0.875rem;
+  --pl-fs-lg: 1rem;
+  --pl-fs-xl: 1.25rem;
+  --pl-fs-2xl: 1.75rem;
+  --pl-fs-3xl: 2.5rem;
+  /* Spacing on a 4px grid. */
+  --pl-s1: 0.25rem;
+  --pl-s2: 0.5rem;
+  --pl-s3: 0.75rem;
+  --pl-s4: 1rem;
+  --pl-s5: 1.5rem;
+  --pl-s6: 2rem;
+  --pl-s7: 3rem;
+  --pl-r1: 6px;
+  --pl-r2: 10px;
+  --pl-r3: 14px;
+  --pl-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --pl-focus: 0 0 0 2px var(--pl-bg), 0 0 0 4px var(--pl-accent);
 
   min-height: 100vh;
   background: var(--pl-bg);
   color: var(--pl-text);
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: var(--pl-fs-md);
   line-height: 1.5;
   text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+@media (max-width: 760px) {
+  .pl-root { font-size: 0.9375rem; }
 }
 
 /* Reset the public site's large display type inside the planner. */
@@ -32,9 +74,9 @@
   line-height: 1.25;
   margin: 0 0 var(--spacing-sm);
 }
-.pl-root h1 { font-size: 1.75rem; }
-.pl-root h2 { font-size: 1.2rem; }
-.pl-root h3 { font-size: 1.05rem; }
+.pl-root h1 { font-size: var(--pl-fs-2xl); font-weight: 600; }
+.pl-root h2 { font-family: var(--font-body); font-size: var(--pl-fs-lg); font-weight: 600; }
+.pl-root h3 { font-family: var(--font-body); font-size: var(--pl-fs-md); font-weight: 600; }
 .pl-root p {
   font-size: inherit;
   color: inherit;
@@ -48,7 +90,8 @@
 .pl-root textarea {
   width: 100%;
   padding: 0.45rem 0.6rem;
-  font-size: 0.9375rem;
+  font-size: inherit;
+  font-family: inherit;
   background: var(--pl-surface-2);
   border: 1px solid var(--pl-border-strong);
   border-radius: var(--radius-sm);
@@ -59,7 +102,7 @@
 .pl-root textarea:focus {
   outline: none;
   border-color: var(--pl-accent);
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 0 3px var(--pl-accent-soft);
 }
 .pl-root input[aria-invalid='true'] { border-color: var(--pl-danger); }
 .pl-root input[type='checkbox'] {
@@ -98,19 +141,23 @@
   cursor: pointer;
 }
 .pl-btn:hover { border-color: var(--pl-accent); }
-.pl-btn:focus-visible { outline: 2px solid var(--pl-accent); outline-offset: 2px; }
+.pl-root :focus-visible { outline: none; box-shadow: var(--pl-focus); border-radius: var(--pl-r1); }
+.pl-btn { min-height: 2.25rem; border-radius: var(--pl-r1); white-space: nowrap; }
+.pl-btn-sm { min-height: 1.875rem; padding: 0.2rem 0.6rem; font-size: var(--pl-fs-sm); }
 .pl-btn:disabled { opacity: 0.6; cursor: default; }
 .pl-btn-primary {
   background: var(--pl-accent);
   border-color: var(--pl-accent);
-  color: var(--color-black);
+  color: var(--pl-on-accent);
+  font-weight: 600;
 }
-.pl-btn-primary:hover { background: var(--color-gold-light); }
+.pl-btn-primary:hover { background: var(--pl-accent-strong); border-color: var(--pl-accent-strong); }
 .pl-btn-quiet {
   background: transparent;
   border-color: transparent;
   color: var(--pl-muted);
   padding: 0.25rem 0.5rem;
+  min-height: 0;
 }
 .pl-btn-quiet:hover { color: var(--pl-text); border-color: var(--pl-border-strong); }
 .pl-link-btn {
@@ -141,87 +188,6 @@
   flex-direction: column;
   gap: var(--spacing-sm);
   align-items: flex-start;
-}
-
-/* Shell */
-.pl-shell {
-  display: grid;
-  grid-template-columns: 14rem 1fr;
-}
-.pl-sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: var(--pl-surface);
-  border-right: 1px solid var(--pl-border);
-}
-.pl-brand a {
-  font-family: var(--font-heading);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--pl-accent);
-}
-.pl-switcher {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.pl-switcher-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--pl-muted);
-}
-.pl-switcher-note { font-size: 0.85rem; }
-.pl-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.pl-nav-secondary {
-  padding-top: var(--spacing-xs);
-  border-top: 1px solid var(--pl-border);
-}
-.pl-root .pl-nav-link {
-  display: block;
-  padding: 0.4rem 0.6rem;
-  border-radius: var(--radius-sm);
-  color: var(--pl-text);
-}
-.pl-root .pl-nav-link:hover {
-  background: var(--pl-surface-2);
-  color: var(--pl-text);
-}
-.pl-root .pl-nav-link.is-active {
-  background: var(--pl-surface-2);
-  color: var(--pl-accent);
-  box-shadow: inset 2px 0 0 var(--pl-accent);
-}
-.pl-account {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-  padding-top: var(--spacing-xs);
-  border-top: 1px solid var(--pl-border);
-  font-size: 0.8rem;
-}
-.pl-account-email {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--pl-muted);
-}
-.pl-main {
-  min-width: 0;
-  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 /* Screens */
@@ -635,56 +601,8 @@
 .pl-people-rsvp-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--spacing-sm); }
 .pl-people-rsvp-actions .pl-field:first-child { flex: 1 1 14rem; }
 
-/* Now */
-.pl-now-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: var(--spacing-md);
-  align-items: start;
-}
-.pl-now-col-head { display: flex; align-items: baseline; justify-content: space-between; }
-.pl-now-col-head h2 { margin: 0; font-size: 1.15rem; }
-.pl-now-hint { margin: 0; font-size: 0.8125rem; }
-.pl-now-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
-.pl-now-list li + li { border-top: 1px solid var(--pl-border); }
-.pl-now-list li.is-dim { opacity: 0.55; }
-.pl-now-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.5rem 0.25rem;
-  color: var(--pl-text);
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-}
-.pl-now-item:hover,
-.pl-now-item:focus-visible { background: var(--pl-surface-2); }
-.pl-now-title { font-weight: 500; }
-.pl-now-context { font-size: 0.8125rem; }
-
 /* Phone */
 @media (max-width: 760px) {
-  .pl-shell { grid-template-columns: 1fr; }
-  .pl-sidebar {
-    position: static;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--pl-border);
-  }
-  .pl-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .pl-nav-secondary { border-top: none; padding-top: 0; }
-  .pl-root .pl-nav-link.is-active { box-shadow: inset 0 -2px 0 var(--pl-accent); }
-  .pl-account {
-    margin-top: 0;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
-  .pl-main { padding: var(--spacing-sm); }
   .pl-field-wide { grid-column: auto; }
-  .pl-table { font-size: 0.875rem; }
+  .pl-table { font-size: var(--pl-fs-sm); }
 }
