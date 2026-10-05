@@ -13,6 +13,7 @@ import type {
   Publish,
   Question,
   Segment,
+  Song,
   Venue,
   WithId,
 } from '../types';
@@ -37,6 +38,8 @@ export interface SeasonData {
   peopleById: Map<string, WithId<Person>>;
   /** Timer publishes, newest first. */
   publishes: WithId<Publish>[];
+  /** Parody songs, by order. */
+  songs: WithId<Song>[];
   loading: boolean;
   error: FirestoreError | null;
 }
@@ -56,8 +59,9 @@ export function useSeasonData(seasonId: string | null): SeasonData {
   const invitations = useCollection(seasonId ? seasonCol(seasonId, 'invitations') : null);
   const people = useCollection(peopleCol());
   const publishes = useCollection(seasonId ? seasonCol(seasonId, 'publishes') : null);
+  const songs = useCollection(seasonId ? seasonCol(seasonId, 'songs') : null);
 
-  const states = [awards, pieces, segments, venues, questions, checklist, films, ideas, invitations, people, publishes];
+  const states = [awards, pieces, segments, venues, questions, checklist, films, ideas, invitations, people, publishes, songs];
   const loading = states.some((s) => s.loading);
   const error = states.find((s) => s.error)?.error ?? null;
 
@@ -75,6 +79,7 @@ export function useSeasonData(seasonId: string | null): SeasonData {
       invitations: invitations.data,
       people: sortedPeople,
       peopleById: new Map(sortedPeople.map((p) => [p.id, p])),
+      songs: [...songs.data].sort(byOrder),
       publishes: [...publishes.data].sort((a, b) => (b.payloadUpdatedAtMs ?? 0) - (a.payloadUpdatedAtMs ?? 0)),
       loading,
       error,
@@ -91,6 +96,7 @@ export function useSeasonData(seasonId: string | null): SeasonData {
     invitations.data,
     people.data,
     publishes.data,
+    songs.data,
     loading,
     error,
   ]);

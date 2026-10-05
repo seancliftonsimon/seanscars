@@ -12,6 +12,8 @@ import ShowScreen from './screens/show/ShowScreen';
 import PrintScreen from './screens/show/PrintScreen';
 import ReadyScreen from './screens/show/ReadyScreen';
 import MakeScreen from './screens/make/MakeScreen';
+import SongEditor from './screens/make/SongEditor';
+import SingerSheet from './screens/make/SingerSheet';
 import IdeasScreen from './screens/ideas/IdeasScreen';
 import GuestsScreen from './screens/guests/GuestsScreen';
 import DoorList from './screens/guests/DoorList';
@@ -52,6 +54,8 @@ export default function PlannerApp() {
                     <Route path="show/print" element={<PrintScreen />} />
                     <Route path="guests/door" element={<DoorList />} />
                     <Route path="make" element={<MakeScreen />} />
+                    <Route path="make/song/:songId" element={<SongEditor />} />
+                    <Route path="make/song/:songId/sheet" element={<SingerSheet />} />
                     <Route path="prep" element={<PrepScreen />} />
                     <Route path="ideas" element={<IdeasScreen />} />
                     <Route path="season" element={<SeasonSettings />} />

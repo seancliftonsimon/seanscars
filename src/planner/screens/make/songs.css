@@ -1,0 +1,119 @@
+/* Song editor: original | yours, line by line. */
+.pl-song { max-width: 80rem; }
+.pl-inline-select { display: inline-block; width: auto; padding: 0.1rem 0.4rem; font-size: var(--pl-fs-md); background: transparent; border-color: var(--pl-border); }
+.pl-song-stats { display: flex; flex-direction: column; gap: var(--pl-s2); }
+.pl-song-stats p { margin: 0 !important; }
+.pl-paste-box { display: flex; flex-direction: column; gap: var(--pl-s3); }
+.pl-root .pl-paste-box textarea { font-family: inherit; min-height: 12rem; }
+.pl-song-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--pl-s4); align-items: start; }
+.pl-song.has-drawer .pl-song-body { grid-template-columns: minmax(0, 1fr) 19rem; }
+.pl-song-sections { display: flex; flex-direction: column; gap: var(--pl-s4); min-width: 0; }
+
+.pl-ly-section { display: flex; flex-direction: column; gap: 2px; padding: var(--pl-s3) var(--pl-s4); }
+.pl-ly-section-head { display: flex; align-items: center; gap: var(--pl-s3); margin-bottom: var(--pl-s2); }
+.pl-root .pl-ly-section-head h2 { margin: 0; flex: 1; font-size: var(--pl-fs-md); text-transform: uppercase; letter-spacing: 0.06em; color: var(--pl-accent-strong); }
+.pl-ly-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--pl-s4); font-size: var(--pl-fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pl-faint); }
+.pl-ly-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px var(--pl-s4); padding: 3px 0; border-top: 1px solid var(--pl-border); }
+.pl-ly-orig, .pl-ly-mine { display: flex; align-items: center; gap: var(--pl-s2); min-width: 0; }
+.pl-ly-text { flex: 1; min-width: 0; color: var(--pl-muted); }
+.pl-ly-text .pl-inline-text { color: var(--pl-muted); }
+.pl-root .pl-ly-mine input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  background: transparent;
+  border-color: transparent;
+  border-bottom-color: var(--pl-border-strong);
+  border-radius: 0;
+  color: var(--pl-text);
+  font-size: var(--pl-fs-lg);
+}
+.pl-root .pl-ly-mine input:focus { border-color: var(--pl-accent); border-radius: var(--pl-r1); background: var(--pl-surface-2); }
+.pl-root .pl-ly-mine input.is-repeat::placeholder { color: var(--pl-faint); font-style: italic; }
+.pl-ly-meta { display: inline-flex; align-items: center; gap: 0.3rem; flex: none; font-size: var(--pl-fs-xs); font-variant-numeric: tabular-nums; }
+.pl-ly-syl { min-width: 1.6rem; text-align: right; color: var(--pl-faint); font-weight: 600; }
+.pl-ly-syl.is-match { color: var(--pl-good); }
+.pl-ly-syl.is-close { color: var(--pl-muted); }
+.pl-ly-syl.is-off { color: var(--pl-warn); }
+.pl-ly-letter {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--pl-border-strong);
+  border-radius: 50%;
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--pl-fs-xs);
+  cursor: pointer;
+}
+.pl-ly-letter.is-none { background: none; color: var(--pl-faint); }
+.pl-ly-letter.is-mine { background: none; color: var(--pl-muted); border-color: var(--pl-border); }
+.pl-ly-letter:hover { border-color: var(--pl-accent); }
+.pl-ly-rhymefit { padding: 0 0.35rem; border-radius: 999px; font-weight: 600; }
+.pl-ly-rhymefit.is-kept { color: var(--pl-good); background: var(--pl-good-soft); }
+.pl-ly-rhymefit.is-broken { color: var(--pl-warn); background: var(--pl-warn-soft); }
+.pl-ly-tags { grid-column: 2; display: flex; gap: var(--pl-s2); align-items: center; padding-bottom: var(--pl-s1); }
+.pl-root .pl-ly-tag { width: 8rem; padding: 0.15rem 0.4rem; font-size: var(--pl-fs-sm); }
+.pl-root .pl-ly-tag.is-cue { flex: 1; width: auto; }
+
+.pl-rhyme-drawer {
+  position: sticky;
+  top: var(--pl-s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pl-s3);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: var(--pl-s4);
+  background: var(--pl-surface);
+  border: 1px solid var(--pl-border-strong);
+  border-radius: var(--pl-r2);
+}
+.pl-root .pl-rhyme-drawer h2 { margin: 0; font-size: var(--pl-fs-lg); }
+.pl-root .pl-rhyme-drawer h3 { margin: 0 0 var(--pl-s1); font-size: var(--pl-fs-xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--pl-muted); }
+.pl-rhyme-drawer p { margin: 0 !important; }
+.pl-rhyme-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.pl-rhyme-chip { padding: 0.15rem 0.55rem; border: 1px solid var(--pl-border); border-radius: 999px; background: var(--pl-surface-2); color: var(--pl-text); font: inherit; font-size: var(--pl-fs-sm); cursor: pointer; }
+.pl-rhyme-chip:hover { border-color: var(--pl-accent); }
+
+@media (max-width: 900px) {
+  .pl-song.has-drawer .pl-song-body { grid-template-columns: 1fr; }
+  .pl-rhyme-drawer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(3.9rem + env(safe-area-inset-bottom));
+    top: auto;
+    z-index: 22;
+    max-height: 55vh;
+    border-radius: var(--pl-r3) var(--pl-r3) 0 0;
+    box-shadow: var(--pl-shadow);
+  }
+}
+@media (max-width: 760px) {
+  .pl-ly-cols { display: none; }
+  .pl-ly-row { grid-template-columns: 1fr; padding: var(--pl-s2) 0; }
+  .pl-ly-text, .pl-ly-text .pl-inline-text { font-size: var(--pl-fs-sm); }
+  .pl-ly-tags { grid-column: 1; flex-wrap: wrap; }
+  .pl-root .pl-ly-tag { width: 7rem; }
+}
+
+/* Singer sheet */
+.pl-sheet h1 { color: #000; margin: 0; font-size: 1.6em; }
+.pl-sheet-artist { color: #555; margin: 0 0 0.6rem !important; }
+.pl-sheet h2 { color: #6b4f00; font-family: var(--font-body); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.08em; margin: 1rem 0 0.2rem; }
+.pl-sheet-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.5rem; margin: 0.15rem 0 !important; font-size: 1.15em; color: #000; }
+.pl-sheet-singer { padding: 0 0.4rem; border-radius: 4px; font-size: 0.65em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; background: #555; }
+.pl-sheet-singer.is-p0 { background: #8a5a00; }
+.pl-sheet-singer.is-p1 { background: #1f5f99; }
+.pl-sheet-singer.is-p2 { background: #7a2a6b; }
+.pl-sheet-singer.is-p3 { background: #2d6b3a; }
+.pl-sheet-singer.is-p4 { background: #9a3324; }
+.pl-sheet-singer.is-p5 { background: #444; }
+.pl-sheet-cue { font-size: 0.7em; font-style: italic; color: #666; }
+.pl-sheet-orig { flex-basis: 100%; font-size: 0.7em; color: #777; }
+.pl-sheet-todo { color: #aaa; }

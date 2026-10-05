@@ -239,6 +239,42 @@ export interface Idea extends RecordMeta {
   promotedTo?: { kind: string; id: string };
 }
 
+/* ---------- seasons/{s}/songs/{id} ---------- */
+
+/** One line of a parody: the original beside Sean's rewrite. */
+export interface SongLine {
+  id: string;
+  original: string;
+  mine: string;
+  /** Who sings it, e.g. "Cassie", "Both", "Choir". */
+  singer?: string;
+  /** Performance cue, e.g. "doubled lead", "chorus only". */
+  cue?: string;
+}
+
+export interface SongSection {
+  id: string;
+  /** "Verse 1", "Chorus", "Bridge"… */
+  label: string;
+  lines: SongLine[];
+  /** Id of an earlier section whose rewrite this one repeats (a chorus written once). */
+  repeatOf?: string;
+}
+
+/** A song being parodied: the original lyrics and the rewrite, side by side. */
+export interface Song extends RecordMeta {
+  title: string;
+  artist?: string;
+  /** The song piece (a single song or a medley) this belongs to; unset = not placed yet. */
+  pieceId?: string;
+  /** Order within its piece (medley order) or the songbook. */
+  order: number;
+  sections: SongSection[];
+  /** Rhyme brainstorm, free text. */
+  scratch?: string;
+  notes?: string;
+}
+
 /* ---------- seasons/{s}/publishes/{id} ---------- */
 
 export interface Publish extends RecordMeta {
@@ -306,6 +342,7 @@ export interface SeasonSubcollections {
   films: Film;
   ideas: Idea;
   publishes: Publish;
+  songs: Song;
 }
 
 export type SeasonSubcollection = keyof SeasonSubcollections;

@@ -14,11 +14,13 @@ import Queue from './Queue';
 import AwardsView from './AwardsView';
 import Pipeline from './Pipeline';
 import PiecesView from './PiecesView';
+import Songbook from './Songbook';
+import { songProgress } from '../../logic/lyrics';
 import '../awards/awards.css';
 import './make.css';
 
-type View = 'queue' | 'awards' | 'guests' | 'pieces';
-const VIEWS: View[] = ['queue', 'awards', 'guests', 'pieces'];
+type View = 'queue' | 'awards' | 'guests' | 'songs' | 'pieces';
+const VIEWS: View[] = ['queue', 'awards', 'guests', 'songs', 'pieces'];
 
 /**
  * Make: my queue, awards, guest presentations and every piece.
@@ -55,6 +57,7 @@ export default function MakeScreen() {
     queue: mine.length ? `${ready} ready to work on, ${mine.length - ready} blocked.` : 'Your queue is clear.',
     awards: undecided ? `${plural(undecided, 'award')} still need a winner.` : 'Every award has a winner.',
     guests: decks.length ? `${decks.length - pipe.inDeck.length} of ${decks.length} presentations not in the master deck${overdueDecks ? `; ${overdueDecks} overdue` : ''}.` : 'No guest presentations yet.',
+    songs: data.songs.length ? `${data.songs.length} songs, ${data.songs.filter((s) => { const p = songProgress(s); return p.total > 0 && p.written === p.total; }).length} fully rewritten.` : 'No songs yet.',
     pieces: `${data.pieces.length} pieces, ${data.pieces.filter((p) => !isComplete(p)).length} not finished.`,
   };
 
@@ -90,12 +93,14 @@ export default function MakeScreen() {
             { id: 'queue', label: 'My queue', count: ready },
             { id: 'awards', label: 'Awards', count: undecided },
             { id: 'guests', label: 'Guest presentations', count: overdueDecks || decks.length, attention: overdueDecks > 0 },
+            { id: 'songs', label: 'Songs', count: data.songs.length },
             { id: 'pieces', label: 'All pieces', count: data.pieces.length },
           ]}
         />
         {view === 'queue' && <Queue onOpenPiece={(id) => go({ piece: id })} onAdd={() => go({ piece: 'new' })} />}
         {view === 'awards' && <AwardsView onOpenAward={(id) => go({ award: id })} onOpenPiece={(id) => go({ piece: id })} onAdd={() => go({ award: 'new' })} />}
         {view === 'guests' && <Pipeline onOpenPiece={(id) => go({ piece: id })} />}
+        {view === 'songs' && <Songbook />}
         {view === 'pieces' && <PiecesView onOpenPiece={(id) => go({ piece: id })} initialShow={params.get('show')} />}
       </div>
 

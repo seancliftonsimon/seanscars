@@ -1,4 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { songProgress } from '../../logic/lyrics';
 import { PIECE_KIND_LABEL, STEP_STATUS_LABEL } from '../../logic/labels';
 import StepDots from '../../components/StepDots';
 import { createRecord, deleteRecord, seasonCol, seasonSubDoc, updateRecord } from '../../firestore';
@@ -366,6 +368,30 @@ export default function PiecePanel({ seasonId, piece, defaults, data, onClose }:
             </div>
           )}
         </fieldset>
+
+        {piece && draft.kind === 'song' && (
+          <fieldset className="pl-field">
+            <legend>Lyrics</legend>
+            {data.songs.filter((s) => s.pieceId === piece.id).length === 0 ? (
+              <p className="pl-muted pl-small">No songs yet. Add one under Make, Songs, and put it in this piece.</p>
+            ) : (
+              <ul className="pl-people-list">
+                {data.songs
+                  .filter((s) => s.pieceId === piece.id)
+                  .map((s) => {
+                    const p = songProgress(s);
+                    return (
+                      <li key={s.id}>
+                        <RouterLink to={`/plan/make/song/${s.id}`}>{s.title}</RouterLink>{' '}
+                        <span className="pl-muted pl-small">{p.total ? `${p.written}/${p.total} lines` : 'no lyrics yet'}</span>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+            <RouterLink to="/plan/make?view=songs" className="pl-small">Open Songs →</RouterLink>
+          </fieldset>
+        )}
 
         <label className="pl-field">
           <span>Due date</span>

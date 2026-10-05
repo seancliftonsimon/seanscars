@@ -367,6 +367,39 @@ export function seedFor(name: string, ts: MakeTs): SeedDoc[] {
     }),
   );
 
+  /* ---------- songs (public-domain originals only) ---------- */
+  const line = (id: string, original: string, mine = '', extra: Record<string, string> = {}) => ({ id, original, mine, ...extra });
+  put(`${S}/songs/song1`, {
+    title: 'Twinkle, Twinkle, Little Star', artist: 'Traditional', pieceId: 'ps1', order: 1000,
+    sections: [
+      { id: 'tw-v1', label: 'Verse 1', lines: [
+        line('tw1', 'Twinkle, twinkle, little star', 'Sparkle, sparkle, movie star', { singer: 'Sean' }),
+        line('tw2', 'How I wonder what you are', 'Who did you pay to get this far', { singer: 'Sean' }),
+        line('tw3', 'Up above the world so high', 'Up on the screen so very wide', { singer: 'Cassie' }),
+        line('tw4', 'Like a diamond in the sky', '', { singer: 'Cassie', cue: 'doubled lead' }),
+      ] },
+      { id: 'tw-c1', label: 'Chorus', lines: [
+        line('tw5', 'Twinkle, twinkle, little star', 'Sparkle, sparkle, Seanscars star', { singer: 'Both' }),
+        line('tw6', 'How I wonder what you are', 'Tell me who you really are', { singer: 'Both', cue: 'choir only' }),
+      ] },
+      { id: 'tw-c2', label: 'Chorus', repeatOf: 'tw-c1', lines: [
+        line('tw7', 'Twinkle, twinkle, little star'),
+        line('tw8', 'How I wonder what you are'),
+      ] },
+    ],
+    scratch: 'star, far, are, car, bar, guitar, Oscar',
+  });
+  put(`${S}/songs/song2`, {
+    title: 'Row, Row, Row Your Boat', artist: 'Traditional', pieceId: 'ps1', order: 2000,
+    sections: [
+      { id: 'rr-v1', label: 'Verse 1', lines: [
+        line('rr1', 'Row, row, row your boat'), line('rr2', 'Gently down the stream'),
+        line('rr3', 'Merrily, merrily, merrily, merrily'), line('rr4', 'Life is but a dream'),
+      ] },
+    ],
+  });
+  put(`${S}/songs/song3`, { title: 'Take Me Out to the Ball Game', artist: 'Norworth & Von Tilzer', order: 3000, sections: [] });
+
   /* ---------- publishes ---------- */
   if (sc.published) {
     put(`${S}/publishes/pub1`, {
