@@ -4,6 +4,8 @@ The agreement between the planner in `seancliftonsimon/seanscars` (Firestore, `s
 
 ## Principle
 
+Nothing is in production yet, so formats change outright: no backwards-compatibility shims, just update every reader.
+
 The awards are jokes and their rules are whatever the host says. Ties, winners who weren't nominated, the same performance nominated twice and any number of nominees are all allowed. A check may **warn** about what won't fit on screen; it never **refuses** an award for being unconventional. The only hard limits are what no layout can draw.
 
 ## Who owns what
@@ -23,7 +25,7 @@ Award content can be edited in either place. `npm run sync` (presentation repo) 
 | `nominees[].name` | `Contender.personName` | |
 | `nominees[].film` | `Contender.film`, else the title of the film `filmId` links | |
 | `nominees[].caption` | `Contender.caption` | |
-| `winners[]` | `Award.winnerContenderIds` (else `[winnerContenderId]`) | A nominated winner is `{nomineeId}`. A contender with `nominee: false` who won is a surprise winner `{id, name, film, caption}`. |
+| `winners[]` | `Award.winnerContenderIds` | A nominated winner is `{nomineeId}`. A contender with `nominee: false` who won is a surprise winner `{id, name, film, caption}`. |
 | `honorees[]` | Contenders with `nominee: true`, for `honoree` awards | 1 or 2 |
 
 - **Show only:** `media` (pictures, crops, focal points), `copy.*`, `timing.*`, `audio.*`, `presentation.includeRecap`, `status`. A surprise winner's picture follows its slug.
@@ -34,7 +36,7 @@ Award content can be edited in either place. `npm run sync` (presentation repo) 
 
 ## Planner fields (all optional)
 
-- `Award`: `variant`, `shortName`, `slug`, `winnerContenderIds`. Keep writing `winnerContenderId` as the first winner for older screens.
+- `Award`: `variant`, `shortName`, `slug`, and `winnerContenderIds`, which replaces `winnerContenderId` everywhere.
 - `Contender`: `personName`, `film`, `caption`, `slug`.
 - `label` stays, written on save as `personName — film` (an em dash with spaces), or whichever of the two exists.
 
@@ -45,7 +47,6 @@ Award content can be edited in either place. `npm run sync` (presentation repo) 
 - Nominee IDs are unique. A winner may not be listed twice, and a surprise winner's ID may not reuse a nominee's ID.
 - Honoree awards take 1 or 2 honorees and no winners.
 - `source: {planner: {season, awardId}}` records where a synced award came from.
-- Version 1 files (`winnerNomineeId`) are upgraded as they load; `npm run migrate:v2` rewrites them on disk.
 - Warnings, never errors: more than 7 nominees, more tied winners than the tie layout holds, very long names.
 
 ## IDs
