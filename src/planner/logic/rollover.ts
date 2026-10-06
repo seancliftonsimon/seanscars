@@ -60,6 +60,9 @@ export function planRollover(source: RolloverSource, year: number): RolloverPlan
         returning: true,
         contenders: [],
         notes: a.notes,
+        // The frame and short name carry over; the slug does not, because it ends in the year.
+        variant: a.variant,
+        shortName: a.shortName,
       }),
     }));
 

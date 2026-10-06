@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Piece, Publish, WithId } from '../types';
+import type { Award, Piece, Publish, WithId } from '../types';
 import { readiness, type ReadinessInput } from './readiness';
 import { defaultSteps } from './steps';
 
@@ -33,6 +33,19 @@ describe('readiness', () => {
       { id: 't2', text: 'b', done: false, order: 0, dueDate: '2027-01-20' },
     ];
     expect(byId({ checklist }).tasks.detail).toBe('1 task due by show day still open.');
+  });
+  it('counts a tie, a surprise winner and two honorees as decided', () => {
+    const c = (id: string, nominee = true) => ({ id, label: id, nominee });
+    const award = (id: string, over: Partial<Award>): WithId<Award> => ({ id, name: id, order: 0, stage: 'nominees', returning: false, contenders: [c('x'), c('y')], ...over });
+    const awards = [
+      award('Tie', { winnerContenderIds: ['x', 'y'] }),
+      award('Surprise', { contenders: [c('x'), c('z', false)], winnerContenderIds: ['z'] }),
+      award('Honorees', { variant: 'honoree' }),
+      award('Open', {}),
+      award('Idea', { stage: 'idea' }),
+    ];
+    expect(byId({ awards }).awards).toMatchObject({ done: false, detail: 'Still to decide: Open.' });
+    expect(byId({ awards: awards.slice(0, 3) }).awards).toMatchObject({ done: true, detail: 'All decided.' });
   });
   it('fails the clock when over the cap or empty', () => {
     expect(byId({ totals: { ...totals, state: 'over' } }).clock.done).toBe(false);

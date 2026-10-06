@@ -22,8 +22,14 @@ import { errorMessage } from '../errors';
 import { INVITATION_STATUS_LABEL, PIECE_KIND_LABEL, VENUE_STATUS_LABEL, ownerNames } from '../logic/labels';
 import { nextOrder } from '../logic/records';
 import { search, type SearchItem } from '../logic/search';
-import type { IdeaTag } from '../types';
+import type { Award, IdeaTag } from '../types';
 import type { PaletteMode } from './paletteContext';
+
+/** What an award matches besides its name: contenders (label, person, film), short name and show id. */
+function awardKeywords(a: Award): string {
+  const contenders = (a.contenders ?? []).flatMap((c) => [c.label, c.personName, c.film, c.slug]);
+  return [a.shortName, a.slug, ...contenders].filter(Boolean).join(' ');
+}
 
 const KIND_ICON: Record<string, LucideIcon> = {
   go: ArrowRight,
@@ -124,7 +130,7 @@ export default function CommandPalette({ mode, onClose }: Props) {
       const inv = invBy.get(p.id);
       items.push({ id: p.id, kind: 'person', title: p.name, subtitle: inv ? INVITATION_STATUS_LABEL[inv.status] : 'Not on this year’s list', href: `/plan/guests?person=${p.id}`, keywords: `${p.email ?? ''} ${(p.aliases ?? []).join(' ')}` });
     }
-    for (const a of data.awards) items.push({ id: a.id, kind: 'award', title: a.name, href: `/plan/make?view=awards&award=${a.id}`, keywords: a.contenders.map((c) => c.label).join(' ') });
+    for (const a of data.awards) items.push({ id: a.id, kind: 'award', title: a.name, href: `/plan/make?view=awards&award=${a.id}`, keywords: awardKeywords(a) });
     for (const p of data.pieces) items.push({ id: p.id, kind: 'piece', title: p.title, subtitle: `${PIECE_KIND_LABEL[p.kind]} · ${ownerNames(p.ownerPersonIds, data.peopleById)}`, href: `/plan/make?piece=${p.id}` });
     for (const s of data.segments) items.push({ id: s.id, kind: 'segment', title: s.title, href: `/plan/show?segment=${s.id}` });
     for (const f of data.films) items.push({ id: f.id, kind: 'film', title: f.title, href: `/plan/ideas?view=films&film=${f.id}` });

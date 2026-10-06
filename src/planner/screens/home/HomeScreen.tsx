@@ -30,6 +30,7 @@ import { projectionBasis, type HomeAction } from '../../logic/home';
 import { IDEA_TAG_LABEL } from '../../logic/labels';
 import { needsNudge } from '../../logic/invites';
 import { PHASES, phaseInfo, relevance, type InfoBlock } from '../../logic/phase';
+import { isDecided } from '../../logic/showGraphics';
 import { venueFit, VENUE_FIT_LABEL } from '../../logic/venues';
 import type { PhaseId } from '../../types';
 import ActionRow from './ActionRow';
@@ -199,7 +200,7 @@ function useBlocks(d: Derived | null, phase: PhaseId) {
         ),
       });
     }
-    const undecided = data.awards.filter((a) => a.stage !== 'cut' && a.stage !== 'idea' && !a.winnerContenderId);
+    const undecided = data.awards.filter((a) => a.stage !== 'cut' && a.stage !== 'idea' && !isDecided(a));
     blocks.push({
       id: 'awardDecisions',
       node: (

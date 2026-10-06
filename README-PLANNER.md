@@ -59,6 +59,7 @@ All record types are in `src/planner/types.ts`, which is the source of truth. Pa
 
 - `seasons/{year}`: season settings (show date, start time, runtime cap, buffer target, `timerDocId`).
 - `seasons/{year}/segments`, `awards`, `pieces`, `invitations`, `venues`, `questions`, `checklist`, `films`, `ideas`, `publishes`.
+- Awards carry the fields the show graphics share (`docs/show-graphics-contract.md`): `variant` (`standard` if missing, `film-only`, `honoree`), `shortName`, `slug` (the Show ID, set once on first save) and `winnerContenderIds` (zero or more, so ties and winners who weren't nominated are fine). Contenders add `personName`, `film`, `caption` and `slug`; `label` is written on save as `personName — film`. The pure helpers are in `logic/showGraphics.ts`.
 - `people/{personId}`: shared across seasons. Invitations are keyed by person id.
 - `rsvps/{id}`: public form submissions, with planner-only `processed` and `matchedPersonId`.
 - `showConfigs/{timerDocId}`: the Backstage Timer's document. Owned by the timer; the planner writes it only through Publish.

@@ -7,6 +7,7 @@ import { DrawerFrame } from '../../components/ui/Drawer';
 import { deckPipeline } from '../../logic/contributors';
 import { plural } from '../../logic/dates';
 import { isComplete } from '../../logic/steps';
+import { isDecided } from '../../logic/showGraphics';
 import { derivedWaiting } from '../../logic/waiting';
 import AwardPanel from '../awards/AwardPanel';
 import PiecePanel from '../awards/PiecePanel';
@@ -50,7 +51,7 @@ export default function MakeScreen() {
   const pipe = deckPipeline(data.pieces, today);
   const decks = Object.values(pipe).flat();
   const overdueDecks = decks.filter((d) => d.overdue).length;
-  const undecided = data.awards.filter((a) => a.stage !== 'cut' && a.stage !== 'idea' && !a.winnerContenderId).length;
+  const undecided = data.awards.filter((a) => a.stage !== 'cut' && a.stage !== 'idea' && !isDecided(a)).length;
   const answers: Record<View, string> = {
     queue: mine.length ? `${ready} ready to work on, ${mine.length - ready} blocked.` : 'Your queue is clear.',
     awards: undecided ? `${plural(undecided, 'award')} still need a winner.` : 'Every award has a winner.',
@@ -104,6 +105,7 @@ export default function MakeScreen() {
           <AwardPanel
             key={awardParam ?? 'none'}
             seasonId={season.id}
+            year={season.year}
             award={award}
             data={data}
             onClose={() => go({})}

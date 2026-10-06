@@ -275,7 +275,7 @@ export function mapAwards2026(rows: Row[], segments: { id: string; title: string
         returning: true,
         segmentId,
         contenders: winner !== '' ? [{ id: 'winner', label: winner, nominee: true }] : [],
-        winnerContenderId: winner !== '' ? 'winner' : undefined,
+        winnerContenderIds: winner !== '' ? ['winner'] : undefined,
         notes: format !== '' ? `Format: ${format}` : undefined,
       }),
       piece: stripUndefined({

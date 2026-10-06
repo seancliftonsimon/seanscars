@@ -34,3 +34,53 @@
 .pl-awards-link-row input { flex: 1; min-width: 0; }
 .pl-awards-link-open { white-space: nowrap; }
 .pl-awards-wait-note { margin: 4px 0 0; }
+
+/* Winner chips on the Awards list: the chip, with a small remove button. */
+.pl-chip.pl-award-winner { padding-right: 0.2rem; }
+.pl-award-winner-x {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-left: 0.15rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+.pl-award-winner-x:hover,
+.pl-award-winner-x:focus-visible { opacity: 1; background: rgba(255, 255, 255, 0.12); }
+
+/* Award panel: one row per contender, reorderable. */
+.pl-awards-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.25rem 0.35rem;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--pl-border);
+  background: var(--pl-surface);
+}
+.pl-awards-row.is-dragging { position: relative; z-index: 3; background: var(--pl-surface-2); box-shadow: var(--pl-shadow); }
+.pl-awards-row > .pl-drag-handle { margin-top: 0.3rem; }
+.pl-awards-row-body { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.pl-awards-row-names { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+.pl-awards-row-note { font-size: 0.8125rem; }
+.pl-awards-row-hint { margin: 0; }
+.pl-awards-row-flags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.9rem; }
+.pl-awards-row-flags .pl-check { min-height: 1.75rem; }
+.pl-awards-row-flags .pl-tag { margin-left: 0; }
+.pl-awards-row-remove { margin-left: auto; }
+.pl-awards-winners { margin: 0; font-size: 0.875rem; }
+.pl-awards-warnings p,
+.pl-awards-stale p { margin: 0; }
+.pl-awards-warnings ul { margin: 0.25rem 0 0; padding-left: 1.1rem; }
+.pl-awards-stale { margin-bottom: var(--spacing-sm); }
+.pl-awards-stale .pl-btn { margin-top: 0.4rem; }
+@media (max-width: 520px) {
+  .pl-awards-row-names { grid-template-columns: 1fr; }
+  .pl-award-winner-x { width: 1.6rem; height: 1.6rem; }
+}

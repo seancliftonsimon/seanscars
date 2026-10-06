@@ -8,6 +8,7 @@ import type {
   WithId,
 } from '../types';
 import { computeSchedule, type ScheduleTotals } from './clock';
+import { isDecided } from './showGraphics';
 import { deliveryStep, isComplete, nextStep } from './steps';
 import { blockedCount, derivedWaiting, type WaitingData } from './waiting';
 
@@ -102,7 +103,7 @@ export function computeNow(
   });
 
   const awardItems = data.awards
-    .filter((a) => !a.winnerContenderId)
+    .filter((a) => !isDecided(a))
     .map((a) => ({
       a,
       n: data.pieces.filter((p) => {
