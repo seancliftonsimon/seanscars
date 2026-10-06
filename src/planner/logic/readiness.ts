@@ -4,6 +4,7 @@ import { describeOverUnder } from './clockFormat';
 import { deckStage } from './contributors';
 import { plural } from './dates';
 import { isComplete } from './steps';
+import { isDecided } from './showGraphics';
 
 /*
  * Show-week readiness, derived from what's already in the planner. Each
@@ -38,7 +39,7 @@ export function readiness(input: ReadinessInput): ReadinessItem[] {
   const incomplete = pieces.filter((p) => !isComplete(p));
   const decks = pieces.filter((p) => p.kind === 'contributor-deck');
   const decksNotIn = decks.filter((p) => deckStage(p) !== 'inDeck');
-  const undecided = awards.filter((a) => a.stage !== 'cut' && a.stage !== 'idea' && !a.winnerContenderId);
+  const undecided = awards.filter((a) => a.stage !== 'cut' && a.stage !== 'idea' && !isDecided(a));
   const dueBy = season.showDate ?? input.today;
   const tasksOpen = checklist.filter((c) => !c.done && (!c.dueDate || c.dueDate <= dueBy));
   const noReply = invitations.filter((i) => i.status === 'invited');

@@ -254,10 +254,81 @@ export function seedFor(name: string, ts: MakeTs): SeedDoc[] {
       order: (i + 1) * 1000, name: nm, stage: hasWinner ? 'winner' : stage0, returning: i < 3,
       ...(seg ? { segmentId: seg } : {}),
       contenders: stage0 === 'idea' ? [] : contenders.map((c) => (hasWinner ? { ...c, nominee: c.nominee || c.id.endsWith('c1') } : c)),
-      ...(hasWinner ? { winnerContenderId: `a${i + 1}c1` } : {}),
+      ...(hasWinner ? { winnerContenderIds: [`a${i + 1}c1`] } : {}),
       ...(i === 0 ? { recognizes: 'The boldest snack combination of the year' } : {}),
     });
   });
+
+  /*
+   * Awards that exercise what the show graphics allow: a tie, a winner nobody
+   * nominated, the same nominee twice, each frame, and a full set of five.
+   * Slugs are set on some and left off others, so both cases show.
+   */
+  const filmId = (title: string) => `f${FILMS.indexOf(title) + 1}`;
+  const entry = (award: string, n: number, personName: string | undefined, film: string | undefined, nominee: boolean, extra: Record<string, unknown> = {}) => ({
+    id: `${award}c${n}`,
+    label: [personName, film].filter(Boolean).join(' — '),
+    ...(personName ? { personName } : {}),
+    ...(film ? { film, filmId: filmId(film) } : {}),
+    nominee,
+    ...extra,
+  });
+  const finished = sc.progress >= 0.9;
+  const framed: [string, Record<string, unknown>][] = [
+    ['a8', {
+      name: 'Best Duo Act', shortName: 'Duo Act', recognizes: 'Two people, one terrible idea', stage: 'winner', slug: 'best-duo-act-2027',
+      contenders: [
+        entry('a8', 1, 'Avery Quill', 'The Glass Orchard', true, { slug: 'avery-quill' }),
+        entry('a8', 2, 'Bea Marchetti', 'Midnight at Pelican Pier', true, { slug: 'bea-marchetti' }),
+        entry('a8', 3, 'Cal Okonkwo', 'Copper Ridge', true, { slug: 'cal-okonkwo' }),
+        entry('a8', 4, 'Dana Whitlock', 'Lantern Season', true, { slug: 'dana-whitlock' }),
+      ],
+      winnerContenderIds: ['a8c1', 'a8c2'], // a tie
+    }],
+    ['a9', {
+      name: 'Best Surprise Entrance', recognizes: 'Arriving at exactly the wrong moment', stage: 'winner',
+      contenders: [
+        entry('a9', 1, 'Eli Brandvold', 'Paper Boats', true),
+        entry('a9', 2, 'Fern Castellano', 'Saltwater Saints', true),
+        entry('a9', 3, 'Gus Halloran', 'Moth Hour', true),
+        entry('a9', 4, 'Hana Leclair', 'A Fox in Aspic', false, { caption: 'Walked in late and took a bow' }),
+      ],
+      winnerContenderIds: ['a9c4'], // won without being nominated
+    }],
+    ['a10', {
+      name: 'Best Encore', recognizes: 'Doing it all again, on purpose', stage: finished ? 'winner' : 'nominees',
+      contenders: [
+        entry('a10', 1, 'Ivo Petrakis', 'Heatwave Hotel', true, { slug: 'ivo-petrakis' }),
+        entry('a10', 2, 'Ivo Petrakis', 'Heatwave Hotel', true, { slug: 'ivo-petrakis-2', note: 'Same performance, second take' }), // the same nominee twice
+        entry('a10', 3, 'Juno Albright', 'Pigeon Kings', true, { slug: 'juno-albright' }),
+      ],
+      ...(finished ? { winnerContenderIds: ['a10c1'] } : {}),
+    }],
+    ['a11', {
+      name: 'Film of the Year', shortName: 'Film of the Year', variant: 'film-only', stage: finished ? 'winner' : 'nominees',
+      contenders: ['The Quiet Engine', 'Dear Hollow', 'Orbit of Small Things', 'The Last Cartographer'].map((f, j) => entry('a11', j + 1, undefined, f, true)),
+      ...(finished ? { winnerContenderIds: ['a11c2'] } : {}),
+    }],
+    ['a12', {
+      name: 'Lifetime Achievement in Procrastination', shortName: 'Procrastination', variant: 'honoree', stage: 'winner',
+      contenders: [
+        entry('a12', 1, 'Kit Ferreira', undefined, true, { caption: 'Since 1998' }),
+        entry('a12', 2, 'Lena Moreau', undefined, true, { caption: 'Still working on it' }),
+      ],
+    }],
+    ['a13', {
+      name: 'Best Performance in a Minor Role', shortName: 'Minor Role', recognizes: 'Fewer lines, bigger heart', stage: finished ? 'winner' : 'nominees',
+      contenders: [
+        entry('a13', 1, 'Milo Achterberg', 'Heatwave Hotel', true, { caption: 'The night porter' }),
+        entry('a13', 2, 'Nora Vasquez', 'Under the Rhubarb', true, { caption: 'Woman with a ladder' }),
+        entry('a13', 3, 'Otto Lindqvist', 'Two Left Wings', true, { caption: 'Second pigeon from the left' }),
+        entry('a13', 4, 'Pia Delacroix', 'The Borrowed Summer', true, { caption: 'The neighbor' }),
+        entry('a13', 5, 'Quinn Harrow', 'Cinder & Sage', true, { caption: 'Man in the hat' }),
+      ],
+      ...(finished ? { winnerContenderIds: ['a13c3'] } : {}),
+    }],
+  ];
+  framed.forEach(([id, data], i) => put(`${S}/awards/${id}`, { order: (awards.length + i + 1) * 1000, returning: false, ...data }));
 
   /* ---------- pieces ---------- */
   let order = 0;

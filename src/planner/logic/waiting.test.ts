@@ -88,7 +88,7 @@ describe("award-video derived wait", () => {
     });
 
     const decided = data({
-      awards: [award({ winnerContenderId: "c1" })],
+      awards: [award({ winnerContenderIds: ["c1"] })],
       pieces: [p],
     });
     expect(derivedWaiting(p, decided)).toBeNull();
@@ -125,8 +125,25 @@ describe("manual waits resolve", () => {
     const w = { kind: "award" as const, id: "a1" };
     expect(isResolved(w, data({ awards: [award()] }))).toBe(false);
     expect(
-      isResolved(w, data({ awards: [award({ winnerContenderId: "c1" })] })),
+      isResolved(w, data({ awards: [award({ winnerContenderIds: ["c1"] })] })),
     ).toBe(true);
+  });
+
+  it("award, for a tie, a surprise winner or two honorees", () => {
+    const w = { kind: "award" as const, id: "a1" };
+    const contenders = [
+      { id: "c1", label: "One", nominee: true },
+      { id: "c2", label: "Two", nominee: true },
+      { id: "c3", label: "Surprise", nominee: false },
+    ];
+    const resolved = (over: Partial<WithId<Award>>) =>
+      isResolved(w, data({ awards: [award({ contenders, ...over })] }));
+    expect(resolved({ winnerContenderIds: ["c1", "c2"] })).toBe(true);
+    expect(resolved({ winnerContenderIds: ["c3"] })).toBe(true);
+    expect(resolved({ winnerContenderIds: [] })).toBe(false);
+    expect(resolved({ variant: "honoree" })).toBe(true);
+    expect(resolved({ variant: "honoree", contenders: [] })).toBe(false);
+    expect(resolved({ variant: "film-only" })).toBe(false);
   });
 
   it("piece via its delivery step", () => {
@@ -228,7 +245,7 @@ describe("blockedCount", () => {
     expect(
       blockedCount(
         { kind: "award", id: "a1" },
-        { ...d, awards: [award({ winnerContenderId: "c1" })] },
+        { ...d, awards: [award({ winnerContenderIds: ["c1"] })] },
       ),
     ).toBe(0);
   });

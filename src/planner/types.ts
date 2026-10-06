@@ -86,11 +86,21 @@ export type AwardStage = 'idea' | 'contenders' | 'nominees' | 'winner' | 'cut';
 
 export interface Contender {
   id: string;
+  /** Written on save from `personName — film` (see logic/showGraphics.composeLabel). */
   label: string;
   filmId?: string;
   nominee: boolean;
   note?: string;
+  /* Show graphics fields (docs/show-graphics-contract.md). */
+  personName?: string;
+  film?: string;
+  caption?: string;
+  /** Set once on save, unique within the award; never regenerated. */
+  slug?: string;
 }
+
+/** Which frame the show draws. A missing variant means `standard`. */
+export type AwardVariant = 'standard' | 'film-only' | 'honoree';
 
 export interface Award extends RecordMeta {
   order: number;
@@ -100,8 +110,16 @@ export interface Award extends RecordMeta {
   returning: boolean;
   segmentId?: string;
   contenders: Contender[];
-  winnerContenderId?: string;
+  /** Zero or more, in order. A winner need not be a nominee. */
+  winnerContenderIds?: string[];
   notes?: string;
+  /* Show graphics fields (docs/show-graphics-contract.md). */
+  variant?: AwardVariant;
+  shortName?: string;
+  /** `<kebab name>-<year>`, set once on save, unique within the season. */
+  slug?: string;
+  /** Written by the importers so re-running them updates the same document. */
+  importKey?: string;
 }
 
 /* ---------- seasons/{s}/pieces/{id} ---------- */

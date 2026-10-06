@@ -161,9 +161,11 @@ describe('decide', () => {
         award({ id: 'a1', name: 'One' }),
         award({ id: 'a2', name: 'Two' }),
         award({ id: 'a3', name: 'Three' }),
-        award({ id: 'a4', name: 'Decided', winnerContenderId: 'c1' }),
+        award({ id: 'a4', name: 'Decided', winnerContenderIds: ['c1'] }),
+        award({ id: 'a5', name: 'Honorees', variant: 'honoree' }),
+        award({ id: 'a6', name: 'Surprise', contenders: [{ id: 'z', label: 'Z', nominee: false }], winnerContenderIds: ['z'] }),
       ],
-      pieces: [wait('x1', 'a1'), wait('x2', 'a2'), wait('x3', 'a2'), wait('x4', 'a4')],
+      pieces: [wait('x1', 'a1'), wait('x2', 'a2'), wait('x3', 'a2'), wait('x4', 'a4'), wait('x5', 'a5'), wait('x6', 'a6')],
     });
     const v = computeNow(season, d, TODAY);
     expect(v.decide.map((i) => i.key)).toEqual(['award:a2', 'award:a1']);

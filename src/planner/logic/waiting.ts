@@ -9,6 +9,7 @@ import type {
   WithId,
 } from "../types";
 import { deliveryStep, isComplete, nextStep } from "./steps";
+import { isDecided } from "./showGraphics";
 
 export interface WaitingData {
   awards: WithId<Award>[];
@@ -30,7 +31,7 @@ export function isResolved(w: WaitingOn, data: WaitingData): boolean {
   switch (w.kind) {
     case "award": {
       const award = data.awards.find((a) => a.id === w.id);
-      return !award || Boolean(award.winnerContenderId);
+      return !award || isDecided(award);
     }
     case "piece": {
       const piece = data.pieces.find((p) => p.id === w.id);
@@ -55,7 +56,7 @@ export function waitingLabel(w: WaitingOn, data: WaitingData): string {
   switch (w.kind) {
     case "award": {
       const award = data.awards.find((a) => a.id === w.id);
-      return award ? `${award.name} winner` : "a deleted item";
+      return award ? `${award.name} ${award.variant === "honoree" ? "honorees" : "winner"}` : "a deleted item";
     }
     case "piece": {
       const piece = data.pieces.find((p) => p.id === w.id);
@@ -83,7 +84,7 @@ export function derivedWaiting(
       (s) => s.key === "winner-decided",
     );
     const next = nextStep(piece);
-    if (award && !award.winnerContenderId && winnerIndex >= 0 && next) {
+    if (award && !isDecided(award) && winnerIndex >= 0 && next) {
       if (piece.steps.indexOf(next) >= winnerIndex) {
         const target: WaitingOn = { kind: "award", id: award.id };
         return { ...target, label: waitingLabel(target, data), derived: true };

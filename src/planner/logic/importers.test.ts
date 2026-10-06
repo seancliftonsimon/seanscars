@@ -194,7 +194,7 @@ describe('mapAwards2026', () => {
         returning: true,
         segmentId: 'seg-open',
         contenders: [{ id: 'winner', label: 'Sample Film', nominee: true }],
-        winnerContenderId: 'winner',
+        winnerContenderIds: ['winner'],
         notes: 'Format: clip',
       },
       piece: {

@@ -64,9 +64,12 @@ const awards: WithId<Award>[] = [
     stage: 'winner',
     returning: true,
     segmentId: 's1',
-    contenders: [{ id: 'winner', label: 'Sample Film', nominee: true }],
-    winnerContenderId: 'winner',
+    contenders: [{ id: 'winner', label: 'Sample Film', nominee: true, slug: 'sample-film' }],
+    winnerContenderIds: ['winner'],
     notes: 'Format: clip',
+    variant: 'film-only',
+    shortName: 'Examples',
+    slug: 'best-example-2026',
   },
   { id: 'a2', order: 2000, name: 'One-off', stage: 'winner', returning: false, contenders: [] },
 ];
@@ -103,9 +106,15 @@ describe('planRollover', () => {
           returning: true,
           contenders: [],
           notes: 'Format: clip',
+          variant: 'film-only',
+          shortName: 'Examples',
         },
       },
     ]);
+  });
+
+  it('does not copy the slug, because it ends in the year', () => {
+    expect(plan.awards[0].award).not.toHaveProperty('slug');
   });
 
   it('copies house segments only', () => {
