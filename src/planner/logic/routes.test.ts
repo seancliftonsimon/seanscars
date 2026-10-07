@@ -17,6 +17,8 @@ describe('planner routes', () => {
     expect(plannerPageTitle('/plan/films')).toBe('Planner | Ideas');
     expect(plannerPageTitle('/plan/people')).toBe('Planner | Guests');
     expect(plannerPageTitle('/plan/nope')).toBe('Planner | Home');
+    expect(plannerPageTitle('/plan/make/song/abc123')).toBe('Planner | Song');
+    expect(plannerPageTitle('/plan/make/song/abc123/sheet')).toBe('Planner | Song');
   });
 
   it('translates old deep links', () => {

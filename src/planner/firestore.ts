@@ -70,6 +70,7 @@ const subConverters: SubConverters = {
   films: makeConverter(),
   ideas: makeConverter(),
   publishes: makeConverter(),
+  songs: makeConverter(),
 };
 
 /* ---------- path helpers ---------- */

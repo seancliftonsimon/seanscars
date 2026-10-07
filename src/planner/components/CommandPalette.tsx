@@ -8,6 +8,7 @@ import {
   HelpCircle,
   Lightbulb,
   MapPin,
+  Music,
   Plus,
   Search,
   Trophy,
@@ -42,6 +43,7 @@ const KIND_ICON: Record<string, LucideIcon> = {
   question: HelpCircle,
   task: CheckSquare,
   idea: Lightbulb,
+  song: Music,
   add: Plus,
 };
 
@@ -56,6 +58,7 @@ const KIND_LABEL: Record<string, string> = {
   question: 'Question',
   task: 'Task',
   idea: 'Idea',
+  song: 'Song',
 };
 
 const GO: SearchItem[] = [
@@ -73,6 +76,7 @@ const GO: SearchItem[] = [
   ['Make: my queue', '/plan/make', 'pieces next steps'],
   ['Awards', '/plan/make?view=awards', 'nominees winner'],
   ['Guest presentations', '/plan/make?view=guests', 'contributors decks'],
+  ['Songs', '/plan/make?view=songs', 'lyrics parody medley songbook'],
   ['All pieces', '/plan/make?view=pieces', 'videos songs'],
   ['Venue & to-dos', '/plan/prep', 'logistics'],
   ['Venues', '/plan/prep?view=venues', 'book compare'],
@@ -137,6 +141,7 @@ export default function CommandPalette({ mode, onClose }: Props) {
     for (const v of data.venues) items.push({ id: v.id, kind: 'venue', title: v.name, subtitle: VENUE_STATUS_LABEL[v.status], href: `/plan/prep?venue=${v.id}` });
     for (const q of data.questions) items.push({ id: q.id, kind: 'question', title: q.question, subtitle: q.status === 'decided' ? `Decided: ${q.answer ?? ''}` : 'Open', href: `/plan/prep?question=${q.id}`, keywords: q.options });
     for (const c of data.checklist) items.push({ id: c.id, kind: 'task', title: c.text, subtitle: c.done ? 'Done' : c.area, href: `/plan/prep?task=${c.id}` });
+    for (const s of data.songs) items.push({ id: s.id, kind: 'song', title: s.title, subtitle: s.artist, href: `/plan/make/song/${s.id}` });
     for (const i of data.ideas) items.push({ id: i.id, kind: 'idea', title: i.text, href: `/plan/ideas?idea=${i.id}` });
     return items;
   }, [data]);

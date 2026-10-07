@@ -18,6 +18,7 @@ export const PLANNER_SECTIONS: PlannerSection[] = [
   { path: 'show/print', label: 'Print run of show', nav: 'none' },
   { path: 'show/ready', label: 'Show week', nav: 'none' },
   { path: 'make', label: 'Make', nav: 'primary' },
+  { path: 'make/song', label: 'Song', nav: 'none' },
   { path: 'prep', label: 'Venue & to-dos', nav: 'primary' },
   { path: 'ideas', label: 'Ideas', nav: 'primary' },
   { path: 'season', label: 'Season setup', nav: 'settings' },
@@ -47,7 +48,7 @@ export function isPlannerPath(pathname: string): boolean {
 /** Browser tab title for a /plan path, e.g. "Planner | Show". */
 export function plannerPageTitle(pathname: string): string {
   const rest = pathname.replace(/^\/plan\/?/, '').replace(/\/+$/, '');
-  const section = findSection(rest);
+  const section = findSection(rest) ?? findSection(rest.replace(/\/[^/]+(\/sheet)?$/, ''));
   return `Planner | ${section ? section.label : 'Home'}`;
 }
 
