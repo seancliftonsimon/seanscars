@@ -13,7 +13,7 @@
 .pl-clockmeter .is-sean, .pl-sw.is-sean { background: var(--pl-accent); }
 .pl-clockmeter .is-guests, .pl-sw.is-guests { background: var(--pl-info); }
 .pl-clockmeter .is-house, .pl-sw.is-house { background: #8a8577; }
-.pl-clockmeter .is-gap { background: repeating-linear-gradient(45deg, rgba(243, 241, 234, 0.25) 0 3px, transparent 3px 6px); }
+.pl-clockmeter .is-gap { background: repeating-linear-gradient(45deg, rgba(27, 26, 23, 0.18) 0 3px, transparent 3px 6px); }
 .pl-clockmeter i { position: absolute; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; }
 .pl-clockmeter-buffer { background: var(--pl-muted); }
 .pl-clockmeter-cap { background: var(--pl-text); }

@@ -2,32 +2,33 @@
    .pl-root so the public site's styles are untouched. */
 
 .pl-root {
-  /* Surfaces: one dark ramp, lighter = closer. */
-  --pl-bg: #0f0f12;
-  --pl-surface: #17171b;
-  --pl-surface-2: #1f1f24;
-  --pl-surface-3: #29292f;
-  --pl-border: rgba(243, 241, 234, 0.08);
-  --pl-border-strong: rgba(243, 241, 234, 0.16);
-  /* Text: cream, then two quieter steps (all ≥ 4.5:1 on --pl-surface). */
-  --pl-text: #f3f1ea;
-  --pl-muted: #b3b0a7;
-  --pl-faint: #9a978f;
-  /* One accent (gold) for actions and the current place. */
-  --pl-accent: var(--color-gold);
-  --pl-accent-strong: var(--color-gold-light);
-  --pl-accent-soft: rgba(212, 175, 55, 0.14);
-  --pl-on-accent: #141006;
+  /* Light theme. Surfaces: warm paper page, white cards, two hover/press steps. */
+  color-scheme: light;
+  --pl-bg: #f6f4ef;
+  --pl-surface: #ffffff;
+  --pl-surface-2: #f4f2ed;
+  --pl-surface-3: #e9e6df;
+  --pl-border: rgba(27, 26, 23, 0.1);
+  --pl-border-strong: rgba(27, 26, 23, 0.2);
+  /* Text: ink, then two quieter steps (all ≥ 4.5:1 on --pl-surface and --pl-bg). */
+  --pl-text: #1b1a17;
+  --pl-muted: #55524b;
+  --pl-faint: #6b675f;
+  /* One accent (a deep gold that reads on white) for actions and the current place. */
+  --pl-accent: #8f6b00;
+  --pl-accent-strong: #6f5300;
+  --pl-accent-soft: rgba(184, 148, 30, 0.14);
+  --pl-on-accent: #ffffff;
   /* Status palette, always paired with an icon or a word. */
-  --pl-good: #6fcf97;
-  --pl-good-soft: rgba(111, 207, 151, 0.14);
-  --pl-warn: #f2a65a;
-  --pl-warn-soft: rgba(242, 166, 90, 0.14);
-  --pl-danger: #f07167;
-  --pl-danger-soft: rgba(240, 113, 103, 0.14);
-  --pl-info: #8fb3f5;
-  --pl-info-soft: rgba(143, 179, 245, 0.14);
-  --pl-neutral-soft: rgba(243, 241, 234, 0.07);
+  --pl-good: #1e7d46;
+  --pl-good-soft: rgba(30, 125, 70, 0.11);
+  --pl-warn: #a85400;
+  --pl-warn-soft: rgba(196, 107, 12, 0.12);
+  --pl-danger: #b8322a;
+  --pl-danger-soft: rgba(184, 50, 42, 0.1);
+  --pl-info: #2c5cba;
+  --pl-info-soft: rgba(44, 92, 186, 0.1);
+  --pl-neutral-soft: rgba(27, 26, 23, 0.05);
   /* Type scale (rem at 16px): 12 · 13 · 14 · 16 · 20 · 28 · 40. */
   --pl-fs-xs: 0.75rem;
   --pl-fs-sm: 0.8125rem;
@@ -47,7 +48,7 @@
   --pl-r1: 6px;
   --pl-r2: 10px;
   --pl-r3: 14px;
-  --pl-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --pl-shadow: 0 10px 30px rgba(27, 26, 23, 0.14), 0 1px 3px rgba(27, 26, 23, 0.08);
   --pl-focus: 0 0 0 2px var(--pl-bg), 0 0 0 4px var(--pl-accent);
 
   min-height: 100vh;
@@ -83,7 +84,7 @@
   margin: 0 0 var(--spacing-xs);
 }
 .pl-root a { color: var(--pl-accent); }
-.pl-root a:hover { color: var(--color-gold-light); }
+.pl-root a:hover { color: var(--pl-accent-strong); }
 
 .pl-root input,
 .pl-root select,
@@ -342,11 +343,11 @@
   font-family: var(--font-heading);
   font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
-  color: var(--color-gold);
+  color: var(--pl-accent);
 }
 .pl-clockbar-status { color: var(--pl-muted); }
-.pl-clockbar.is-tight .pl-clockbar-total { color: var(--color-gold-light); }
-.pl-clockbar.is-tight .pl-clockbar-status { color: var(--color-gold-light); }
+.pl-clockbar.is-tight .pl-clockbar-total { color: var(--pl-warn); }
+.pl-clockbar.is-tight .pl-clockbar-status { color: var(--pl-warn); }
 .pl-clockbar.is-over .pl-clockbar-total,
 .pl-clockbar.is-over .pl-clockbar-status { color: var(--pl-danger); }
 .pl-clockbar-track {
@@ -362,7 +363,7 @@
 .pl-clockbar-seg-contrib { background: var(--color-gold); }
 .pl-clockbar-seg-house { background: var(--color-gold-dark); }
 .pl-clockbar-seg-hard {
-  background: repeating-linear-gradient(45deg, rgba(250, 249, 246, 0.25) 0 3px, transparent 3px 6px);
+  background: repeating-linear-gradient(45deg, rgba(27, 26, 23, 0.18) 0 3px, transparent 3px 6px);
 }
 .pl-clockbar-over {
   position: absolute;
@@ -404,7 +405,7 @@
 .pl-push-right { margin-left: auto; }
 .pl-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pl-btn-danger { border-color: var(--pl-danger); color: var(--pl-danger); }
-.pl-btn-danger:hover { background: rgba(224, 87, 79, 0.12); }
+.pl-btn-danger:hover { background: var(--pl-danger-soft); }
 .pl-table-wrap { overflow-x: auto; }
 .pl-show-table td { vertical-align: middle; }
 .pl-show-table .pl-seg-notes { color: var(--pl-muted); font-size: 0.8125rem; max-width: 16rem; }
@@ -504,7 +505,7 @@
   border-radius: var(--radius-md);
   background: var(--pl-surface);
 }
-.pl-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+.pl-dialog::backdrop { background: rgba(27, 26, 23, 0.4); }
 .pl-dialog h2 { margin: 0 0 var(--spacing-xs); font-size: 1.1rem; }
 
 /* Publish */
@@ -517,9 +518,9 @@
 .pl-publish-warning {
   margin: 0 0 var(--spacing-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-gold-light);
+  border: 1px solid var(--pl-accent);
   border-radius: var(--radius-sm);
-  background: rgba(244, 208, 63, 0.08);
+  background: var(--pl-accent-soft);
 }
 .pl-publish-warning ul,
 .pl-publish-changes { margin: 0.25rem 0 0; padding-left: 1.2rem; max-height: 14rem; overflow-y: auto; }
@@ -581,7 +582,7 @@
   padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--pl-accent);
-  color: var(--color-black);
+  color: var(--pl-on-accent);
   font-size: 0.75rem;
   font-weight: 600;
   text-align: center;

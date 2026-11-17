@@ -52,7 +52,7 @@
   cursor: pointer;
 }
 .pl-award-winner-x:hover,
-.pl-award-winner-x:focus-visible { opacity: 1; background: rgba(255, 255, 255, 0.12); }
+.pl-award-winner-x:focus-visible { opacity: 1; background: var(--pl-neutral-soft); }
 
 /* Award panel: one row per contender, reorderable. */
 .pl-awards-row {

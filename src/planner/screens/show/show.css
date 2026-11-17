@@ -22,7 +22,7 @@
 }
 .pl-tl-item.is-contributors .pl-tl-card { border-left-color: var(--pl-info); }
 .pl-tl-item.is-house .pl-tl-card { border-left-color: #8a8577; background: var(--pl-bg); }
-.pl-tl-item.is-trim .pl-tl-card { box-shadow: inset 0 0 0 1px rgba(242, 166, 90, 0.45); }
+.pl-tl-item.is-trim .pl-tl-card { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pl-warn) 45%, transparent); }
 .pl-tl-item.is-dragging .pl-tl-card { box-shadow: var(--pl-shadow); background: var(--pl-surface-2); }
 .pl-tl-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .pl-tl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--pl-s2); }
