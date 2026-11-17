@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { History, Pencil, UserPlus, X } from 'lucide-react';
+import { ChevronDown, UserPlus, X } from 'lucide-react';
 import { createRecord, deleteRecord, peopleCol, personDoc, seasonSubDoc } from '../../firestore';
 import { usePlanner } from '../../hooks/plannerContext';
 import { useSafeWrite, useUndoableUpdate } from '../../hooks/useUndoable';
 import { useToast } from '../../components/ui/toastContext';
-import { ChipSelect } from '../../components/ui/Chip';
 import { Stepper } from '../../components/ui/Stepper';
-import { INVITATION_OPTIONS } from '../../components/status';
-import { INVITATION_STATUS_LABEL } from '../../logic/labels';
+import { INVITATION_STATUS_LABEL, INVITATION_STATUS_ORDER } from '../../logic/labels';
 import { plural } from '../../logic/dates';
 import {
   SEATED_STATUSES,
@@ -29,7 +27,14 @@ import './seats.css';
 /** Seats in the room when the season has no capacity set. */
 export const DEFAULT_SEATS = 58;
 const PER_ROW = 10;
+const HALF = PER_ROW / 2;
+/** Suggestions shown before "Show all". */
+const SUGGEST_LIMIT = 10;
+/** Don't hide just a few: cap only when more than this many would be hidden. */
+const SUGGEST_SLACK = 4;
 const NEW_INVITATION = { status: 'invite?' as const, plusOnes: 0, brunch: false, rsvpIds: [] as string[] };
+
+const statusClass = (s: InvitationStatus) => `is-${s === 'invite?' ? 'listed' : s}`;
 
 interface Props {
   onOpenPerson: (id: string) => void;
@@ -44,9 +49,11 @@ export default function Seats({ onOpenPerson }: Props) {
   const update = useUndoableUpdate();
   const write = useSafeWrite();
   const toast = useToast();
-  const [hover, setHover] = useState<string | null>(null);
+  const [hoverSeat, setHoverSeat] = useState<Seat | null>(null);
+  const [hoverParty, setHoverParty] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
 
   const capacity = season?.capacity && season.capacity > 0 ? season.capacity : DEFAULT_SEATS;
@@ -59,11 +66,13 @@ export default function Seats({ onOpenPerson }: Props) {
   useEffect(() => {
     if (!focus) return;
     rowRefs.current.get(focus)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const t = window.setTimeout(() => setFocus(null), 2400);
+    return () => window.clearTimeout(t);
   }, [focus]);
 
   if (!season) return null;
   const sid = season.id;
-  const lit = hover ?? focus;
+  const lit = hoverSeat?.party?.personId ?? hoverParty ?? focus;
 
   const setPlusOnes = (party: Party, inv: WithId<Invitation>, n: number) => {
     const patch: Partial<Invitation> = { plusOnes: n };
@@ -123,152 +132,194 @@ export default function Seats({ onOpenPerson }: Props) {
     }
   }
 
-  const fresh = sugg.filter((s) => !s.countedWith);
-  const counted = sugg.filter((s) => s.countedWith);
   const query = name.trim().toLowerCase();
   const matches = (s: Suggestion) => !query || s.name.toLowerCase().includes(query);
+  const fresh = sugg.filter((s) => !s.countedWith && matches(s));
+  const counted = sugg.filter((s) => s.countedWith && matches(s));
+  const capped = !showAll && !query && fresh.length > SUGGEST_LIMIT + SUGGEST_SLACK;
+  const shown = capped ? fresh.slice(0, SUGGEST_LIMIT) : fresh;
+  const exact = data.people.some((p) => p.name.trim().toLowerCase() === query);
+
+  const groups = SEATED_STATUSES.map((status) => ({ status, parties: parties.filter((p) => p.status === status) })).filter((g) => g.parties.length);
+  const over = tally.free < 0;
+  const pct = Math.min(100, (tally.total / capacity) * 100);
 
   return (
     <div className="pl-seats">
-      <section className="pl-card pl-seats-room" aria-labelledby="seats-head">
-        <div className="pl-seats-score">
-          <h2 id="seats-head" className="pl-seats-big">
-            <span className={tally.free < 0 ? 'is-over' : undefined}>{tally.total}</span>
-            <span className="pl-seats-of"> / {capacity} seats</span>
-          </h2>
-          <p className={`pl-seats-free ${tally.free < 0 ? 'is-over' : tally.free <= 3 ? 'is-tight' : ''}`}>
-            {tally.free < 0 ? `${plural(-tally.free, 'person', 'people')} over` : tally.free === 0 ? 'Full house' : `${plural(tally.free, 'seat')} free`}
-          </p>
-          <p className="pl-small pl-faint">
-            {plural(tally.guests, 'guest')} + {plural(tally.plusOnes, 'plus-one')}
-          </p>
-        </div>
-
-        <ul className="pl-seats-legend" aria-label="Seats by status">
-          {SEATED_STATUSES.map((s) => (
-            <li key={s} className={`is-${s === 'invite?' ? 'listed' : s}`}>
-              <span className="pl-seat-swatch" aria-hidden /> {INVITATION_STATUS_LABEL[s]} <strong>{tally.byStatus[s]}</strong>
+      <div className="pl-seats-left">
+        <section className="pl-card pl-seats-room" aria-labelledby="seats-head">
+          <header className="pl-seats-score">
+            <h2 id="seats-head" className="pl-seats-big">
+              <span className={over ? 'is-over' : undefined}>{tally.total}</span>
+              <span className="pl-seats-of">of {capacity} seats</span>
+            </h2>
+            <span className={`pl-seats-free ${over ? 'is-over' : tally.free <= 3 ? 'is-tight' : ''}`}>
+              {over ? `${-tally.free} over` : tally.free === 0 ? 'Full house' : `${tally.free} free`}
+            </span>
+          </header>
+          <div className={`pl-seats-meter${over ? ' is-over' : ''}`} aria-hidden>
+            <span style={{ width: `${pct}%` }} />
+          </div>
+          <ul className="pl-seats-legend" aria-label="Seats by status">
+            {SEATED_STATUSES.filter((s) => tally.byStatus[s] > 0).map((s) => (
+              <li key={s} className={statusClass(s)}>
+                <span className="pl-seat-swatch" aria-hidden />
+                {INVITATION_STATUS_LABEL[s]} <strong>{tally.byStatus[s]}</strong>
+              </li>
+            ))}
+            <li className="is-plus">
+              <span className="pl-seat-swatch" aria-hidden />
+              Plus-ones <strong>{tally.plusOnes}</strong>
             </li>
-          ))}
-          <li className="is-plus">
-            <span className="pl-seat-swatch" aria-hidden /> Plus-one
-          </li>
-        </ul>
+          </ul>
 
-        <SeatMap seats={seats} capacity={capacity} lit={lit} onHover={setHover} onPick={(id) => setFocus(id)} tally={tally.total} />
-      </section>
+          <SeatMap
+            seats={seats}
+            capacity={capacity}
+            lit={lit}
+            total={tally.total}
+            onHover={setHoverSeat}
+            onPick={(id) => setFocus(id)}
+          />
+          <p className="pl-seats-caption" aria-live="polite">
+            {hoverSeat ? (
+              <>
+                <span className="pl-faint">{hoverSeat.over ? 'No seat' : `${rowLetter(Math.floor(hoverSeat.index / PER_ROW))}${(hoverSeat.index % PER_ROW) + 1}`}</span>{' '}
+                {seatLabel(hoverSeat)}
+              </>
+            ) : (
+              <span className="pl-faint">Point at a seat to see who’s in it.</span>
+            )}
+          </p>
+        </section>
 
-      <div className="pl-seats-side">
-        <section className="pl-stack" aria-labelledby="seats-add">
+        <section className="pl-card pl-seats-add" aria-labelledby="seats-add">
           <h2 id="seats-add" className="pl-seats-h">Add people</h2>
-          <form className="pl-toolbar" onSubmit={addNew}>
+          <form className="pl-seats-addform" onSubmit={addNew}>
             <input
               type="search"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Type a name, or filter past guests…"
+              placeholder="New name, or filter past guests"
               aria-label="Add a guest by name"
             />
-            {name.trim() && (
-              <button type="submit" className="pl-btn pl-btn-primary">
-                <UserPlus size={16} aria-hidden /> Add
-              </button>
-            )}
+            <button type="submit" className="pl-btn pl-btn-primary pl-btn-sm" disabled={!name.trim()}>
+              <UserPlus size={14} aria-hidden /> {name.trim() && !exact && !fresh.length ? `Add “${name.trim()}”` : 'Add'}
+            </button>
           </form>
-          {fresh.some(matches) && (
+          {fresh.length > 0 ? (
             <div className="pl-seats-suggest" role="group" aria-label="Past guests not on the list">
-              {fresh.filter(matches).map((s) => (
-                <button key={s.personId} type="button" className="pl-seats-chip" onClick={() => void addBack(s)} title={s.notes ? `${s.name}: ${s.notes}` : `Add ${s.name}`}>
-                  <span className="pl-seats-chip-name">
-                    <History size={12} aria-hidden /> {s.name}
-                    {s.status && <span className="pl-faint"> · {INVITATION_STATUS_LABEL[s.status]}</span>}
-                  </span>
-                  {s.notes && <span className="pl-seats-chip-note">{s.notes}</span>}
+              {shown.map((s) => (
+                <button
+                  key={s.personId}
+                  type="button"
+                  className="pl-seats-chip"
+                  onClick={() => void addBack(s)}
+                  title={[s.notes, s.status ? `This year: ${INVITATION_STATUS_LABEL[s.status]}` : ''].filter(Boolean).join(' · ') || `Add ${s.name}`}
+                  aria-label={`Add ${s.name}${s.notes ? `. ${s.notes}` : ''}`}
+                >
+                  <span aria-hidden>+</span> {s.name}
                 </button>
               ))}
+              {capped && (
+                <button type="button" className="pl-seats-more" onClick={() => setShowAll(true)}>
+                  {fresh.length - SUGGEST_LIMIT} more
+                </button>
+              )}
             </div>
+          ) : (
+            query && <p className="pl-small pl-faint pl-seats-none">No past guest matches. Press Enter to add them.</p>
           )}
-          {counted.some(matches) && (
-            <details className="pl-details pl-small">
-              <summary>Already sitting as someone’s plus-one ({counted.filter(matches).length})</summary>
-              <ul className="pl-seats-counted">
-                {counted.filter(matches).map((s) => (
-                  <li key={s.personId}>
-                    {s.name} <span className="pl-faint">with {s.countedWith}</span>
-                    <button type="button" className="pl-btn pl-btn-quiet pl-btn-sm" onClick={() => void addBack(s)}>
-                      Give their own invite
-                    </button>
-                  </li>
-                ))}
-              </ul>
+          {counted.length > 0 && (
+            <details className="pl-small pl-faint pl-seats-counted">
+              <summary>{plural(counted.length, 'past guest is', 'past guests are')} already seated as a plus-one</summary>
+              {counted.map((s, k) => (
+                <span key={s.personId}>
+                  {k > 0 && ', '}
+                  <button type="button" className="pl-seats-link" onClick={() => void addBack(s)} title={`Give ${s.name} their own invitation`}>
+                    {s.name}
+                  </button>{' '}
+                  <span>({s.countedWith})</span>
+                </span>
+              ))}
             </details>
           )}
         </section>
-
-        <section className="pl-stack" aria-labelledby="seats-list">
-          <h2 id="seats-list" className="pl-seats-h">
-            Who’s sitting <span className="pl-count">{parties.length}</span>
-          </h2>
-          {parties.length === 0 ? (
-            <p className="pl-muted">No one yet. Add people above and watch the room fill.</p>
-          ) : (
-            <ul className="pl-list" aria-label="Parties holding seats">
-              {parties.map((party) => {
-                const inv = invById.get(party.personId);
-                if (!inv) return null;
-                return (
-                  <li
-                    key={party.personId}
-                    ref={(el) => {
-                      if (el) rowRefs.current.set(party.personId, el);
-                      else rowRefs.current.delete(party.personId);
-                    }}
-                    onMouseEnter={() => setHover(party.personId)}
-                    onMouseLeave={() => setHover(null)}
-                  >
-                    <PartyRow
-                      party={party}
-                      lit={lit === party.personId}
-                      onOpen={() => onOpenPerson(party.personId)}
-                      onStatus={(status) =>
-                        void update(seasonSubDoc(sid, 'invitations', party.personId), inv, { status }, `${party.name}: ${INVITATION_STATUS_LABEL[status]}`)
-                      }
-                      onPlusOnes={(n) => setPlusOnes(party, inv, n)}
-                      onNames={(names) => setNames(party, inv, names)}
-                      onRemove={() => takeOff(party, inv)}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
       </div>
+
+      <section className="pl-seats-right" aria-label="Who’s sitting">
+        {parties.length === 0 ? (
+          <p className="pl-muted">No one yet. Add people and watch the room fill.</p>
+        ) : (
+          groups.map((g) => (
+            <div key={g.status} className={`pl-seats-group ${statusClass(g.status)}`}>
+              <h3 className="pl-seats-grouphead">
+                <span className="pl-seat-swatch" aria-hidden />
+                {INVITATION_STATUS_LABEL[g.status]}
+                <span className="pl-faint">
+                  {plural(g.parties.length, 'party', 'parties')} · {plural(tally.byStatus[g.status], 'seat')}
+                </span>
+              </h3>
+              <ul className="pl-seats-list">
+                {g.parties.map((party) => {
+                  const inv = invById.get(party.personId);
+                  if (!inv) return null;
+                  return (
+                    <li
+                      key={party.personId}
+                      ref={(el) => {
+                        if (el) rowRefs.current.set(party.personId, el);
+                        else rowRefs.current.delete(party.personId);
+                      }}
+                      onMouseEnter={() => setHoverParty(party.personId)}
+                      onMouseLeave={() => setHoverParty(null)}
+                    >
+                      <PartyRow
+                        party={party}
+                        lit={lit === party.personId}
+                        onOpen={() => onOpenPerson(party.personId)}
+                        onStatus={(status) =>
+                          void update(seasonSubDoc(sid, 'invitations', party.personId), inv, { status }, `${party.name}: ${INVITATION_STATUS_LABEL[status]}`)
+                        }
+                        onPlusOnes={(n) => setPlusOnes(party, inv, n)}
+                        onNames={(names) => setNames(party, inv, names)}
+                        onRemove={() => takeOff(party, inv)}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))
+        )}
+      </section>
     </div>
   );
 }
 
-const statusClass = (s: InvitationStatus) => `is-${s === 'invite?' ? 'listed' : s}`;
-
+/**
+ * The room. One grid for every row so the aisle lines up; a short back row
+ * is centered on the aisle like a real theater.
+ */
 function SeatMap({
   seats,
   capacity,
   lit,
+  total,
   onHover,
   onPick,
-  tally,
 }: {
   seats: Seat[];
   capacity: number;
   lit: string | null;
-  onHover: (id: string | null) => void;
+  total: number;
+  onHover: (s: Seat | null) => void;
   onPick: (id: string) => void;
-  tally: number;
 }) {
   const rows = rowLengths(capacity, PER_ROW);
   const overflow = seats.slice(capacity);
-  const starts = rows.map((_, r) => r * PER_ROW);
-  const seatEl = (seat: Seat) => {
+
+  const seatEl = (seat: Seat, style?: React.CSSProperties) => {
     const p = seat.party;
     const cls = [
       'pl-seat',
@@ -277,6 +328,7 @@ function SeatMap({
       seat.over ? 'is-over' : '',
       p && lit === p.personId ? 'is-lit' : '',
       lit && p && lit !== p.personId ? 'is-dim' : '',
+      lit && !p ? 'is-dim' : '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -284,40 +336,66 @@ function SeatMap({
       <span
         key={`${seat.index}:${p?.personId ?? ''}:${seat.slot}`}
         className={cls}
-        title={seatLabel(seat)}
-        onMouseEnter={() => onHover(p?.personId ?? null)}
+        style={style}
+        onMouseEnter={() => onHover(seat)}
         onMouseLeave={() => onHover(null)}
         onClick={() => p && onPick(p.personId)}
-      >
-        {p && seat.slot > 0 ? '+' : ''}
-      </span>
+      />
     );
   };
+
   return (
-    <div className="pl-seatmap" role="img" aria-label={`${tally} of ${capacity} seats taken`}>
+    <div className="pl-seatmap" role="img" aria-label={`${total} of ${capacity} seats taken`}>
       <div className="pl-seatmap-screen" aria-hidden>
-        Screen
+        <span>Screen</span>
       </div>
-      {rows.map((len, r) => {
-        const row = seats.slice(starts[r], starts[r] + len);
-        const half = Math.ceil(PER_ROW / 2);
-        return (
-          <div key={r} className="pl-seatmap-row" aria-hidden>
-            <span className="pl-seatmap-letter">{rowLetter(r)}</span>
-            <span className="pl-seatmap-block">{row.slice(0, Math.min(half, Math.ceil(len / 2))).map(seatEl)}</span>
-            <span className="pl-seatmap-aisle" />
-            <span className="pl-seatmap-block">{row.slice(Math.min(half, Math.ceil(len / 2))).map(seatEl)}</span>
-            <span className="pl-seatmap-letter">{rowLetter(r)}</span>
-          </div>
-        );
-      })}
+      <div className="pl-seatmap-grid" aria-hidden>
+        {rows.map((len, r) => {
+          const start = r * PER_ROW;
+          const left = Math.min(HALF, Math.ceil(len / 2));
+          const row = seats.slice(start, start + len);
+          const line = r + 1;
+          return [
+            <span key={`l${r}`} className="pl-seatmap-letter" style={{ gridRow: line, gridColumn: 1 }}>
+              {rowLetter(r)}
+            </span>,
+            ...row.map((seat, k) =>
+              seatEl(seat, {
+                gridRow: line,
+                // Left block hugs the aisle (columns 2–6), right block starts after it (8–12).
+                gridColumn: k < left ? 2 + (HALF - left) + k : 8 + (k - left),
+              }),
+            ),
+            <span key={`r${r}`} className="pl-seatmap-letter" style={{ gridRow: line, gridColumn: 13 }}>
+              {rowLetter(r)}
+            </span>,
+          ];
+        })}
+      </div>
       {overflow.length > 0 && (
         <div className="pl-seatmap-over" aria-hidden>
-          <span className="pl-seatmap-over-label">No seat: {overflow.length}</span>
-          <span className="pl-seatmap-over-seats">{overflow.map(seatEl)}</span>
+          <span className="pl-seatmap-over-label">No seat · {overflow.length}</span>
+          <span className="pl-seatmap-over-seats">{overflow.map((s) => seatEl(s))}</span>
         </div>
       )}
     </div>
+  );
+}
+
+/** A status dot that is really a native <select>. */
+function StatusDot({ value, onChange, label }: { value: InvitationStatus; onChange: (s: InvitationStatus) => void; label: string }) {
+  return (
+    <span className={`pl-seats-dot ${statusClass(value)}`} title={`${INVITATION_STATUS_LABEL[value]}: change`}>
+      <span className="pl-seat-swatch" aria-hidden />
+      <ChevronDown size={12} aria-hidden />
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value as InvitationStatus)}>
+        {INVITATION_STATUS_ORDER.map((s) => (
+          <option key={s} value={s}>
+            {INVITATION_STATUS_LABEL[s]}
+          </option>
+        ))}
+      </select>
+    </span>
   );
 }
 
@@ -344,39 +422,31 @@ function PartyRow({
     setDraft(Array.from({ length: party.plusOnes }, (_, k) => party.plusOneNames[k] ?? ''));
     setEditing(true);
   };
-  const save = () => {
-    onNames(draft);
-    setEditing(false);
-  };
   const named = party.plusOneNames.filter((n) => n.trim());
   const unnamed = party.plusOnes - named.length;
+  const guests = [...named, ...(unnamed > 0 ? [named.length ? `${unnamed} more` : plural(unnamed, 'guest')] : [])].join(', ');
 
   return (
-    <div className={`pl-list-row pl-seats-row${lit ? ' is-highlight' : ''}`}>
-      <span className={`pl-seat pl-seat-key ${statusClass(party.status)}`} aria-hidden>
-        {party.size}
-      </span>
-      <div className="pl-list-main">
-        <button type="button" className="pl-list-title" onClick={onOpen}>
+    <div className={`pl-seats-row${lit ? ' is-lit' : ''}`}>
+      <StatusDot value={party.status} onChange={onStatus} label={`Status for ${party.name}`} />
+      <div className="pl-seats-who">
+        <button type="button" className="pl-seats-name" onClick={onOpen}>
           {party.name}
         </button>
         {party.plusOnes > 0 && !editing && (
-          <span className="pl-list-meta pl-small">
-            <span className="pl-faint">
-              with {[...named, ...(unnamed > 0 ? [named.length ? `${unnamed} more` : plural(unnamed, 'guest')] : [])].join(', ')}
-            </span>
-            <button type="button" className="pl-seats-link" onClick={startEdit} aria-label={`Name ${party.name}’s plus-ones`}>
-              <Pencil size={11} aria-hidden /> {named.length ? 'Edit' : 'Name them'}
-            </button>
-          </span>
+          <button type="button" className="pl-seats-guests" onClick={startEdit} title="Name the plus-ones">
+            + {guests}
+          </button>
         )}
         {editing && (
           <form
             className="pl-seats-names"
             onSubmit={(e) => {
               e.preventDefault();
-              save();
+              onNames(draft);
+              setEditing(false);
             }}
+            onKeyDown={(e) => e.key === 'Escape' && setEditing(false)}
           >
             {draft.map((v, k) => (
               <input
@@ -393,16 +463,10 @@ function PartyRow({
           </form>
         )}
       </div>
-      <div className="pl-list-actions">
-        <ChipSelect value={party.status} options={INVITATION_OPTIONS} label={`Status for ${party.name}`} onChange={onStatus} />
-        <span className="pl-plus">
-          <span className="pl-small pl-faint">+1s</span>
-          <Stepper value={party.plusOnes} label={`Plus-ones for ${party.name}`} onChange={onPlusOnes} />
-        </span>
-        <button type="button" className="pl-btn pl-btn-quiet pl-btn-sm pl-seats-remove" onClick={onRemove} aria-label={`Take ${party.name} off this year’s list`} title="Not this year">
-          <X size={14} aria-hidden />
-        </button>
-      </div>
+      <Stepper value={party.plusOnes} label={`Plus-ones for ${party.name}`} onChange={onPlusOnes} />
+      <button type="button" className="pl-seats-remove" onClick={onRemove} aria-label={`Take ${party.name} off this year’s list`} title="Not this year">
+        <X size={14} aria-hidden />
+      </button>
     </div>
   );
 }
