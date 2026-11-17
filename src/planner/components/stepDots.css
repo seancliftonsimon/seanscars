@@ -18,13 +18,13 @@
 }
 .pl-dots-md .pl-dot { width: 16px; height: 16px; }
 .pl-dot-doing {
-  border-color: #d4af37;
-  background: linear-gradient(90deg, #d4af37 50%, transparent 50%);
+  border-color: var(--pl-accent, #d4af37);
+  background: linear-gradient(90deg, var(--pl-accent, #d4af37) 50%, transparent 50%);
 }
 .pl-dot-done {
-  border-color: #d4af37;
-  background: #d4af37;
+  border-color: var(--pl-accent, #d4af37);
+  background: var(--pl-accent, #d4af37);
 }
 button.pl-dot { cursor: pointer; }
-button.pl-dot:hover { box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.35); }
-button.pl-dot:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
+button.pl-dot:hover { box-shadow: 0 0 0 2px var(--pl-accent-soft, rgba(212, 175, 55, 0.35)); }
+button.pl-dot:focus-visible { outline: 2px solid var(--pl-accent, #d4af37); outline-offset: 2px; }

@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { ChevronDown, UserPlus, X } from 'lucide-react';
+import { ChevronDown, Plus, UserPlus, X } from 'lucide-react';
 import { createRecord, deleteRecord, peopleCol, personDoc, seasonSubDoc } from '../../firestore';
 import { usePlanner } from '../../hooks/plannerContext';
 import { useSafeWrite, useUndoableUpdate } from '../../hooks/useUndoable';
 import { useToast } from '../../components/ui/toastContext';
-import { Stepper } from '../../components/ui/Stepper';
 import { INVITATION_STATUS_LABEL, INVITATION_STATUS_ORDER } from '../../logic/labels';
 import { plural } from '../../logic/dates';
 import {
@@ -55,6 +54,7 @@ export default function Seats({ onOpenPerson }: Props) {
   const [name, setName] = useState('');
   const [showAll, setShowAll] = useState(false);
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
+  const addRef = useRef<HTMLInputElement>(null);
 
   const capacity = season?.capacity && season.capacity > 0 ? season.capacity : DEFAULT_SEATS;
   const invById = useMemo(() => new Map(data.invitations.map((i) => [i.id, i])), [data.invitations]);
@@ -74,17 +74,28 @@ export default function Seats({ onOpenPerson }: Props) {
   const sid = season.id;
   const lit = hoverSeat?.party?.personId ?? hoverParty ?? focus;
 
-  const setPlusOnes = (party: Party, inv: WithId<Invitation>, n: number) => {
-    const patch: Partial<Invitation> = { plusOnes: n };
-    if (inv.plusOneNames?.length) patch.plusOneNames = resizeNames(inv.plusOneNames, n);
-    void update(seasonSubDoc(sid, 'invitations', party.personId), inv, patch, `${party.name}: ${plural(n, 'plus-one')}`);
+  const ref = (party: Party) => seasonSubDoc(sid, 'invitations', party.personId);
+
+  /** Adds one plus-one (unnamed). */
+  const addPlusOne = (party: Party, inv: WithId<Invitation>) =>
+    void update(ref(party), inv, { plusOnes: party.plusOnes + 1 }, `${party.name}: ${plural(party.plusOnes + 1, 'plus-one')}`);
+
+  /** Removes plus-one `k`, and their name. */
+  const removePlusOne = (party: Party, inv: WithId<Invitation>, k: number) => {
+    const names = Array.from({ length: party.plusOnes }, (_, j) => party.plusOneNames[j] ?? '');
+    const gone = names[k]?.trim();
+    names.splice(k, 1);
+    const patch: Partial<Invitation> = { plusOnes: party.plusOnes - 1 };
+    if (inv.plusOneNames?.length) patch.plusOneNames = resizeNames(names, party.plusOnes - 1);
+    void update(ref(party), inv, patch, gone ? `${gone} removed from ${party.name}’s party` : `${party.name}: ${plural(party.plusOnes - 1, 'plus-one')}`);
   };
 
-  const setNames = (party: Party, inv: WithId<Invitation>, names: string[]) => {
-    const next = resizeNames(names.map((n) => n.trim()), party.plusOnes);
-    const prev = inv.plusOneNames ?? [];
-    if (next.length === prev.length && next.every((n, i) => n === prev[i])) return;
-    void update(seasonSubDoc(sid, 'invitations', party.personId), inv, { plusOneNames: next }, `${party.name}’s guests renamed`);
+  /** Names plus-one `k` (blank clears it). */
+  const namePlusOne = (party: Party, inv: WithId<Invitation>, k: number, value: string) => {
+    const names = Array.from({ length: party.plusOnes }, (_, j) => party.plusOneNames[j] ?? '');
+    if ((names[k] ?? '') === value.trim()) return;
+    names[k] = value.trim();
+    void update(ref(party), inv, { plusOneNames: resizeNames(names, party.plusOnes) }, value.trim() ? `${value.trim()} is ${party.name}’s +1` : `${party.name}’s +1 unnamed`);
   };
 
   const takeOff = (party: Party, inv: WithId<Invitation>) =>
@@ -180,6 +191,10 @@ export default function Seats({ onOpenPerson }: Props) {
             total={tally.total}
             onHover={setHoverSeat}
             onPick={(id) => setFocus(id)}
+            onPickEmpty={() => {
+              addRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+              addRef.current?.focus({ preventScroll: true });
+            }}
           />
           <p className="pl-seats-caption" aria-live="polite">
             {hoverSeat ? (
@@ -188,25 +203,34 @@ export default function Seats({ onOpenPerson }: Props) {
                 {seatLabel(hoverSeat)}
               </>
             ) : (
-              <span className="pl-faint">Point at a seat to see who’s in it.</span>
+              <span className="pl-faint">Point at a seat to see who’s in it. Click an empty seat to add someone.</span>
             )}
           </p>
         </section>
 
         <section className="pl-card pl-seats-add" aria-labelledby="seats-add">
-          <h2 id="seats-add" className="pl-seats-h">Add people</h2>
+          <div>
+            <h2 id="seats-add" className="pl-seats-h">
+              <UserPlus size={16} aria-hidden /> Add a guest
+            </h2>
+            <p className="pl-small pl-faint pl-seats-help">Type their name and press Add. Bringing a +1? Use the +1 button next to their name in the list.</p>
+          </div>
           <form className="pl-seats-addform" onSubmit={addNew}>
+            <label className="pl-sr-only" htmlFor="seats-add-name">Guest’s name</label>
             <input
-              type="search"
+              id="seats-add-name"
+              ref={addRef}
+              type="text"
+              autoComplete="off"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="New name, or filter past guests"
-              aria-label="Add a guest by name"
+              placeholder="Guest’s name"
             />
-            <button type="submit" className="pl-btn pl-btn-primary pl-btn-sm" disabled={!name.trim()}>
-              <UserPlus size={14} aria-hidden /> {name.trim() && !exact && !fresh.length ? `Add “${name.trim()}”` : 'Add'}
+            <button type="submit" className="pl-btn pl-btn-primary">
+              <Plus size={16} aria-hidden /> {name.trim() && !exact && !fresh.length ? `Add “${name.trim()}”` : 'Add to list'}
             </button>
           </form>
+          {fresh.length > 0 && <p className="pl-seats-sublabel">{query ? 'Matching past guests' : 'Past guests: tap to add'}</p>}
           {fresh.length > 0 ? (
             <div className="pl-seats-suggest" role="group" aria-label="Past guests not on the list">
               {shown.map((s) => (
@@ -218,7 +242,7 @@ export default function Seats({ onOpenPerson }: Props) {
                   title={[s.notes, s.status ? `This year: ${INVITATION_STATUS_LABEL[s.status]}` : ''].filter(Boolean).join(' · ') || `Add ${s.name}`}
                   aria-label={`Add ${s.name}${s.notes ? `. ${s.notes}` : ''}`}
                 >
-                  <span aria-hidden>+</span> {s.name}
+                  <Plus size={13} aria-hidden /> {s.name}
                 </button>
               ))}
               {capped && (
@@ -281,8 +305,9 @@ export default function Seats({ onOpenPerson }: Props) {
                         onStatus={(status) =>
                           void update(seasonSubDoc(sid, 'invitations', party.personId), inv, { status }, `${party.name}: ${INVITATION_STATUS_LABEL[status]}`)
                         }
-                        onPlusOnes={(n) => setPlusOnes(party, inv, n)}
-                        onNames={(names) => setNames(party, inv, names)}
+                        onAddPlusOne={() => addPlusOne(party, inv)}
+                        onRemovePlusOne={(k) => removePlusOne(party, inv, k)}
+                        onNamePlusOne={(k, v) => namePlusOne(party, inv, k, v)}
                         onRemove={() => takeOff(party, inv)}
                       />
                     </li>
@@ -308,6 +333,7 @@ function SeatMap({
   total,
   onHover,
   onPick,
+  onPickEmpty,
 }: {
   seats: Seat[];
   capacity: number;
@@ -315,6 +341,7 @@ function SeatMap({
   total: number;
   onHover: (s: Seat | null) => void;
   onPick: (id: string) => void;
+  onPickEmpty: () => void;
 }) {
   const rows = rowLengths(capacity, PER_ROW);
   const overflow = seats.slice(capacity);
@@ -339,7 +366,7 @@ function SeatMap({
         style={style}
         onMouseEnter={() => onHover(seat)}
         onMouseLeave={() => onHover(null)}
-        onClick={() => p && onPick(p.personId)}
+        onClick={() => (p ? onPick(p.personId) : onPickEmpty())}
       />
     );
   };
@@ -404,27 +431,43 @@ function PartyRow({
   lit,
   onOpen,
   onStatus,
-  onPlusOnes,
-  onNames,
+  onAddPlusOne,
+  onRemovePlusOne,
+  onNamePlusOne,
   onRemove,
 }: {
   party: Party;
   lit: boolean;
   onOpen: () => void;
   onStatus: (s: InvitationStatus) => void;
-  onPlusOnes: (n: number) => void;
-  onNames: (names: string[]) => void;
+  onAddPlusOne: () => void;
+  onRemovePlusOne: (k: number) => void;
+  onNamePlusOne: (k: number, name: string) => void;
   onRemove: () => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<string[]>([]);
-  const startEdit = () => {
-    setDraft(Array.from({ length: party.plusOnes }, (_, k) => party.plusOneNames[k] ?? ''));
-    setEditing(true);
+  /** Which plus-one is being named, if any. */
+  const [editing, setEditing] = useState<number | null>(null);
+  const [draft, setDraft] = useState('');
+  const [waiting, setWaiting] = useState(false);
+  const [seen, setSeen] = useState(party.plusOnes);
+  // A plus-one just added opens its name box once the new count arrives.
+  if (seen !== party.plusOnes) {
+    setSeen(party.plusOnes);
+    if (waiting && party.plusOnes > seen) {
+      setWaiting(false);
+      setDraft('');
+      setEditing(party.plusOnes - 1);
+    }
+  }
+
+  const edit = (k: number) => {
+    setDraft(party.plusOneNames[k] ?? '');
+    setEditing(k);
   };
-  const named = party.plusOneNames.filter((n) => n.trim());
-  const unnamed = party.plusOnes - named.length;
-  const guests = [...named, ...(unnamed > 0 ? [named.length ? `${unnamed} more` : plural(unnamed, 'guest')] : [])].join(', ');
+  const commit = () => {
+    if (editing !== null) onNamePlusOne(editing, draft);
+    setEditing(null);
+  };
 
   return (
     <div className={`pl-seats-row${lit ? ' is-lit' : ''}`}>
@@ -433,37 +476,52 @@ function PartyRow({
         <button type="button" className="pl-seats-name" onClick={onOpen}>
           {party.name}
         </button>
-        {party.plusOnes > 0 && !editing && (
-          <button type="button" className="pl-seats-guests" onClick={startEdit} title="Name the plus-ones">
-            + {guests}
-          </button>
-        )}
-        {editing && (
-          <form
-            className="pl-seats-names"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onNames(draft);
-              setEditing(false);
-            }}
-            onKeyDown={(e) => e.key === 'Escape' && setEditing(false)}
-          >
-            {draft.map((v, k) => (
-              <input
-                key={k}
-                value={v}
-                autoFocus={k === 0}
-                placeholder={`Guest ${k + 1}`}
-                aria-label={`${party.name}’s guest ${k + 1}`}
-                onChange={(e) => setDraft((d) => d.map((x, j) => (j === k ? e.target.value : x)))}
-              />
-            ))}
-            <button type="submit" className="pl-btn pl-btn-sm pl-btn-primary">Save</button>
-            <button type="button" className="pl-btn pl-btn-sm pl-btn-quiet" onClick={() => setEditing(false)}>Cancel</button>
-          </form>
+        {party.plusOnes > 0 && (
+          <ul className="pl-seats-ones" aria-label={`${party.name}’s plus-ones`}>
+            {Array.from({ length: party.plusOnes }, (_, k) => {
+              const n = party.plusOneNames[k]?.trim();
+              return (
+                <li key={k} className={`pl-seats-one${n ? '' : ' is-unnamed'}`}>
+                  {editing === k ? (
+                    <input
+                      autoFocus
+                      value={draft}
+                      placeholder="Name (optional)"
+                      aria-label={`Name of ${party.name}’s +1`}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onBlur={commit}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commit();
+                        if (e.key === 'Escape') setEditing(null);
+                      }}
+                    />
+                  ) : (
+                    <button type="button" className="pl-seats-one-name" onClick={() => edit(k)} title="Click to name">
+                      {n || `+1 · add name`}
+                    </button>
+                  )}
+                  <button type="button" className="pl-seats-one-x" onClick={() => onRemovePlusOne(k)} aria-label={`Remove ${n || `${party.name}’s +1`}`} title="Remove this +1">
+                    <X size={11} aria-hidden />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
-      <Stepper value={party.plusOnes} label={`Plus-ones for ${party.name}`} onChange={onPlusOnes} />
+      <button
+        type="button"
+        className="pl-seats-addone"
+        onClick={() => {
+          setWaiting(true);
+          onAddPlusOne();
+        }}
+        disabled={party.plusOnes >= 9}
+        aria-label={`Add a +1 for ${party.name}`}
+        title={`Add a +1 for ${party.name}`}
+      >
+        <Plus size={13} aria-hidden />1
+      </button>
       <button type="button" className="pl-seats-remove" onClick={onRemove} aria-label={`Take ${party.name} off this year’s list`} title="Not this year">
         <X size={14} aria-hidden />
       </button>

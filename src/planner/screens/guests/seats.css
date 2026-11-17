@@ -8,7 +8,11 @@
 }
 .pl-seats-left { position: sticky; top: var(--pl-s3); display: flex; flex-direction: column; gap: var(--pl-s4); min-width: 0; }
 .pl-seats-right { display: flex; flex-direction: column; gap: var(--pl-s5); min-width: 0; }
-.pl-root .pl-seats-h { margin: 0; font-size: var(--pl-fs-md); font-weight: 600; }
+.pl-root .pl-seats-h { margin: 0; display: flex; align-items: center; gap: 0.4rem; font-size: var(--pl-fs-lg); font-weight: 600; }
+.pl-root .pl-seats-h svg { color: var(--pl-accent); }
+.pl-seats-help { margin: 0.2rem 0 0; }
+.pl-seats-sublabel { margin: 0 0 -0.25rem; font-size: var(--pl-fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pl-faint); }
+.pl-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Status colors, shared by seats, swatches and dots. */
 .pl-seats { --seat-c: var(--pl-faint); }
@@ -111,29 +115,29 @@
   min-height: 1.25rem;
   font-size: var(--pl-fs-sm);
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-wrap: balance;
 }
 
 /* ---------- Add card ---------- */
 .pl-seats-add { display: flex; flex-direction: column; gap: var(--pl-s3); }
 .pl-seats-addform { display: flex; gap: var(--pl-s2); }
-.pl-root .pl-seats-addform input { flex: 1; min-width: 0; }
+.pl-root .pl-seats-addform input { flex: 1; min-width: 0; min-height: 2.5rem; font-size: var(--pl-fs-lg); }
+.pl-root .pl-seats-addform .pl-btn { min-height: 2.5rem; }
 .pl-seats-suggest { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .pl-root .pl-seats-chip,
 .pl-root .pl-seats-more {
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
   border: 1px solid var(--pl-border-strong);
-  background: transparent;
+  background: var(--pl-surface);
   color: var(--pl-text);
   font: inherit;
   font-size: var(--pl-fs-sm);
   cursor: pointer;
   transition: border-color 120ms ease, background 120ms ease;
 }
-.pl-root .pl-seats-chip span { color: var(--pl-accent); font-weight: 700; }
+.pl-root .pl-seats-chip { display: inline-flex; align-items: center; gap: 0.25rem; }
+.pl-root .pl-seats-chip svg { color: var(--pl-accent); }
 .pl-root .pl-seats-chip:hover { border-color: var(--pl-accent); background: var(--pl-accent-soft); }
 .pl-root .pl-seats-more { border-style: dashed; color: var(--pl-muted); }
 .pl-root .pl-seats-more:hover { color: var(--pl-text); }
@@ -179,26 +183,76 @@
 }
 .pl-seats-row.is-lit { background: var(--pl-accent-soft); }
 .pl-seats-who { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
-.pl-root .pl-seats-name,
-.pl-root .pl-seats-guests {
+.pl-root .pl-seats-name {
   max-width: 100%;
   background: none;
   border: 0;
   padding: 0;
   font: inherit;
+  font-weight: 500;
+  font-size: var(--pl-fs-md);
+  color: var(--pl-text);
   text-align: left;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pl-root .pl-seats-name { color: var(--pl-text); font-weight: 500; font-size: var(--pl-fs-md); }
-.pl-root .pl-seats-name:hover { color: var(--pl-accent-strong); }
-.pl-root .pl-seats-guests { color: var(--pl-faint); font-size: var(--pl-fs-xs); }
-.pl-root .pl-seats-guests:hover { color: var(--pl-text); }
+.pl-root .pl-seats-name:hover { color: var(--pl-accent-strong); text-decoration: underline; text-underline-offset: 3px; }
 
-.pl-seats-names { display: flex; flex-wrap: wrap; gap: var(--pl-s1); margin-top: var(--pl-s1); width: 100%; }
-.pl-root .pl-seats-names input { flex: 1 1 7rem; min-width: 0; padding: 0.2rem 0.4rem; font-size: var(--pl-fs-sm); }
+/* Each plus-one is its own tag: click to name, × to remove. */
+.pl-seats-ones { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.pl-seats-one {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--seat-c) 45%, transparent);
+  background: color-mix(in srgb, var(--seat-c) 10%, var(--pl-surface));
+  font-size: var(--pl-fs-xs);
+}
+.pl-seats-one.is-unnamed { border-style: dashed; }
+.pl-root .pl-seats-one-name {
+  padding: 0.1rem 0.15rem 0.1rem 0.5rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--pl-text);
+  cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-root .pl-seats-one.is-unnamed .pl-seats-one-name { color: var(--pl-faint); font-style: italic; }
+.pl-root .pl-seats-one input { width: 9rem; min-height: 0; padding: 0.1rem 0.4rem; margin: 1px; border-radius: 999px; font-size: var(--pl-fs-xs); }
+.pl-root .pl-seats-one-x {
+  display: inline-flex;
+  padding: 0.2rem 0.35rem 0.2rem 0.2rem;
+  border: 0;
+  background: none;
+  color: var(--pl-faint);
+  cursor: pointer;
+  border-radius: 0 999px 999px 0;
+}
+.pl-root .pl-seats-one-x:hover { color: var(--pl-danger); }
+
+.pl-root .pl-seats-addone {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--pl-border-strong);
+  border-radius: 999px;
+  background: var(--pl-surface);
+  color: var(--pl-accent);
+  font: inherit;
+  font-size: var(--pl-fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.pl-root .pl-seats-addone:hover { border-color: var(--pl-accent); background: var(--pl-accent-soft); }
+.pl-root .pl-seats-addone:disabled { opacity: 0.4; cursor: default; }
 
 .pl-seats-dot { position: relative; flex: none; display: inline-flex; align-items: center; gap: 1px; padding: 0.25rem 0.15rem; border-radius: var(--pl-r1); color: var(--pl-faint); }
 .pl-seats-dot .pl-seat-swatch { width: 0.7rem; height: 0.7rem; border-radius: 50%; }

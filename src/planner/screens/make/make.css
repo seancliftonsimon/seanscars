@@ -16,7 +16,7 @@
 .pl-root .pl-board-col h3 { margin: 0; display: flex; gap: var(--pl-s2); align-items: baseline; }
 .pl-board-col header p { margin: 0 !important; }
 .pl-board-card { display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; padding: var(--pl-s3); background: var(--pl-surface-2); border: 1px solid var(--pl-border); border-radius: var(--pl-r1); }
-.pl-board-card.is-overdue { border-color: rgba(240, 113, 103, 0.5); }
+.pl-board-card.is-overdue { border-color: color-mix(in srgb, var(--pl-danger) 50%, transparent); }
 @media (max-width: 900px) {
   .pl-board { grid-template-columns: 1fr; overflow: visible; }
 }
