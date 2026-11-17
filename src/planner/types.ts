@@ -183,6 +183,8 @@ export type InviteMethod = 'text' | 'mail' | 'hand' | 'email';
 export interface Invitation extends RecordMeta {
   status: InvitationStatus;
   plusOnes: number;
+  /** Optional names for the plus-ones, in seat order. May be shorter than plusOnes. */
+  plusOneNames?: string[];
   brunch: boolean;
   method?: InviteMethod;
   invitedAt?: IsoDate;

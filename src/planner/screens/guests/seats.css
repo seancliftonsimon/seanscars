@@ -1,0 +1,161 @@
+/* Seats view: a theater seat map that fills as the list grows. */
+
+.pl-seats {
+  display: grid;
+  grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+  gap: var(--pl-s5);
+  align-items: start;
+}
+.pl-seats-room { position: sticky; top: var(--pl-s3); display: flex; flex-direction: column; gap: var(--pl-s4); }
+.pl-seats-side { display: flex; flex-direction: column; gap: var(--pl-s5); min-width: 0; }
+.pl-root .pl-seats-h { margin: 0; font-size: var(--pl-fs-lg); display: flex; align-items: baseline; gap: var(--pl-s2); }
+.pl-seats-h .pl-count { color: var(--pl-faint); font-weight: 400; font-size: var(--pl-fs-sm); }
+
+/* Score */
+.pl-seats-score { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: var(--pl-s4); align-items: baseline; }
+.pl-root .pl-seats-big { margin: 0; grid-row: span 2; font-size: var(--pl-fs-3xl); font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.02em; }
+.pl-seats-big .is-over { color: var(--pl-danger); }
+.pl-seats-of { font-size: var(--pl-fs-lg); color: var(--pl-muted); font-weight: 500; letter-spacing: 0; }
+.pl-seats-free { margin: 0; font-weight: 600; color: var(--pl-good); }
+.pl-seats-free.is-tight { color: var(--pl-warn); }
+.pl-seats-free.is-over { color: var(--pl-danger); }
+.pl-seats-score .pl-small { margin: 0; white-space: nowrap; }
+
+/* Status colors: shared by seats, swatches and row keys. */
+.pl-seats { --seat-c: var(--pl-faint); }
+.pl-seats .is-confirmed { --seat-c: var(--pl-good); }
+.pl-seats .is-maybe { --seat-c: var(--pl-warn); }
+.pl-seats .is-invited { --seat-c: var(--pl-info); }
+.pl-seats .is-listed { --seat-c: var(--pl-accent); }
+
+.pl-seats-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--pl-s2) var(--pl-s4); font-size: var(--pl-fs-sm); color: var(--pl-muted); }
+.pl-seats-legend li { display: inline-flex; align-items: center; gap: 0.35rem; }
+.pl-seats-legend strong { color: var(--pl-text); font-variant-numeric: tabular-nums; }
+.pl-seat-swatch { width: 0.8rem; height: 0.8rem; border-radius: 3px; background: var(--seat-c); }
+.pl-seats-legend .is-plus .pl-seat-swatch { background: transparent; border: 2px solid var(--pl-muted); }
+
+/* The map */
+.pl-seatmap { display: flex; flex-direction: column; gap: 0.4rem; align-items: center; }
+.pl-seatmap-screen {
+  width: 80%;
+  margin-bottom: var(--pl-s3);
+  padding-bottom: 0.3rem;
+  border-bottom: 3px solid var(--pl-accent);
+  border-radius: 0 0 50% 50% / 0 0 10px 10px;
+  text-align: center;
+  font-size: var(--pl-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--pl-faint);
+  box-shadow: 0 8px 18px -12px var(--pl-accent);
+}
+.pl-seatmap-row { display: flex; align-items: center; gap: 0.3rem; }
+.pl-seatmap-block { display: flex; gap: 0.3rem; }
+.pl-seatmap-aisle { width: 0.9rem; }
+.pl-seatmap-letter { width: 1rem; text-align: center; font-size: var(--pl-fs-xs); color: var(--pl-faint); }
+
+.pl-seat {
+  --seat-size: 1.75rem;
+  width: var(--seat-size);
+  height: var(--seat-size);
+  border-radius: 6px 6px 3px 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--pl-fs-xs);
+  font-weight: 700;
+  color: var(--pl-on-accent);
+  background: var(--seat-c);
+  border: 2px solid var(--seat-c);
+  cursor: pointer;
+  transition: opacity 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  animation: pl-seat-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  user-select: none;
+}
+.pl-seat.is-plus { background: color-mix(in srgb, var(--seat-c) 22%, transparent); color: var(--seat-c); }
+.pl-seat.is-empty {
+  background: var(--pl-surface-2);
+  border-color: var(--pl-border-strong);
+  cursor: default;
+  animation: none;
+}
+.pl-seat.is-over { border-style: dashed; border-color: var(--pl-danger); box-shadow: 0 0 0 1px var(--pl-danger-soft); }
+.pl-seat.is-lit { transform: translateY(-2px) scale(1.12); box-shadow: 0 0 0 2px var(--pl-bg), 0 0 0 4px var(--seat-c); z-index: 1; }
+.pl-seat.is-dim { opacity: 0.35; }
+
+@keyframes pl-seat-in {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.pl-seatmap-over {
+  margin-top: var(--pl-s3);
+  padding: var(--pl-s2) var(--pl-s3);
+  border: 1px dashed var(--pl-danger);
+  border-radius: var(--pl-r2);
+  background: var(--pl-danger-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pl-s2);
+  align-items: center;
+}
+.pl-seatmap-over-label { font-size: var(--pl-fs-xs); font-weight: 700; color: var(--pl-danger); text-transform: uppercase; letter-spacing: 0.08em; }
+.pl-seatmap-over-seats { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; max-width: 21rem; }
+
+/* Rows */
+.pl-seats-row { gap: var(--pl-s3); }
+.pl-seat.pl-seat-key { --seat-size: 1.6rem; cursor: default; animation: none; flex: none; }
+.pl-seats-row .pl-list-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--pl-s2); }
+.pl-root .pl-seats-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--pl-accent);
+  font: inherit;
+  font-size: var(--pl-fs-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.pl-root .pl-seats-link:hover { text-decoration: underline; }
+.pl-seats-names { display: flex; flex-wrap: wrap; gap: var(--pl-s2); margin-top: var(--pl-s1); }
+.pl-root .pl-seats-names input { flex: 1 1 9rem; min-width: 0; }
+.pl-root .pl-seats-remove { padding: 0.2rem 0.45rem; }
+
+/* Suggestions */
+.pl-seats-suggest { display: flex; flex-wrap: wrap; gap: var(--pl-s2); }
+.pl-root .pl-seats-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-width: 15rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--pl-r2);
+  border: 1px dashed var(--pl-border-strong);
+  background: var(--pl-surface);
+  color: var(--pl-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pl-root .pl-seats-chip:hover { border-style: solid; border-color: var(--pl-accent); background: var(--pl-accent-soft); }
+.pl-seats-chip-name { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; font-size: var(--pl-fs-sm); }
+.pl-seats-chip-name svg { color: var(--pl-accent); }
+.pl-seats-chip-note { font-size: var(--pl-fs-xs); color: var(--pl-faint); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pl-seats-counted { list-style: none; margin: var(--pl-s2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--pl-s1); }
+.pl-seats-counted li { display: flex; align-items: center; gap: var(--pl-s2); flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .pl-seats { grid-template-columns: 1fr; }
+  .pl-seats-room { position: static; }
+}
+@media (max-width: 420px) {
+  .pl-seat { --seat-size: 1.4rem; }
+  .pl-seatmap-row, .pl-seatmap-block { gap: 0.2rem; }
+  .pl-seatmap-aisle { width: 0.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-seat { animation: none; transition: none; }
+}

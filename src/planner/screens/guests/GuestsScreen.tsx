@@ -16,14 +16,17 @@ import SendInvites from './SendInvites';
 import Replies from './Replies';
 import Waiting from './Waiting';
 import FinalNumbers from './FinalNumbers';
+import Seats, { DEFAULT_SEATS } from './Seats';
+import { buildParties, tallySeats } from '../../logic/seats';
 import './guests.css';
 
-type View = 'list' | 'send' | 'replies' | 'waiting' | 'final';
-const VIEWS: View[] = ['list', 'send', 'replies', 'waiting', 'final'];
+type View = 'list' | 'seats' | 'send' | 'replies' | 'waiting' | 'final';
+const VIEWS: View[] = ['list', 'seats', 'send', 'replies', 'waiting', 'final'];
 
 /**
  * Guests: build the list against capacity, send invitations, file replies,
  * nudge the quiet ones, and lock the final numbers. `?view=…`, `?person=…`.
+ * `?view=seats` shows the room filling up, plus-ones included.
  */
 export default function GuestsScreen() {
   const { season, data, inbox, phase } = usePlanner();
@@ -56,8 +59,12 @@ export default function GuestsScreen() {
   const basis = projectionBasis(phase.id);
   const invitesOut = d.send.sent > 0;
   const booked = data.venues.find((v) => v.id === season.venueOptionId);
+  const seatTally = tallySeats(buildParties(data.people, data.invitations), season.capacity && season.capacity > 0 ? season.capacity : DEFAULT_SEATS);
   const answers: Record<View, string> = {
     list: capacityVerdict(d.projection, basis).text,
+    seats: seatTally.free >= 0
+      ? `${seatTally.total} of ${seatTally.capacity} seats spoken for, counting everyone on the list. ${plural(seatTally.free, 'seat')} free.`
+      : `${seatTally.total} people for ${seatTally.capacity} seats: ${seatTally.free * -1} over.`,
     send: d.send.toSend ? `${d.send.sent} of ${d.send.total} invitations sent. ${plural(d.send.toSend, 'person', 'people')} ready to invite.` : d.send.total ? 'Every invitation is out.' : 'Put people on the list first.',
     replies: inbox.length ? `${plural(inbox.length, 'new RSVP')} to file.` : 'All caught up.',
     waiting: d.waiting.length ? `${plural(d.waiting.length, 'guest')} haven’t replied yet.` : 'No one to chase.',
@@ -74,6 +81,7 @@ export default function GuestsScreen() {
           defaultView="list"
           views={[
             { id: 'list', label: 'Guest list', count: data.invitations.filter((i) => i.status !== 'not-inviting').length },
+            { id: 'seats', label: 'Seats', count: seatTally.total },
             { id: 'send', label: 'Send invitations', count: d.send.toSend },
             { id: 'replies', label: 'Replies', count: inbox.length, attention: true },
             { id: 'waiting', label: 'Waiting', count: invitesOut ? d.waiting.length : undefined },
@@ -86,6 +94,7 @@ export default function GuestsScreen() {
           </div>
         )}
         {view === 'list' && <GuestList derived={d} phase={phase.id} onOpenPerson={openPerson} />}
+        {view === 'seats' && <Seats onOpenPerson={openPerson} />}
         {view === 'send' && <SendInvites derived={d} onOpenPerson={openPerson} />}
         {view === 'replies' && <Replies onOpenPerson={openPerson} />}
         {view === 'waiting' && <Waiting derived={d} onOpenPerson={openPerson} highlight={personId} />}
