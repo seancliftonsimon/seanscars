@@ -178,6 +178,9 @@ export type InvitationStatus =
   | 'declined'
   | 'not-inviting';
 
+/** How likely a guest is to come, before they reply. */
+export type Likelihood = 'likely' | 'maybe' | 'unlikely';
+
 export type InviteMethod = 'text' | 'mail' | 'hand' | 'email';
 
 export interface Invitation extends RecordMeta {
@@ -185,6 +188,10 @@ export interface Invitation extends RecordMeta {
   plusOnes: number;
   /** Optional names for the plus-ones, in seat order. May be shorter than plusOnes. */
   plusOneNames?: string[];
+  /** Sean's guess before they reply. Unset = likely. */
+  likelihood?: Likelihood;
+  /** Position on the seat map (gaps of 1000). Unset = after everyone placed by hand. */
+  seatOrder?: number;
   brunch: boolean;
   method?: InviteMethod;
   invitedAt?: IsoDate;

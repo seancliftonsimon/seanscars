@@ -62,9 +62,7 @@ export default function GuestsScreen() {
   const seatTally = tallySeats(buildParties(data.people, data.invitations), season.capacity && season.capacity > 0 ? season.capacity : DEFAULT_SEATS);
   const answers: Record<View, string> = {
     list: capacityVerdict(d.projection, basis).text,
-    seats: seatTally.free >= 0
-      ? `${seatTally.total} of ${seatTally.capacity} seats spoken for, counting everyone on the list. ${plural(seatTally.free, 'seat')} free.`
-      : `${seatTally.total} people for ${seatTally.capacity} seats: ${seatTally.free * -1} over.`,
+    seats: `About ${seatTally.expected} expected for ${seatTally.capacity} seats; ${seatTally.total} if everyone on the list comes.`,
     send: d.send.toSend ? `${d.send.sent} of ${d.send.total} invitations sent. ${plural(d.send.toSend, 'person', 'people')} ready to invite.` : d.send.total ? 'Every invitation is out.' : 'Put people on the list first.',
     replies: inbox.length ? `${plural(inbox.length, 'new RSVP')} to file.` : 'All caught up.',
     waiting: d.waiting.length ? `${plural(d.waiting.length, 'guest')} haven’t replied yet.` : 'No one to chase.',
