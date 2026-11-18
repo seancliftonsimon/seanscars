@@ -25,7 +25,7 @@ All paths are under `/#/plan`. Labels and paths are declared in `src/planner/rou
 | Route | What it does |
 | --- | --- |
 | `/plan` (Home) | Countdown, the season's phase, the three things most worth doing next (with inline actions), and the blocks that matter in this phase. |
-| `/plan/guests` (Guests) | Guest list with the projected headcount vs capacity (plus-ones counted). Views: `?view=seats` (seat map of the room filling up, with past guests to add back), `?view=send` (send invitations), `replies` (RSVP inbox), `waiting` (who hasn't replied, nudges), `final` (show-week numbers). `?person=` opens a guest. |
+| `/plan/guests` (Guests) | Guest list with the projected headcount vs capacity (plus-ones counted). Views: `?view=seats` (seat map with names: expected turnout vs seats held, likelihood per guest, drag to rearrange, past guests to add back), `?view=send` (send invitations), `replies` (RSVP inbox), `waiting` (who hasn't replied, nudges), `final` (show-week numbers). `?person=` opens a guest. |
 | `/plan/guests/door` | Printable alphabetical door list. |
 | `/plan/show` (Show) | Clock verdict and the run of show as a timeline; Publish to timer. `?segment=<id or new>` opens a segment. |
 | `/plan/show/ready` | Show-week readiness, Publish, Print and the timer switch steps. `?publish=1` opens Publish. |
@@ -60,6 +60,7 @@ All record types are in `src/planner/types.ts`, which is the source of truth. Pa
 - `seasons/{year}`: season settings (show date, start time, runtime cap, buffer target, `timerDocId`).
 - `seasons/{year}/segments`, `awards`, `pieces`, `invitations`, `venues`, `questions`, `checklist`, `films`, `ideas`, `publishes`.
 - Awards carry the fields the show graphics share (`docs/show-graphics-contract.md`): `variant` (`standard` if missing, `film-only`, `honoree`), `shortName`, `slug` (the Show ID, set once on first save) and `winnerContenderIds` (zero or more, so ties and winners who weren't nominated are fine). Contenders add `personName`, `film`, `caption` and `slug`; `label` is written on save as `personName — film`. The pure helpers are in `logic/showGraphics.ts`.
+- Invitations may carry `likelihood` (`likely` | `maybe` | `unlikely`, unset = likely), Sean's guess before a reply, and `seatOrder` (the Seats view's order, gaps of 1000; unset = after everyone placed by hand). A reply wins over the guess: Coming counts as a full seat and an RSVP maybe as Maybe. Expected turnout weights likely 1, maybe ½, likely not ⅕ (`logic/seats.ts`).
 - Invitations may carry `plusOneNames` (optional, in seat order, at most `plusOnes` long). The Seats view uses them to label plus-one seats, and to flag a past guest who already holds a seat as someone's plus-one.
 - `people/{personId}`: shared across seasons. Invitations are keyed by person id.
 - `rsvps/{id}`: public form submissions, with planner-only `processed` and `matchedPersonId`.
